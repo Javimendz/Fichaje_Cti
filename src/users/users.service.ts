@@ -1,26 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'auth/entities/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
+
+  
 
   findAll() {
-    return `This action returns all users`;
+    return this.userRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  findOne(id: string) {
+    return  this.userRepository.findOneBy({ id });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, dto: UpdateUserDto) {
+
+    const user = await this.findOne(id);
+    if(!user) throw new Error('Usuario no encontrado');
+    
+    Object.assign(user, dto);
+    return this.userRepository.save(user);
+
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    
+
+    const user = await this.findOne(id);
+    if(!user) throw new Error('Usuario no encontrado');
+
+    await this.userRepository.delete(id);
+    return { message: 'Usuario eliminado' };
+
   }
 }

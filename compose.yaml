@@ -1,0 +1,10 @@
+services:
+  fichajecti:
+    image: fichajecti
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3001:3001

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CheckinsModule } from './checkins/checkins.module';
@@ -26,6 +25,8 @@ import { ConfigModule } from '@nestjs/config';
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
         synchronize: true,
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+
 
 
     }),
@@ -36,7 +37,6 @@ import { ConfigModule } from '@nestjs/config';
     ShiftsModule, 
     AlarmsModule, 
     LocationsModule],
-  controllers: [AppController],
-  providers: [AppService],
+  
 })
 export class AppModule {}

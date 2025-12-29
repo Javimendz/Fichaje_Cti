@@ -1,8 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {  Repository } from 'typeorm';
 import { User } from "./entities/user.entity";
 import { CreateUserDto } from "./dto/createUserDto";
+import { VerifyCodeDto } from './dto/verify-code.dto'; 
+import { JwtService } from "@nestjs/jwt";
+import { UpdateAuthDto } from "./dto/update-auth.dto";
 
 @Injectable()
 export class AuthService {
@@ -10,6 +13,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
      private readonly userRepository: Repository<User>,
+      private readonly jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -34,18 +38,15 @@ export class AuthService {
   return { message: 'Código enviado' };
 }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+async update(id: string, updateAuthDto: UpdateAuthDto) {
+  const user = await this.userRepository.findOneBy({ id });
+  if (!user) throw new NotFoundException('Usuario no encontrado');
 
- 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
+  Object.assign(user, updateAuthDto);
+  return this.userRepository.save(user);
+}
+
 
    generarCodigo(): string {
    return Math.floor(100000 + Math.random() * 900000).toString(); // 6 dígitos
@@ -54,6 +55,7 @@ export class AuthService {
 
 
   async verifyCode(dto: VerifyCodeDto) {
+
   const { telefono, codigo } = dto;
 
   const user = await this.userRepository.findOneBy({ telefono });

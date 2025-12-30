@@ -1,4 +1,5 @@
-import { IsBoolean, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { UserRole } from "auth/roles.enum";
+import { IsBoolean, IsNotEmpty, IsNumber, IsString, MinLength } from "class-validator";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 
@@ -15,7 +16,7 @@ export class User {
 
     @IsString()
     @IsNotEmpty()
-    @Column({ unique: true })
+     @Column({ type: 'varchar', nullable: false }) 
     dni: string;
 
     @IsString()
@@ -71,8 +72,19 @@ export class User {
     @Column('bool', {default: false})
     isVerified: boolean;
 
+    @IsNumber()
+    @IsNotEmpty()
+    @Column('int', { nullable: true })
+    diaPertenece: number;
+
+
+    @IsString()
+    @IsNotEmpty()
+    @Column('text', { nullable: false })
+    codigoOTP: string;
+
     @IsString()
     @MinLength(1)
-    @Column('text', {array:true, default: ['user']})
-    rol: string[];
+    @Column('text', {array:true, default: [UserRole.USER]})
+    rol: UserRole[];
 }

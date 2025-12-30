@@ -1,8 +1,9 @@
-import { IsEmail, IsString, MinLength, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsNotEmpty, IsOptional, IsDateString, IsNumber, IsArray, Min, min } from 'class-validator';
 
 export class CreateUserDto {
     
     @IsString()
+    @MinLength(8)
     telefono: string;
 
     @IsOptional()
@@ -12,14 +13,53 @@ export class CreateUserDto {
   
 
     @IsString()
+    @IsOptional() 
+    @MinLength(3)
+    nombre?: string;
+
     @IsOptional()
-    nombre: string;
+    @IsString()
+    @MinLength(3)
+    apellidos?: string;
+    
+
+    @IsDateString()
+    @IsOptional()
+    fechaNacimiento?: Date;
 
     @IsString()
-    @IsNotEmpty()
-    lastName: string;
+    @IsOptional()
+    calle?: string;
 
     @IsString()
-    @IsNotEmpty()
-    role: string;
+    @IsOptional()
+    poblacion?: string;
+
+    @IsString()
+    @IsOptional()
+    provincia?: string;
+
+    @IsString()
+    @IsOptional()
+    pais?: string;
+
+    @IsString()
+    @IsOptional()
+    categoria?: string;
+
+    @IsString()
+    @IsOptional()
+    actividad?: string;
+
+    @IsNumber()
+    @IsOptional()
+    diaPertenece?: number;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    rol?: string[];
+
+    
+ 
 }

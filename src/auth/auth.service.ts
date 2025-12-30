@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import {  Repository } from 'typeorm';
-import { User } from "./entities/user.entity";
+
 import { CreateUserDto } from "./dto/createUserDto";
 import { VerifyCodeDto } from './dto/verify-code.dto'; 
 import { JwtService } from "@nestjs/jwt";
 import { UpdateAuthDto } from "./dto/update-auth.dto";
+import { User } from "./entities/user.entity";
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
   }
 
   const codigo = this.generarCodigo();
+  user.
   user.codigoExpiraEn = new Date(Date.now() + 5 * 60 * 1000); // 5 min
   await this.userRepository.save(user);
 

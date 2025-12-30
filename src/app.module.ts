@@ -9,6 +9,8 @@ import { AlarmsModule } from './alarms/alarms.module';
 import { LocationsModule } from './locations/locations.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
+import { SeedModule } from 'seed/seed.module';
 
 @Module({
   
@@ -36,7 +38,9 @@ import { ConfigModule } from '@nestjs/config';
     AttendanceModule, 
     ShiftsModule, 
     AlarmsModule, 
-    LocationsModule],
+    SeedModule
+   
+   ],
   
 })
 export class AppModule {}

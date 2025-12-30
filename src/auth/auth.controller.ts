@@ -18,9 +18,5 @@ export class AuthController {
   verifyOtp(@Body() verifyCodeDto: VerifyCodeDto) {
     return this.authService.verifyCode(verifyCodeDto);
   }
-  // Login
-  @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
-  }
+ 
 }

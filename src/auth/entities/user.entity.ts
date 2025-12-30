@@ -28,10 +28,17 @@ export class User {
     @Column('text', {array:true, default: ['user']})
     rol: string[];
 
-    @IsDate()
-    @MinLength(1)
-    @Column({ type: 'timestamp', nullable: true })
-    codigoExpiraEn?: Date;
+    @Column({ 
+    type: 'varchar', 
+    nullable: true // Esto permite NULL en la base de datos
+    })
+    codigoOTP?: string | null; // El '?' y '| null' evitan el error de TypeScript ts(2322)
+
+    @Column({ 
+    type: 'timestamp', 
+    nullable: true 
+    })
+    codigoExpiraEn?: Date | null;
 
 }
 

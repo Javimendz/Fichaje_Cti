@@ -33,6 +33,7 @@ import { SeedModule } from 'seed/seed.module';
 
     }),
     AuthModule, 
+    AllowedPhonesModule,
     UsersModule, 
     CheckinsModule, 
     AttendanceModule, 

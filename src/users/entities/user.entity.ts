@@ -77,11 +77,16 @@ export class User {
     @Column('int', { nullable: true })
     diaPertenece: number;
 
-
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: false })
-    codigoOTP: string;
+   @Column({ 
+  type: 'varchar',   
+   nullable: true    })
+codigoOTP?: string | null;
+   
+    @Column({ 
+  type: 'timestamp', 
+  nullable: true 
+})
+codigoExpiraEn?: Date | null;
 
     @IsString()
     @MinLength(1)

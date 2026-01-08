@@ -14,14 +14,14 @@ export class User {
   // ============================================
   // CONTACTO (OBLIGATORIOS)
   // ============================================
-  @Column('text', { unique: true, nullable: true })
-  telefono: string;
+ @Column('text', { unique: true, nullable: true })
+telefono?: string;
 
-  @Column({ type: 'varchar', nullable: false })
-  dni: string;
+@Column({ type: 'varchar', nullable: true })
+dni?: string;
 
-  @Column('text')
-  email: string;
+@Column('text', { nullable: true })
+email?: string;
 
   // ============================================
   // DATOS PERSONALES

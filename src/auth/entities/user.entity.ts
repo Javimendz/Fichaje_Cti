@@ -10,8 +10,8 @@ export class  User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 20 })
-  telefono: string;
+@Column({ length: 20, nullable: true })
+telefono?: string;
 
   @Column({ default: false })
   isVerified: boolean;

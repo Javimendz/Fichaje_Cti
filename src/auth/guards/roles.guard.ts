@@ -21,13 +21,10 @@ export class RolesGuard implements CanActivate {
 
     if (!user || !user.rol) return false;
 
-    // ADMIN siempre tiene acceso
-    if (user.rol.includes(UserRole.ADMIN)) return true;
+   // El SUPERADMIN suele tener acceso a todo
+  if (user.rol === UserRole.SUPERADMIN) return true;
 
-    // Comprobar si el usuario tiene al menos un rol permitido
-   
-   //Temporalmente desactivado para testeo
-   return true;
-    //return requiredRoles.some(role => user.rol.includes(role));
+  // Validación estricta
+  return requiredRoles.includes(user.rol);
   }
 }

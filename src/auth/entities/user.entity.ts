@@ -1,45 +1,62 @@
-import { ArrayNotEmpty, IsArray, IsBoolean, IsDate, IsNotEmpty, IsString, MinLength } from "class-validator";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Ausencia } from "ausencia/entities/ausencia.entity";
+import { UserRole } from "auth/roles.enum";
+import { Empresa } from "empresas/entities/empresa.entity";
+import { Jornada } from "jornada/entities/jornada.entity";
+import { Horario } from "schedules/entities/horario.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
+export class  User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-export class User {
+  @Column({ length: 20 })
+  telefono: string;
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+  })
+  rol: UserRole;
+
+@Column({
+  type: 'jsonb', // Recomendado en Postgres por eficiencia y búsqueda
+  nullable: true
+})
+codigoOTP: {
+  codigo: string;
+  expiracion: Date;
+}| null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  codigoExpiraEn?: Date;
+
+  @Column({ nullable: true })
+  dni?: string;
+
+  @Column({ nullable: true })
+  email?: string;
+
+  @Column({ nullable: true })
+  password?: string;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+   @ManyToOne(() => Empresa, empresa => empresa.usuarios)
+   empresa: Empresa;
+
+   @OneToMany(() => Jornada, (jornada) => jornada.usuario)
+  jornadas: Jornada[];
+
+  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
+  ausencias: Ausencia[];
 
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
-
-    @IsString()
-    @IsNotEmpty()
-    @MinLength(1)
-    @Column('text', { unique: true })
-    telefono: string;
-
-   
-
-    @IsBoolean()
-    @Column('bool', {default: false})
-    isVerified: boolean;
-
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsString({ each: true })
-    @Column('text', {array:true, default: ['user']})
-    rol: string[];
-
-    @Column({ 
-    type: 'varchar', 
-    nullable: true // Esto permite NULL en la base de datos
-    })
-    codigoOTP?: string | null; // El '?' y '| null' evitan el error de TypeScript ts(2322)
-
-    @Column({ 
-    type: 'timestamp', 
-    nullable: true 
-    })
-    codigoExpiraEn?: Date | null;
-
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
+  @JoinColumn({ name: 'horario_id' }) // Mapeo exacto a tu modelo ER
+  horario: Horario;
 }
-
-

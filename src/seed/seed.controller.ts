@@ -5,7 +5,8 @@ import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import { SeedsService } from './seed.service';
 
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+//Comentar para pruebas, DESCOMENTAR EN PRODUCCIÓN
+//@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('seeds')
 export class SeedsController {
   constructor(private readonly seedsService: SeedsService) {}

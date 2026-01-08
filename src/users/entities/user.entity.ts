@@ -1,95 +1,107 @@
+import { Ausencia } from "ausencia/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
-import { IsBoolean, IsNotEmpty, IsNumber, IsString, MinLength } from "class-validator";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { Empresa } from "empresas/entities/empresa.entity";
+import { Jornada } from "jornada/entities/jornada.entity";
+import { Horario } from "schedules/entities/horario.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
 export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @PrimaryGeneratedColumn()
-    id: string;
+  // ============================================
+  // CONTACTO (OBLIGATORIOS)
+  // ============================================
+  @Column('text', { unique: true, nullable: true })
+  telefono: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { unique: true})
-    telefono: string;
+  @Column({ type: 'varchar', nullable: false })
+  dni: string;
 
-    @IsString()
-    @IsNotEmpty()
-     @Column({ type: 'varchar', nullable: false }) 
-    dni: string;
+  @Column('text')
+  email: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text')
-    nombre?: string;
+  // ============================================
+  // DATOS PERSONALES
+  // ============================================
+ @Column({ nullable: true }) // Añade esto
+nombre: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    apellidos?: string;
+  @Column('text', { nullable: true })
+  apellidos?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('date', { nullable: true })
-    fechaNacimiento?: Date;
+  @Column('date', { nullable: true })
+  fechaNacimiento?: Date;
 
+  // ============================================
+  // DIRECCIÓN
+  // ============================================
+  @Column('text', { nullable: true })
+  calle?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    calle?: string;
+  @Column('text', { nullable: true })
+  poblacion?: string;
 
+  @Column('text', { nullable: true })
+  provincia?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    poblacion?: string;
+  @Column('text', { nullable: true })
+  pais?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    provincia?: string;
+  // ============================================
+  // DATOS LABORALES
+  // ============================================
+  @Column('text', { nullable: true })
+  categoria?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    pais?: string;
+  @Column('text', { nullable: true })
+  actividad?: string;
 
+  @Column('int', { nullable: true })
+  diaPertenece?: number;
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    categoria?: string;
+  // ============================================
+  // AUTENTICACIÓN
+  // ============================================
+  @Column({ nullable: true })
+  password?: string; // Solo para ADMIN
 
-    @IsString()
-    @IsNotEmpty()
-    @Column('text', { nullable: true })
-    actividad?: string;
+  @Column({ nullable: true })
+  codigoOTP?: string; // Código temporal para WORKER
 
-    @IsBoolean()
-    @IsNotEmpty()
-    @Column('bool', {default: false})
-    isVerified: boolean;
+  @Column({ type: 'timestamp', nullable: true })
+  codigoExpiraEn?: Date | null;
 
-    @IsNumber()
-    @IsNotEmpty()
-    @Column('int', { nullable: true })
-    diaPertenece: number;
+  @Column('bool', { default: false })
+  isVerified: boolean;
 
-   @Column({ 
-  type: 'varchar',   
-   nullable: true    })
-codigoOTP?: string | null;
-   
-    @Column({ 
-  type: 'timestamp', 
-  nullable: true 
-})
-codigoExpiraEn?: Date | null;
+  @Column({ default: true })
+  isActive: boolean;
 
-    @IsString()
-    @MinLength(1)
-    @Column('text', {array:true, default: [UserRole.USER]})
-    rol: UserRole[];
+  // ============================================
+  // ROL Y PERMISOS
+  // ============================================
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+  })
+  rol: UserRole;
+
+  // ============================================
+  // RELACIONES
+  // ============================================
+  @ManyToOne(() => Empresa, (e) => e.usuarios)
+  empresa: Empresa;
+
+ @ManyToOne(() => Horario)
+  @JoinColumn({ name: 'horario_id' })
+  horario: Horario;
+
+  @OneToMany(() => Jornada, (jornada) => jornada.usuario)
+  jornadas: Jornada[];
+
+  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
+  ausencias: Ausencia[];
 }

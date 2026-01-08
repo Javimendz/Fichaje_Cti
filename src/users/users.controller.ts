@@ -7,134 +7,100 @@ import {
   Param,
   Delete,
   UseGuards,
-  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { CreateWorkerDto } from './dto/create-worker.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
-import { AllowedPhonesService } from 'allowed-phones/allowed-phones.service';
-import { UpdateUserRoleDto } from './dto/update-user-role.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
+import { GetUser } from 'auth/decorators/get-user.decorator';
+import { User } from 'auth/entities/user.entity';
+import { EmpresasService } from 'empresas/empresas.service';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly allowedPhonesService: AllowedPhonesService,
+    private readonly empresasService: EmpresasService,
   ) {}
 
   // ========================
-  // REGISTRO DE USUARIO
+  // CREAR ADMIN (SUPERADMIN)
   // ========================
-  @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    // Validar allowed phones
-    const allowed = await this.allowedPhonesService.checkPhoneAllowed(
-      createUserDto.telefono,
-    );
-    if (!allowed) {
-      throw new ForbiddenException(
-        'Este número no está autorizado para registrarse',
-      );
-    }
+  @Post('admin')
+  @Roles(UserRole.SUPERADMIN)
+  async createAdmin(
+    @Body() dto: CreateAdminDto,
+  ) {
+    // Obtener la empresa
+    const empresa = await this.empresasService.findOne(dto.empresaId);
+    
+    return this.usersService.createAdmin(dto, empresa);
+  }
 
-    // Crear usuario
-    const user = await this.usersService.create(createUserDto);
-
-    // Marcar teléfono como usado
-    await this.allowedPhonesService.markUsed(createUserDto.telefono);
-
-    return user;
+  // ========================
+  // CREAR WORKER (ADMIN)
+  // ========================
+  @Post('worker')
+  @Roles(UserRole.ADMIN)
+  async createWorker(
+    @Body() dto: CreateWorkerDto,
+    @GetUser() currentUser: User,
+  ) {
+    // El worker se crea en la empresa del admin actual
+    return this.usersService.createWorker(dto, currentUser.empresa);
   }
 
   // ========================
   // LISTAR USUARIOS
-  // Solo admin
+  // SUPERADMIN ve todos
+  // ADMIN ve solo de su empresa
   // ========================
   @Get()
-  @Roles(UserRole.ADMIN)
-  findAll() {
-    return this.usersService.findAll();
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+  findAll(@GetUser() currentUser: User) {
+    return this.usersService.findAllByUser(currentUser);
   }
 
   // ========================
   // OBTENER USUARIO POR ID
-  // Admin puede ver cualquier usuario
-  // Usuario normal solo puede ver su propio ID
+  // Con validación de permisos
   // ========================
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.USER)
-  async findOne(@Param('id') id: string, @Body('requestUserId') requestUserId: string) {
-    const user = await this.usersService.findOne(id);
-
-    // Validación simple: usuario solo puede ver su propio perfil
-    if (
-      user.rol.includes(UserRole.USER) &&
-      user.id !== requestUserId
-    ) {
-      throw new ForbiddenException('No autorizado');
-    }
-
-    return user;
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.WORKER)
+  async findOne(
+    @Param('id') id: string,
+    @GetUser() currentUser: User,
+  ) {
+    return this.usersService.findOneById(id, currentUser);
   }
 
   // ========================
   // ACTUALIZAR USUARIO
   // ========================
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.USER)
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @Body('requestUserId') requestUserId: string,
+    @Body() dto: UpdateUserDto,
+    @GetUser() currentUser: User,
   ) {
-    // Usuario normal solo puede actualizar su propio perfil
-    const user = await this.usersService.findOne(id);
-    if (
-      user.rol.includes(UserRole.USER) &&
-      user.id !== requestUserId
-    ) {
-      throw new ForbiddenException('No autorizado');
-    }
-
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, dto, currentUser);
   }
 
   // ========================
-  // ELIMINAR USUARIO
-  // Solo admin
+  // ELIMINAR USUARIO (SOFT DELETE)
   // ========================
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
-  }
-
-  // ========================
-  // ACTUALIZAR ROL
-  // Solo admin
-  // ========================
-  @Patch(':id/role')
-  @Roles(UserRole.ADMIN)
-  updateRole(
+  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+  async remove(
     @Param('id') id: string,
-    @Body() updateUserRoleDto: UpdateUserRoleDto,
+    @GetUser() currentUser: User,
   ) {
-    return this.usersService.updateRole(id, updateUserRoleDto.rol);
+    return this.usersService.remove(id, currentUser);
   }
-
-  @Post('create-admin')
-  @Roles(UserRole.ADMIN) // solo admin puede usar este endpoint
-  async createAdmin(@Body() dto: CreateAdminDto) {
-    const user = await this.usersService.createAdmin(dto);
-    return user;
-  }
-
 }
-

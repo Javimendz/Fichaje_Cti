@@ -11,6 +11,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
 import { SeedModule } from 'seed/seed.module';
+import { EmpresasModule } from './empresas/empresas.module';
+import { RolesModule } from './roles/roles.module';
+import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
+import { SchedulesModule } from './schedules/schedules.module';
+import { JornadaModule } from './jornada/jornada.module';
+import { FranjasHorariasModule } from './franja-horaria/franja-horaria.module';
+import { AusenciasModule } from './ausencia/ausencia.module';
 
 @Module({
   
@@ -39,7 +46,7 @@ import { SeedModule } from 'seed/seed.module';
     AttendanceModule, 
     ShiftsModule, 
     AlarmsModule, 
-    SeedModule
+    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule
    
    ],
   

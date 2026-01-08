@@ -1,115 +1,119 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from 'auth/entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRole } from 'auth/roles.enum';
-import { AllowedPhonesService } from 'allowed-phones/allowed-phones.service';
-import { CreateAdminDto } from './dto/create-admin.dto';
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "auth/entities/user.entity";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { CreateAdminDto } from "./dto/create-admin.dto";
+import { UserRole } from "auth/roles.enum";
+import { Empresa } from "empresas/entities/empresa.entity";
+import { CreateWorkerDto } from "./dto/create-worker.dto";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly allowedPhonesService: AllowedPhonesService, // para control de teléfonos
   ) {}
 
   // ========================
-  // CREAR USUARIO (REGISTRO)
+  // CREAR ADMIN (SUPERADMIN)
   // ========================
-  async create(createUserDto: CreateUserDto) {
-    // Validar allowed phones
-    const allowed = await this.allowedPhonesService.checkPhoneAllowed(
-      createUserDto.telefono,
-    );
-    if (!allowed) {
-      throw new Error('Número no autorizado para registrarse');
-    }
-
+  async createAdmin(dto: CreateAdminDto, empresa: Empresa) {
     const user = this.userRepository.create({
-      ...createUserDto,
-      rol: [UserRole.USER],
+      ...dto,
+      rol: UserRole.ADMIN,
+      empresa: empresa,
       isVerified: true,
+      isActive: true,
     });
 
-    await this.userRepository.save(user);
-
-    // Marcar teléfono como usado
-    await this.allowedPhonesService.markUsed(createUserDto.telefono);
-
-    return user;
+    return this.userRepository.save(user);
   }
 
   // ========================
-  // LISTAR USUARIOS
-  // Solo admin
+  // CREAR WORKER (ADMIN)
   // ========================
-  findAll() {
-    return this.userRepository.find();
+  async createWorker(dto: CreateWorkerDto, empresa: Empresa) {
+    const user = this.userRepository.create({
+      ...dto,
+      rol: UserRole.WORKER,
+      empresa: empresa,
+      isVerified: false,
+      isActive: true,
+    });
+
+    return this.userRepository.save(user);
+  }
+
+  // ========================
+  // LISTAR USUARIOS POR SCOPE
+  // ========================
+  async findAllByUser(user: User) {
+    // El SUPERADMIN ve absolutamente todo
+    if (user.rol === UserRole.SUPERADMIN) {
+      return this.userRepository.find({
+        relations: ['empresa'], // 'rol' no es una relación, es un enum
+      });
+    }
+    
+// El ADMIN ve solo a los usuarios de SU empresa
+    if (!user.empresa) {
+        throw new ForbiddenException('El administrador no tiene una empresa asignada');
+    }
+
+    return this.userRepository.find({
+      where: { empresa: { id: user.empresa.id } },
+      relations: ['empresa'],
+    });
   }
 
   // ========================
   // OBTENER USUARIO POR ID
   // ========================
-  async findOne(id: string) {
-    const user = await this.userRepository.findOneBy({ id });
+  async findOneById(id: string, currentUser: User) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['empresa'],
+    });
+
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
+
+    // ADMIN no puede ver usuarios de otra empresa
+   // Validación de Scope: Si no es SUPERADMIN, debe pertenecer a la misma empresa
+    if (currentUser.rol !== UserRole.SUPERADMIN) {
+      if (!currentUser.empresa || currentUser.empresa.id !== user.empresa?.id) {
+        throw new ForbiddenException('No tienes permiso para ver este usuario');
+      }
+    }
+    
     return user;
   }
 
   // ========================
   // ACTUALIZAR USUARIO
   // ========================
-  async update(id: string, dto: UpdateUserDto) {
-    const user = await this.userRepository.preload({
-      id,
-      ...dto,
-    });
+  async update(id: string, dto: UpdateUserDto, currentUser: User) {
+    const user = await this.findOneById(id, currentUser);
 
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
+    Object.assign(user, dto);
 
     return this.userRepository.save(user);
   }
 
   // ========================
-  // ELIMINAR USUARIO
+  // ELIMINAR (SOFT DELETE)
   // ========================
-  async remove(id: string) {
-    const result = await this.userRepository.delete(id);
-
-    if (result.affected === 0) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    return { message: 'Usuario eliminado' };
-  }
-
-  // ========================
-  // CAMBIAR ROL (solo admin)
-  // ========================
-  async updateRole(id: string, roles: UserRole[]) {
-    const user = await this.findOne(id);
-
-    user.rol = roles;
+  async remove(id: string, currentUser: User) {
+    const user = await this.findOneById(id, currentUser);
+    
+    user.isActive = false;
 
     return this.userRepository.save(user);
   }
 
-  async createAdmin(dto: CreateAdminDto) {
-    // Crear usuario
-    const user = this.userRepository.create({
-      ...dto,
-      rol: [UserRole.ADMIN],
-      isVerified: true,
-    });
-
-    return this.userRepository.save(user);
+  async findAllRaw() {
+    return this.userRepository.find({ relations: ['empresa'] });
   }
-
 }

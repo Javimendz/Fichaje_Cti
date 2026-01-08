@@ -1,10 +1,17 @@
-import { Injectable } from '@nestjs/common';
+// src/auth/strategies/jwt.strategy.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, ExtractJwt } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: process.env.JWT_SECRET || 'miSecretoSuperSecreto',
@@ -12,7 +19,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Devuelve lo que quieres que esté disponible en req.user
-    return { userId: payload.sub, username: payload.username };
+    const { sub } = payload;
+    
+    const user = await this.userRepository.findOne({
+      where: { id: sub },
+      relations: ['empresa'], 
+    });
+
+    if (!user) throw new UnauthorizedException('Token no válido');
+    if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
+
+    return user; // Este objeto es el que recibe el decorador @GetUser
   }
 }

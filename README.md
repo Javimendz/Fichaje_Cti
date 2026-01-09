@@ -23,9 +23,63 @@
 1. Enviar código otp
 ```
 localhost:3000/api/auth/send-otp
+
+Post
+
+{
+
+    "telefono": "Telefono Necesario"
+}
+
 ```
 2. Verificar código otp
 
 ```
 localhost:3000/api/auth/verify-otp
+
+Post
+
+{ "telefono": "+Telefono necesario", "codigo": "Codigo generado" }
+
+
 ```
+
+3. Ejecutar Seed
+```
+Post
+
+http://localhost:3000/api/seeds/run
+
+```
+
+4. Login 
+
+``` 
+http://localhost:3000/api/auth/login
+
+Post
+
+{
+    "telefono": "Telefono necesario", 
+    "password": "admin_password"
+
+}
+
+```
+
+
+5. Permitir telefonos
+
+```
+
+http://localhost:3000/api/allowed-phones
+
+Post
+
+http://localhost:3000/api/allowed-phones
+
+{
+    "telefono": "Telefono necesario"
+}
+
+``` 

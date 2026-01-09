@@ -4,6 +4,7 @@ import { UsersService } from "users/users.service";
 import { EmpresasService } from '../empresas/empresas.service';
 import { CreateAdminDto } from "users/dto/create-admin.dto";
 import { CreateWorkerDto } from "users/dto/create-worker.dto";
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SeedsService {
@@ -38,7 +39,7 @@ export class SeedsService {
     // Usamos el método que ya tienes en UsersService que filtra por empresa/rol
     const allUsers = await this.usersService.findAllRaw(); // Método auxiliar para obtener todos sin filtros
     const adminExists = allUsers.some(u => u.telefono === adminPhone);
-
+    const hashedPassword = await bcrypt.hash('admin_password', 10);
     if (!adminExists) {
       const adminDto: CreateAdminDto = {
         telefono: adminPhone,
@@ -46,7 +47,7 @@ export class SeedsService {
         apellidos: 'Principal',
         dni: '00000000A',
         email: "admin@sistema.com",
-        password: "admin_password", // Si usas password para admins
+        password: hashedPassword, // Si usas password para admins
         empresaId: empresaBase.id
       };
 

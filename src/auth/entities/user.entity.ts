@@ -22,14 +22,11 @@ telefono?: string;
   })
   rol: UserRole;
 
-@Column({
-  type: 'jsonb', // Recomendado en Postgres por eficiencia y búsqueda
-  nullable: true
-})
+@Column({ type: 'json', nullable: true })
 codigoOTP: {
   codigo: string;
   expiracion: Date;
-}| null;
+} | null;
 
   @Column({ type: 'timestamp', nullable: true })
   codigoExpiraEn?: Date;

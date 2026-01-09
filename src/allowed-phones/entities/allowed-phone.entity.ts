@@ -1,5 +1,6 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Empresa } from 'empresas/entities/empresa.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('allowed_phones')
 export class AllowedPhone {
@@ -9,6 +10,14 @@ export class AllowedPhone {
 
   @Column({ unique: true })
   telefono: string;
+
+
+  @Column({ nullable: true })
+  empresaId: string;
+
+ @ManyToOne(() => Empresa)
+  @JoinColumn({ name: 'empresaId' }) // Esto vincula la columna con la relación
+  empresa: Empresa;
 
   @Column({ default: true })
   active: boolean; // Si el número sigue autorizado

@@ -1,12 +1,12 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Request, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { AllowedPhonesService } from './allowed-phones.service';
 import { CreateAllowedPhoneDto } from './dto/create-allowed-phone.dto';
 import { UserRole } from 'auth/roles.enum';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { RolesGuard } from 'auth/guards/roles.guard';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('allowed-phones')
 export class AllowedPhonesController {
   constructor(private readonly allowedPhonesService: AllowedPhonesService) {}
@@ -17,11 +17,17 @@ export class AllowedPhonesController {
     return this.allowedPhonesService.findAll();
   }
 
-  @Post()
-  @Roles(UserRole.ADMIN)
-  create(@Body() dto: CreateAllowedPhoneDto) {
-    return this.allowedPhonesService.create(dto);
-  }
+ @Post()
+@Roles(UserRole.ADMIN)
+create(@Body() dto: CreateAllowedPhoneDto, @Request() req: any) {
+  // Prueba con req.user.id si req.user.sub te da undefined
+  const adminId = req.user.id || req.user.sub; 
+  const empresaId = req.user.empresaId;
+
+  console.log('Datos del Token:', req.user); // Esto te dirá qué campos tiene tu token realmente
+
+  return this.allowedPhonesService.create(dto, adminId, empresaId);
+}
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)

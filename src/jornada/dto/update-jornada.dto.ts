@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateJornadaDto } from './create-jornada.dto';
+import { CheckInDto } from './check-in.dto';
 
-export class UpdateJornadaDto extends PartialType(CreateJornadaDto) {}
+export class UpdateJornadaDto extends PartialType(CheckInDto) {}

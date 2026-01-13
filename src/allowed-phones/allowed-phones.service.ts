@@ -27,7 +27,7 @@ async create(createPhoneDto: CreateAllowedPhoneDto, adminId: string, empresaId: 
     active: true,
     used: false,
     source: 'ADMIN_PANEL',
-  } as any); // 👈 El 'as any' o 'as DeepPartial<AllowedPhone>' rompe el bucle de error de TS
+  } as any); // El 'as any' o 'as DeepPartial<AllowedPhone>' rompe el bucle de error de TS
 
   return await this.allowedPhoneRepo.save(newPhone);
 }

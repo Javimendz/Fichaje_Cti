@@ -14,8 +14,8 @@ export class User {
   // ============================================
   // CONTACTO (OBLIGATORIOS)
   // ============================================
- @Column('text', { unique: true, nullable: true })
-telefono?: string;
+ @Column('text', { unique: true, nullable: false })
+telefono: string;
 
 @Column({ type: 'varchar', nullable: true })
 dni?: string;
@@ -27,7 +27,7 @@ email?: string;
   // DATOS PERSONALES
   // ============================================
  @Column({ nullable: true }) // Añade esto
-nombre: string;
+nombre?: string;
 
   @Column('text', { nullable: true })
   apellidos?: string;

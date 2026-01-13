@@ -1,10 +1,10 @@
 import { User } from "auth/entities/user.entity";
+import { Empresa } from "empresas/entities/empresa.entity"; // Asegúrate de importar tu entidad Empresa
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+@Entity('jornadas')
 export class Jornada {
-
-   @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'timestamp' })
@@ -23,9 +23,11 @@ export class Jornada {
   longitud: number;
 
   @Column()
-  tipo: string; // "Entrada" o "Salida" (según tu modelo)
+  tipo: string; // "Entrada" o "Salida"
 
-  @ManyToOne(() => User, (usuario) => usuario.jornadas)
-  @JoinColumn({ name: 'usuario_id' })
-  usuario: User;
+  @ManyToOne(() => User, (user) => user.jornadas, { eager: true, cascade: false })
+usuario: User;
+
+@ManyToOne(() => Empresa, { eager: true })
+empresa: Empresa;
 }

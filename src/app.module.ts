@@ -34,7 +34,10 @@ import { AusenciasModule } from './ausencia/ausencia.module';
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
         synchronize: true,
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        extra: {
+           timezone: 'UTC', // Esto asegura que el driver use UTC
+        },
+       entities: [__dirname + '/**/*.entity{.ts,.js}'],
 
 
 

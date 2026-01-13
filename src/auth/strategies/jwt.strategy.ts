@@ -18,17 +18,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
-    const { sub } = payload;
-    
-    const user = await this.userRepository.findOne({
-      where: { id: sub },
-      relations: ['empresa'], 
-    });
+async validate(payload: any) {
+  const { sub } = payload; // sub es el ID del usuario
+  
+  const user = await this.userRepository.findOne({
+    where: { id: sub },
+    relations: ['empresa'], // 
+  });
 
-    if (!user) throw new UnauthorizedException('Token no válido');
-    if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
-
-    return user; // Este objeto es el que recibe el decorador @GetUser
+  if (!user) {
+    throw new UnauthorizedException('Usuario no encontrado');
   }
+
+  // Si 'telefono' sigue saliendo null, asegúrate de que no tenga { select: false } en la Entity
+  return user; 
+}
 }

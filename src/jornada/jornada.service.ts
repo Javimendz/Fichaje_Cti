@@ -10,73 +10,93 @@ export class JornadasService {
   constructor(
     @InjectRepository(Jornada)
     private readonly jornadaRepository: Repository<Jornada>,
+  @InjectRepository(User) 
+  private readonly userRepository: Repository<User>,
   ) {}
 
-  // INICIAR JORNADA (Check-in)
-  async checkIn(dto: CheckInDto, usuario: User) {
-    // Verificar si ya tiene una jornada abierta
-    const jornadaAbierta = await this.jornadaRepository.findOne({
-      where: { usuario: { id: usuario.id }, fin: IsNull() }
-    });
+async checkIn(dto: CheckInDto, usuario: User) {
+  // 1. CARGA FORZADA: Buscamos al usuario real para asegurar que tenemos su empresa
+  const usuarioReal = await this.userRepository.findOne({
+    where: { id: usuario.id },
+    relations: ['empresa'] 
+  });
 
-    if (jornadaAbierta) {
-      throw new BadRequestException('Ya tienes una jornada activa.');
-    }
-
-    const nuevaJornada = this.jornadaRepository.create({
-      inicio: new Date(),
-      tipo: 'Entrada',
-      latitud: dto.latitud,
-      longitud: dto.longitud,
-      usuario: usuario
-    });
-
-    return await this.jornadaRepository.save(nuevaJornada);
+  if (!usuarioReal) throw new BadRequestException('Usuario no encontrado');
+  
+  // Verificación de seguridad: si no tiene empresa en la DB, no puede fichar
+  if (!usuarioReal.empresa) {
+    throw new BadRequestException('El usuario no tiene una empresa asignada en la base de datos.');
   }
 
-  // FINALIZAR JORNADA (Check-out)
-  async checkOut(usuario: User) {
-    const jornada = await this.jornadaRepository.findOne({
-      where: { usuario: { id: usuario.id }, fin: IsNull() }
-    });
+  // 2. Verificación de jornada abierta (evita duplicados)
+  const jornadaAbierta = await this.jornadaRepository.findOne({
+    where: { usuario: { id: usuario.id }, fin: IsNull() }
+  });
 
-    if (!jornada) {
-      throw new BadRequestException('No tienes ninguna jornada activa para cerrar.');
-    }
-
-    jornada.fin = new Date();
-    jornada.tipo = 'Salida';
-
-    // Cálculo de total_minutos
-    const diffMs = jornada.fin.getTime() - jornada.inicio.getTime();
-    jornada.total_minutos = Math.floor(diffMs / (1000 * 60));
-
-    return await this.jornadaRepository.save(jornada);
+  if (jornadaAbierta) {
+    throw new BadRequestException('Ya tienes una jornada activa.');
   }
 
-  async getHistorial(usuarioId: string) {
-    return await this.jornadaRepository.find({
-      where: { usuario: { id: usuarioId } },
-      order: { inicio: 'DESC' }
-    });
+  // 3. Creación: Asignamos manualmente latitud y longitud para asegurar el registro
+  const nuevaJornada = this.jornadaRepository.create({
+    inicio: new Date(),
+    tipo: 'Entrada',
+    latitud: dto.latitud,    // Mapeo explícito desde el DTO
+    longitud: dto.longitud,  // Mapeo explícito desde el DTO
+    usuario: usuarioReal,    // Usamos el objeto completo para no borrar el teléfono
+    empresa: usuarioReal.empresa 
+  });
+
+  const guardada = await this.jornadaRepository.save(nuevaJornada);
+
+  // 4. Retorno final con todas las relaciones cargadas
+  return await this.jornadaRepository.findOne({
+    where: { id: guardada.id },
+    relations: ['usuario', 'empresa']
+  });
+}
+// FINALIZAR JORNADA (Check-out)
+// Cambiamos 'usuarioId: string' por 'usuario: User'
+async checkOut(usuario: User) {
+  const jornada = await this.jornadaRepository.findOne({
+    where: { usuario: { id: usuario.id }, fin: IsNull() }
+  });
+
+  if (!jornada) {
+    throw new BadRequestException('No hay jornada activa para cerrar.');
   }
 
+  jornada.fin = new Date();
+  jornada.total_minutos = Math.floor((jornada.fin.getTime() - jornada.inicio.getTime()) / 60000);
+  jornada.tipo = 'Salida';
+  return await this.jornadaRepository.save(jornada);
+}
 
-  // 3. BUSCAR JORNADA ACTUAL
-  async findActiveJornada(usuarioId: string): Promise<Jornada | null> {
-    return await this.jornadaRepository.findOne({
-      where: { usuario: { id: usuarioId }, fin: IsNull() }
-    });
-  }
 
-  // 4. HISTORIAL PARA ADMINS O USUARIO
-  async findAllByRange(usuarioId: string, desde: Date, hasta: Date) {
-    return await this.jornadaRepository.find({
-      where: { 
-        usuario: { id: usuarioId },
-        inicio: Between(desde, hasta) 
-      },
-      order: { inicio: 'DESC' }
-    });
-  }
+async findActiveJornada(usuarioId: string): Promise<Jornada | null> {
+  return await this.jornadaRepository.findOne({
+    where: { usuario: { id: usuarioId }, fin: IsNull() }
+  });
+}
+
+// 4. VER MI HISTORIAL (Usado por /historial)
+async getHistorial(usuarioId: string) {
+  return await this.jornadaRepository.find({
+    where: { usuario: { id: usuarioId } },
+    order: { inicio: 'DESC' }
+  });
+}
+
+// 5. HISTORIAL POR RANGO (Usado por /rango)
+async findAllByRange(usuarioId: string, desde: Date, hasta: Date) {
+  return await this.jornadaRepository.find({
+    where: { 
+      usuario: { id: usuarioId },
+      inicio: Between(desde, hasta) 
+    },
+    order: { inicio: 'DESC' }
+  });
+}
+
+
 }

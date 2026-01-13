@@ -11,17 +11,19 @@ export class JornadaController {
   constructor(private readonly jornadasService: JornadasService) {}
 
   // 1. Iniciar Jornada (POST /jornadas/check-in)
+// 1. Iniciar Jornada
   @Post('check-in')
   async create(
     @Body() checkInDto: CheckInDto, 
-    @GetUser() usuario: User
+    @GetUser() usuario: User 
   ) {
     return this.jornadasService.checkIn(checkInDto, usuario);
   }
 
-  // 2. Finalizar Jornada (PATCH /jornadas/check-out)
+  // 2. Finalizar Jornada
   @Patch('check-out')
   async update(@GetUser() usuario: User) {
+    // Ahora enviamos el objeto 'usuario' completo
     return this.jornadasService.checkOut(usuario);
   }
 

@@ -18,6 +18,7 @@ import { SchedulesModule } from './schedules/schedules.module';
 import { JornadaModule } from './jornada/jornada.module';
 import { FranjasHorariasModule } from './franja-horaria/franja-horaria.module';
 import { AusenciasModule } from './ausencia/ausencia.module';
+import { AllowedUserModule } from './allowed-user/allowed-user.module';
 
 @Module({
   
@@ -49,7 +50,7 @@ import { AusenciasModule } from './ausencia/ausencia.module';
     AttendanceModule, 
     ShiftsModule, 
     AlarmsModule, 
-    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule
+    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule, AllowedUserModule
    
    ],
   

@@ -67,7 +67,7 @@ const workers = [
     email: 'worker1@sistema.com',
     rol: UserRole.WORKER, //
     isActive: true, //
-    codigoOTP: { // 👈 Estructura JSON requerida
+    codigoOTP: { 
       codigo: '123456',
       expiracion: new Date(Date.now() + 3600000) // Expira en 1 hora
     }

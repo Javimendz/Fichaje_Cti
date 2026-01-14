@@ -83,3 +83,42 @@ http://localhost:3000/api/allowed-phones
 }
 
 ``` 
+
+
+
+
+6. Check-in
+
+```
+
+http://localhost:3000/api/jornadas/check-in
+
+Post
+
+auth type:  bearer token.
+Pegas el token de trabajador generado.
+
+Body - Json:
+
+{
+  "latitud": 40.4167,
+  "longitud": -3.7037
+}
+
+
+``` 
+
+
+
+
+6. Check-in
+
+```
+
+http://localhost:3000/api/jornadas/check-out
+
+Patch- none
+
+
+``` 
+

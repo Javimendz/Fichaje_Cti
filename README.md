@@ -111,7 +111,7 @@ Body - Json:
 
 
 
-6. Check-in
+7. Check-out
 
 ```
 

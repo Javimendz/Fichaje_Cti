@@ -14,7 +14,7 @@ import {
   UpdateDateColumn 
 } from "typeorm";
 
-@Entity('allowed_users') // Nombre de tabla en snake_case por convención
+@Entity('allowed_users') // Nombre de tabla en snake_case 
 export class AllowedUser {
   @PrimaryGeneratedColumn('uuid')
   id: string;

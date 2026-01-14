@@ -33,16 +33,22 @@ export class UsersService {
   // ========================
   // CREAR WORKER (ADMIN)
   // ========================
-  async createWorker(dto: CreateWorkerDto, empresa: Empresa) {
-    const user = this.userRepository.create({
-      ...dto,
-      rol: UserRole.WORKER,
-      empresa: empresa,
-      isVerified: false,
-      isActive: true,
-    });
+ async createWorker(dto: CreateWorkerDto, empresa: Empresa) {
+  const { codigoOTP, ...userData } = dto;
 
-    return this.userRepository.save(user);
+  const expiraEn = new Date();
+  expiraEn.setMinutes(expiraEn.getMinutes() + 5); // Expira en 5 minutos
+  const user = this.userRepository.create({
+    ...userData, 
+    rol: UserRole.WORKER,
+    empresa,
+    codigoOTP,
+    codigoExpiraEn: expiraEn,
+    isVerified: false,
+    isActive: true,
+  });
+
+  return this.userRepository.save(user);
   }
 
   // ========================

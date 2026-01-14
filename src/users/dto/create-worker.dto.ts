@@ -78,4 +78,10 @@ export class CreateWorkerDto {
   @IsNotEmpty()
   @IsString()
   empresaId: string;
+
+   @IsNotEmpty()
+    codigoOTP?: { 
+      codigo: string;
+      expiracion: Date;
+    };
 }

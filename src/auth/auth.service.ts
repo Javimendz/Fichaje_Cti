@@ -70,49 +70,48 @@ async verifyCode(dto: VerifyCodeDto) {
     relations: ['empresa'],
   });
 
-  if (!user) throw new UnauthorizedException('Usuario no encontrado');
-
-  // --- EL TRUCO PARA REPARAR EL UNDEFINED ---
-  let otpData = user.codigoOTP;
-  
-  // Si TypeORM nos devuelve un string en lugar de un objeto, lo convertimos
-  if (typeof otpData === 'string') {
-    try {
-      otpData = JSON.parse(otpData);
-    } catch (e) {
-      console.error('Error parseando codigoOTP:', e);
-    }
+  if (!user) {
+    throw new UnauthorizedException('Usuario no encontrado');
   }
-  // ------------------------------------------
 
-  console.log('[VERIFY] Datos procesados:', otpData);
-
-  if (!otpData || !otpData.codigo) {
+  // 1️⃣ Verificar que exista OTP
+  if (!user.codigoOTP || !user.codigoExpiraEn) {
     throw new UnauthorizedException('No hay un código pendiente');
   }
 
-  // Comparamos usando la variable procesada 'otpData'
-  if (String(otpData.codigo).trim() !== String(codigo).trim()) {
-    console.error(`[VERIFY] Fallo: BD[${otpData.codigo}] vs Input[${codigo}]`);
+  // 2️⃣ Verificar expiración
+  if (user.codigoExpiraEn < new Date()) {
+    throw new UnauthorizedException('Código expirado');
+  }
+
+  // 3️⃣ Comparar códigos
+  if (String(user.codigoOTP).trim() !== String(codigo).trim()) {
     throw new UnauthorizedException('Código inválido');
   }
 
-  // Si pasa, limpiamos y guardamos
+  // 4️⃣ Marcar usuario como verificado y limpiar OTP
   user.isVerified = true;
   user.codigoOTP = null;
+  user.codigoExpiraEn = null;
+
   await this.userRepository.save(user);
-  
+
+  // 5 Marcar teléfono como usado (si aplica)
   await this.allowedPhonesService.markUsed(telefono);
 
-  const payload = { 
-    sub: user.id, 
-    telefono: user.telefono, 
-    rol: user.rol, 
-    empresaId: user.empresa?.id || null 
+  //  Generar JWT
+  const payload = {
+    sub: user.id,
+    telefono: user.telefono,
+    rol: user.rol,
+    empresaId: user.empresa?.id ?? null,
   };
 
-  return { access_token: this.jwtService.sign(payload) };
+  return {
+    access_token: this.jwtService.sign(payload),
+  };
 }
+
 
 
 

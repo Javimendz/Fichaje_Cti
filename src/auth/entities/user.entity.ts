@@ -29,7 +29,7 @@ codigoOTP: {
 } | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn?: Date;
+  codigoExpiraEn?: Date | null;
 
   @Column({ nullable: true })
   dni?: string;

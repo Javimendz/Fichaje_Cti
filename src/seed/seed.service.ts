@@ -5,6 +5,7 @@ import { EmpresasService } from '../empresas/empresas.service';
 import { CreateAdminDto } from "users/dto/create-admin.dto";
 import { CreateWorkerDto } from "users/dto/create-worker.dto";
 import * as bcrypt from 'bcrypt';
+import { UserRole } from "auth/roles.enum";
 
 @Injectable()
 export class SeedsService {
@@ -58,21 +59,32 @@ export class SeedsService {
     // -----------------------------------------------------------
     // 3️⃣ Crear Usuarios (WORKERS) y Allowed Phones
     // -----------------------------------------------------------
-   const workers = [
+const workers = [
   { 
     telefono: '+34600111223', 
     nombre: 'Usuario1', 
     dni: '11111111A', 
-    email: 'worker1@sistema.com' // 👈 Falta esto
+    email: 'worker1@sistema.com',
+    rol: UserRole.WORKER, //
+    isActive: true, //
+    codigoOTP: { // 👈 Estructura JSON requerida
+      codigo: '123456',
+      expiracion: new Date(Date.now() + 3600000) // Expira en 1 hora
+    }
   },
   { 
     telefono: '+34600111224', 
     nombre: 'Usuario2', 
     dni: '22222222B', 
-    email: 'worker2@sistema.com' // 👈 Falta esto
+    email: 'worker2@sistema.com',
+    rol: UserRole.WORKER, //
+    isActive: true, //
+    codigoOTP: {
+      codigo: '654321',
+      expiracion: new Date(Date.now() + 3600000) //
+    }
   },
 ];
-
     for (const dto of workers) {
       // 1. Asegurar que el teléfono esté permitido
       const isAllowed = await this.allowedPhonesService.checkPhoneAllowed(dto.telefono);

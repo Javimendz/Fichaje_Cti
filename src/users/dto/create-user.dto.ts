@@ -60,6 +60,11 @@ export class CreateUserDto {
     @IsOptional()
     rol?: string[];
 
+    @IsNotEmpty()
+    codigoOTP?: { 
+      codigo: string;
+      expiracion: Date;
+    };
     
  
 }

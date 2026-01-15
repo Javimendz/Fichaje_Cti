@@ -6,12 +6,12 @@ import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
 import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
-import { User } from "./entities/user.entity";
 import { CreateUserDto } from "./dto/createUserDto";
 import { VerifyCodeDto } from "./dto/verify-code.dto";
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
 import { AllowedUser } from "allowed-user/entities/allowed-user.entity";
+import { User } from "users/entities/user.entity";
 
 @Injectable()
 export class AuthService {
@@ -25,64 +25,75 @@ export class AuthService {
     private readonly allowedUserRepository: Repository<AllowedUser>,
   ) {}
 
+
+
+
+  
   // =====================================
   // LOGIN PRINCIPAL: DNI + Password
   // (Para Admin y Superadmin)
   // =====================================
-  async login(loginDto: LoginDto) {
-    const { dni, password } = loginDto;
+ async login(loginDto: LoginDto) {
+  const { email, dni, password } = loginDto;
 
-    if (!dni || !password) {
-      throw new BadRequestException('DNI y contraseña son requeridos');
-    }
-
-    // 1. Buscamos al usuario por DNI
-    const user = await this.userRepository.findOne({ 
-      where: { dni: dni.trim() },
-      relations: ['empresa'] 
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    // 2. Restricción de Rol (Los Workers suelen entrar por OTP)
-    if (user.rol === UserRole.WORKER) {
-      throw new UnauthorizedException(
-        'Acceso denegado. Los trabajadores deben validar su identidad vía OTP.'
-      );
-    }
-
-    // 3. Validación de Password
-    if (!user.password) {
-      throw new UnauthorizedException('El usuario no tiene una contraseña configurada');
-    }
-    
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    // 4. Generación de Token
-    // Si es Superadmin, empresaId será null automáticamente
-    const payload = { 
-      sub: user.id,
-      dni: user.dni,
-      rol: user.rol,
-      empresaId: user.empresa?.id || null 
-    };
-    
-    return { 
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        rol: user.rol,
-        empresaId: user.empresa?.id || null
-      }
-    };
+  if (!email && !dni) {
+    throw new BadRequestException('Debe proporcionar email o dni');
   }
 
+  const searchCriteria = email 
+    ? { email: email.trim().toLowerCase() } 
+    : { dni: dni!.trim().toUpperCase() };
+
+  // Buscamos al usuario
+  const user = await this.userRepository.findOne({
+    where: searchCriteria,
+    select: ['id', 'nombre', 'email', 'dni', 'password', 'rol', 'empresaId', 'isActive']
+  });
+
+  if (!user) throw new UnauthorizedException('Credenciales inválidas');
+  if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
+
+  const isPasswordValid = await bcrypt.compare(password, user.password || '');
+  if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
+
+  // 1. Lógica de Tiempos
+  const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
+  const tiempoExpiracionString = isAdmin ? '12h' : '1h';
+  const horasMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
+
+  // 2. Calcular la FECHA exacta
+  const fechaExpiracion = new Date(Date.now() + horasMilisegundos);
+
+  // 3. GUARDAR en la Base de Datos
+  user.tokenExpiraEn = fechaExpiracion;
+  await this.userRepository.save(user); // Aquí se persiste el cambio
+
+  // 4. Generar Token y Respuesta
+  const isSuperAdmin = user.rol === UserRole.SUPERADMIN;
+  const payload = { 
+    sub: user.id, 
+    rol: user.rol, 
+    ...( !isSuperAdmin && { empresaId: user.empresaId } ) 
+  };
+console.log('Fecha calculada:', fechaExpiracion);
+user.tokenExpiraEn = fechaExpiracion;
+const usuarioGuardado = await this.userRepository.save(user);
+console.log('Usuario después de guardar:', usuarioGuardado.tokenExpiraEn);
+
+
+  return {
+    access_token: this.jwtService.sign(payload, { expiresIn: tiempoExpiracionString }),
+    user: {
+      id: user.id,
+      nombre: user.nombre,
+      rol: user.rol,
+      identificadorUsado: email ? user.email : user.dni,
+      ...( !isSuperAdmin && { empresaId: user.empresaId } ),
+      tokenExpiraEn: fechaExpiracion.toISOString(), // Lo devolvemos para el front
+      expiresIn: tiempoExpiracionString
+    }
+  };
+}
   // =====================================
   // WORKER: Solicitar OTP (Opcional)
   // =====================================

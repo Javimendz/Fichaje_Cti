@@ -1,3 +1,4 @@
+// src/allowed-user/entities/allowed-user.entity.ts
 import { Ausencia } from "ausencia/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
 import { Empresa } from "empresas/entities/empresa.entity";
@@ -14,76 +15,82 @@ import {
   UpdateDateColumn 
 } from "typeorm";
 
-@Entity('allowed_users') // Nombre de tabla en snake_case 
+@Entity('allowed_users')
 export class AllowedUser {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   // ============================================
-  // IDENTIFICACIÓN (El teléfono es la clave de acceso)
+  // IDENTIFICACIÓN
   // ============================================
   @Column({ type: 'text', unique: true, nullable: false })
   telefono: string;
 
   @Column({ type: 'varchar', unique: true, nullable: true })
-  dni?: string | null;
+  dni?: string; // Sin "| null" para evitar error TS2769
 
   @Column({ type: 'text', nullable: true })
-  email?: string | null;
+  email?: string;
 
   // ============================================
-  // DATOS PERSONALES (Rellenados por Admin)
+  // DATOS PERSONALES
   // ============================================
   @Column({ type: 'text', nullable: true })
-  nombre?: string | null;
+  nombre: string;
 
   @Column({ type: 'text', nullable: true })
-  apellidos?: string | null;
+  apellidos?: string;
 
   @Column({ type: 'date', nullable: true })
-  fechaNacimiento?: Date | null;
+  fechaNacimiento?: Date;
 
   // ============================================
   // DIRECCIÓN
   // ============================================
   @Column({ type: 'text', nullable: true })
-  calle?: string | null;
+  calle?: string;
 
   @Column({ type: 'text', nullable: true })
-  poblacion?: string | null;
+  poblacion?: string;
 
   @Column({ type: 'text', nullable: true })
-  provincia?: string | null;
+  provincia?: string;
 
   @Column({ type: 'text', nullable: true })
-  pais?: string | null;
+  pais?: string;
 
   // ============================================
-  // DATOS LABORALES (Pre-configurados)
+  // DATOS LABORALES
   // ============================================
   @Column({ type: 'text', nullable: true })
-  categoria?: string | null;
+  categoria?: string;
 
   @Column({ type: 'text', nullable: true })
-  actividad?: string | null;
+  actividad?: string;
 
   @Column({ type: 'int', nullable: true })
-  diaPertenece?: number | null;
+  diaPertenece?: number;
+
+@CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
   // ============================================
   // ESTADO DE ACTIVACIÓN
   // ============================================
   @Column({ type: 'text', nullable: true })
-  codigoOTP?: string | null;
+  codigoOTP?: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn?: Date | null;
+  codigoExpiraEn?: Date;
 
   @Column({ type: 'bool', default: false })
-  isVerified: boolean; // Indica si el trabajador ya validó su móvil
+  isVerified: boolean;
 
   @Column({ type: 'bool', default: true })
-  isActive: boolean; // El admin puede darlo de baja antes de que empiece
+  isActive: boolean;
 
   @Column({
     type: 'enum',
@@ -96,7 +103,7 @@ export class AllowedUser {
   // RELACIONES
   // ============================================
 
-  @Column({ nullable: false }) // Obligatorio para que pertenezca a una empresa
+  @Column({ nullable: false })
   empresaId: string;
 
   @ManyToOne(() => Empresa, { onDelete: 'CASCADE' })
@@ -104,23 +111,17 @@ export class AllowedUser {
   empresa: Empresa;
 
   @Column({ nullable: true, name: 'horario_id' })
-  horarioId?: string | null;
+  horarioId?: string;
 
   @ManyToOne(() => Horario, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
-  horario?: Horario | null;
+  horario?: Horario;
 
-  // Nota: Estas relaciones solo funcionarán si estas tablas apuntan a 'allowed_users' 
-  // o si decides que esta es tu tabla de usuarios definitiva.
   @OneToMany(() => Jornada, (jornada) => jornada.usuario)
   jornadas: Jornada[];
 
   @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
   ausencias: Ausencia[];
 
-  @CreateDateColumn()
-  createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

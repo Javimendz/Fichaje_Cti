@@ -1,140 +1,80 @@
-import { 
-  Column, 
-  Entity, 
-  JoinColumn, 
-  ManyToOne, 
-  OneToMany, 
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn 
-} from "typeorm";
+// src/auth/entities/user.entity.ts
+import { Ausencia } from 'ausencia/entities/ausencia.entity';
+import { UserRole } from 'auth/roles.enum';
+import { Empresa } from 'empresas/entities/empresa.entity';
+import { Jornada } from 'jornada/entities/jornada.entity';
+import { Horario } from 'schedules/entities/horario.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-import { Ausencia } from "ausencia/entities/ausencia.entity";
-import { UserRole } from "auth/roles.enum";
-import { Empresa } from "empresas/entities/empresa.entity";
-import { Jornada } from "jornada/entities/jornada.entity";
-import { Horario } from "schedules/entities/horario.entity";
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // ============================================
-  // CONTACTO (OBLIGATORIOS)
-  // ============================================
-  @Column('text', { unique: true, nullable: false })
-  telefono: string;
 
-  @Column({ type: 'varchar', unique: true, nullable: true })
+  @Column({ type: 'text', unique: true, nullable: true })
+email: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  nombre: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  apellidos: string | null;
+
+  @Column({ type: 'text', unique: true, nullable: true })
   dni: string | null;
 
-  @Column('text', { nullable: true })
-  email?: string | null;
+  @Column({ type: 'text', unique: true })
+  telefono: string;
 
-  // ============================================
-  // DATOS PERSONALES
-  // ============================================
-  @Column({ type: 'text', nullable: true })
-  nombre?: string | null;
+  @Column({ type: 'text', nullable: true, select: false }) // Importante para auth.service
+  password: string | null;
 
-  @Column('text', { nullable: true })
-  apellidos?: string | null;
-
-  @Column('date', { nullable: true })
-  fechaNacimiento?: Date | null;
-
-  // ============================================
-  // DIRECCIÓN
-  // ============================================
-  @Column('text', { nullable: true })
-  calle?: string | null;
-
-  @Column('text', { nullable: true })
-  poblacion?: string | null;
-
-  @Column('text', { nullable: true })
-  provincia?: string | null;
-
-  @Column('text', { nullable: true })
-  pais?: string | null;
-
-  // ============================================
-  // DATOS LABORALES
-  // ============================================
-  @Column('text', { nullable: true })
-  categoria?: string | null;
-
-  @Column('text', { nullable: true })
-  actividad?: string | null;
-
-  @Column('int', { nullable: true })
-  diaPertenece?: number | null;
-
-  // ============================================
-  // AUTENTICACIÓN
-  // ============================================
-  @Column({ type: 'text', nullable: true, select: false })
-  password?: string | null; 
-
-  @Column({ type: 'text', nullable: true })
-  codigoOTP?: string | null; 
-
-  @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn?: Date | null;
-
-  @Column('bool', { default: false })
-  isVerified: boolean;
-
-  @Column('bool', { default: true })
-  isActive: boolean;
-
-  // ============================================
-  // ROL Y PERMISOS
-  // ============================================
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.WORKER
-  })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER })
   rol: UserRole;
 
-  // ============================================
-  // RELACIONES (CORREGIDAS)
-  // ============================================
+  @Column({ type: 'boolean', default: false })
+  isVerified: boolean;
 
-  // Relación con Empresa
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
+  @Column({ type: 'jsonb', nullable: true })
+  codigoOTP: { codigo: string; expiracion: Date } | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  codigoExpiraEn: Date | null;
+
+ @Column({ 
+  name: 'token_expira_en', // Nombre exacto en la tabla SQL
+  type: 'timestamp', 
+  nullable: true 
+})
+tokenExpiraEn: Date | null;
+
   @Column('uuid', { name: 'empresa_id', nullable: true })
-  empresa_id: string | null;
+  empresaId: string | null;
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
-    nullable: true, 
-    onDelete: 'SET NULL' 
-  })
-  @JoinColumn({ name: 'empresa_id' }) 
-  empresa?: Empresa | null;
-
-  // Relación con Horario
-  @Column('uuid', { name: 'horario_id', nullable: true })
-  horarioId?: string | null;
+  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'empresa_id' })
+  empresa: Empresa | null;
 
   @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
-  horario?: Horario | null;
+  horario: Horario | null;
 
-  // Relaciones Inversas
-  @OneToMany(() => Jornada, (jornada) => jornada.usuario)
+  @OneToMany(() => Jornada, (j) => j.usuario)
   jornadas: Jornada[];
 
-  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
+  @OneToMany(() => Ausencia, (a) => a.usuario)
   ausencias: Ausencia[];
 
-  // ============================================
-  // METADATA
-  // ============================================
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn()
   createdAt: Date;
+  
+   
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

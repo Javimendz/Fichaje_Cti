@@ -58,13 +58,37 @@ http://localhost:3000/api/seeds/run
 ``` 
 http://localhost:3000/api/auth/login
 
+Worker
+
 Post
 
 {
-    "telefono": "Telefono necesario", 
+    "dni": "22222222W", 
+    "password": "worker_password"
+
+}
+
+Admin
+
+Post
+
+{
+    "Email": "admin@empresa.com", 
     "password": "admin_password"
 
 }
+
+
+SuperAdmin
+
+Post
+
+{
+    "Email": "superadmin@cti.com", 
+    "password": "superpassword"
+
+}
+
 
 ```
 

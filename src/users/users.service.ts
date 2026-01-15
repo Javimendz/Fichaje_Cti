@@ -1,7 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { User } from "auth/entities/user.entity";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { CreateAdminDto } from "./dto/create-admin.dto";
 import { UserRole } from "auth/roles.enum";
@@ -9,6 +8,7 @@ import { Empresa } from "empresas/entities/empresa.entity";
 import { CreateWorkerDto } from "./dto/create-worker.dto";
 // ✅ Importamos el Payload en lugar de la Entidad para el usuario que ejecuta la acción
 import type { UserPayload } from "auth/interfaces/user-payload.interface"; 
+import { User } from "./entities/user.entity";
 
 @Injectable()
 export class UsersService {

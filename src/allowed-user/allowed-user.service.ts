@@ -3,10 +3,9 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AllowedUser } from './entities/allowed-user.entity';
-import { CreateAllowedUserDto } from './dto/create-allowed-user.dto'; // 👈 Importa este
+import { CreateAllowedUserDto } from './dto/create-allowed-user.dto';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
-
 
 @Injectable()
 export class AllowedUserService {
@@ -15,59 +14,72 @@ export class AllowedUserService {
     private readonly allowedUserRepository: Repository<AllowedUser>,
   ) {}
 
-  // Cambia el tipo del primer parámetro a 'CreateAllowedUserDto'
-  async create(dto: CreateAllowedUserDto, admin: User) {
-    
-    // Verificación de duplicados
-    const existing = await this.allowedUserRepository.findOne({ 
-      where: { telefono: dto.telefono } 
-    });
-    
-    if (existing) throw new BadRequestException('Este teléfono ya está registrado');
-
-    // Mapeo manual para asegurar que no falte nada
-    const newUser = this.allowedUserRepository.create({
-      ...dto, // Aquí entran nombre, apellidos, dni, email, etc.
-      empresaId: admin.empresaId, // Se asigna desde el admin logueado
-      rol: UserRole.WORKER,
-      isVerified: false,
-      isActive: true,
-    } as any); // Usamos 'as any' para evitar conflictos estrictos con DeepPartial
-
-    return await this.allowedUserRepository.save(newUser);
+ 
+async create(dto: CreateAllowedUserDto, admin: User) {
+  
+  // 1. Verificación previa de seguridad
+  if (!dto.dni || !dto.telefono) {
+    throw new BadRequestException('DNI y Teléfono son obligatorios');
   }
 
-  // Método para el GET del controlador
+  // 2. Mapeo con limpieza de nulos
+  // Usamos 'as any' temporalmente para que TS deje de buscar overloads de Array
+  const newAllowedUser = this.allowedUserRepository.create({
+    telefono: dto.telefono.trim(),
+    dni: dto.dni.toUpperCase().trim(),
+    nombre: dto.nombre ?? undefined,
+    email: dto.email ? dto.email.toLowerCase().trim() : undefined,
+    empresaId: admin.empresaId,
+    rol: UserRole.WORKER,
+    isVerified: false,
+    isActive: true,
+    // Agrega aquí cualquier otro campo del DTO asegurando que no sea null
+    apellidos: (dto as any).apellidos ?? undefined,
+  } as any); 
+
+  return await this.allowedUserRepository.save(newAllowedUser);
+}
+
+  // Listar solo los permitidos de la empresa del Admin logueado
   async findAllByEmpresa(empresaId: string) {
+    if (!empresaId) return []; // Los SuperAdmin podrían no tener empresaId
+    
     return await this.allowedUserRepository.find({
       where: { empresaId },
       order: { createdAt: 'DESC' }
     });
   }
   
-  // Ajusta también findOne, update y remove para recibir string (UUID)
   async findOne(id: string): Promise<AllowedUser> {
     const user = await this.allowedUserRepository.findOneBy({ id });
     
-    // Validamos: Si no existe, lanzamos error y cortamos la ejecución
     if (!user) {
-      throw new NotFoundException(`El usuario con ID ${id} no existe`);
+      throw new NotFoundException(`El registro con ID ${id} no existe`);
     }
     
     return user;
   }
 
   async update(id: string, updateDto: any) {
+    // Si se actualiza el email o dni, normalizarlos
+    if (updateDto.email) updateDto.email = updateDto.email.toLowerCase().trim();
+    if (updateDto.dni) updateDto.dni = updateDto.dni.toUpperCase().trim();
+
     await this.allowedUserRepository.update(id, updateDto);
     return this.findOne(id);
   }
 
- async remove(id: string) {
-    // 1. Usamos findOne que ya tiene la lógica de validación
+  async remove(id: string) {
     const user = await this.findOne(id);
-    
-    // 2. Aquí TypeScript ya sabe que 'user' es de tipo AllowedUser (no null)
     return await this.allowedUserRepository.remove(user);
   }
+
+async findAll() {
+  return await this.allowedUserRepository.find({
+    order: { createdAt: 'DESC' }
+  });
+}
+
+
 
 }

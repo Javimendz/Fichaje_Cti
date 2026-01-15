@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Ausencia, AusenciaEstado } from './entities/ausencia.entity';
 import { CreateAusenciaDto } from './dto/create-ausencia.dto';
-import { User } from 'auth/entities/user.entity';
+
 import { UserRole } from 'auth/roles.enum';
 import { UpdateAusenciaDto } from './dto/update-ausencia.dto';
+import { User } from 'auth/entities/user.entity';
 
 @Injectable()
 export class AusenciasService {

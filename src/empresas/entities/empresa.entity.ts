@@ -28,9 +28,9 @@ export class Empresa {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;          
     
-@OneToMany(() => User, (u) => u.empresa)
+@OneToMany(() => User, (user) => user.empresa) // Ahora 'user' será reconocido
   usuarios: User[];
-
+  
   @OneToMany(() => Horario, (h) => h.empresa)
   horarios: Horario[];
 

@@ -34,7 +34,7 @@ import { AllowedUserModule } from './allowed-user/allowed-user.module';
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: false,
         extra: {
            timezone: 'UTC', // Esto asegura que el driver use UTC
         },

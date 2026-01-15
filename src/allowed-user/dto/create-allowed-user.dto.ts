@@ -23,11 +23,11 @@ export class CreateAllowedUserDto {
 
   @IsString()
   @IsOptional()
-  dni?: string;
+  dni: string;
 
   @IsEmail({}, { message: 'El formato del email no es válido' })
   @IsOptional()
-  email?: string;
+  email: string;
 
   // ============================================
   // DATOS PERSONALES

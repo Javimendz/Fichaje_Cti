@@ -10,6 +10,13 @@ export class  User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+
+ @Column({ type: 'text', nullable: true })
+  nombre?: string | null;
+
+  @Column('text', { nullable: true })
+  apellidos?: string | null;
+
 @Column({ length: 20, nullable: true })
 telefono?: string;
 

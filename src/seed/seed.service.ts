@@ -1,125 +1,129 @@
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
-import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
-import { UsersService } from "users/users.service";
-import { EmpresasService } from '../empresas/empresas.service';
-import { CreateAdminDto } from "users/dto/create-admin.dto";
-import { CreateWorkerDto } from "users/dto/create-worker.dto";
+
+  import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { DeepPartial, Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
+
+import { User } from "auth/entities/user.entity";
+import { Empresa } from "empresas/entities/empresa.entity";
 import { UserRole } from "auth/roles.enum";
+import { EmpresasService } from '../empresas/empresas.service';
+import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
 @Injectable()
 export class SeedsService {
   private readonly logger = new Logger(SeedsService.name);
 
   constructor(
-    private readonly usersService: UsersService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly empresasService: EmpresasService,
     private readonly allowedPhonesService: AllowedPhonesService,
   ) {}
 
   async runSeed() {
-    
-    try {
+  try {
+    this.logger.log('Iniciando ejecución de Seed...');
 
-      
-      this.logger.log('Iniciando ejecución de Seed...');
-
-    // -----------------------------------------------------------
-    // 1️⃣ Crear Empresa Inicial (Necesaria para los usuarios)
-    // -----------------------------------------------------------
+    // 1️⃣ EMPRESA (Ancla para los usuarios)
     let empresaBase = await this.empresasService.findByName('Empresa Demo');
     if (!empresaBase) {
       empresaBase = await this.empresasService.create({ nombre: 'Empresa Demo' });
-      this.logger.log('Empresa Demo creada.');
     }
 
-    // -----------------------------------------------------------
-    // 2️⃣ Crear Admin Inicial (SUPERADMIN)
-    // -----------------------------------------------------------
+
+const superAdminPhone = '+34600999999';
+let superAdmin = await this.userRepository.findOneBy({ telefono: superAdminPhone });
+
+if (!superAdmin) {
+  const superAdminData: DeepPartial<User> = {
+    telefono: superAdminPhone,
+    nombre: 'Super Usuario',
+    password: await bcrypt.hash('superpassword', 10),
+    rol: UserRole.SUPERADMIN,
+    empresa: null as any, 
+    isVerified: true,
+  };
+
+  // Crea la instancia con los datos y guárdala
+  const newSuperAdmin = this.userRepository.create(superAdminData);
+  await this.userRepository.save(newSuperAdmin);
+  
+  this.logger.log('Superadmin creado sin empresa vinculada.');
+}
+
+    // 2️⃣ ADMINISTRADOR
     const adminPhone = '+34600111222';
-    // Usamos el método que ya tienes en UsersService que filtra por empresa/rol
-    const allUsers = await this.usersService.findAllRaw(); // Método auxiliar para obtener todos sin filtros
-    const adminExists = allUsers.some(u => u.telefono === adminPhone);
-    const hashedPassword = await bcrypt.hash('admin_password', 10);
-    if (!adminExists) {
-      const adminDto: CreateAdminDto = {
+    let admin = await this.userRepository.findOneBy({ telefono: adminPhone });
+    if (!admin) {
+      admin = this.userRepository.create({
         telefono: adminPhone,
-        nombre: 'Admin',
-        apellidos: 'Principal',
-        dni: '00000000A',
-        email: "admin@sistema.com",
-        password: hashedPassword, // Si usas password para admins
-        empresaId: empresaBase.id
-      };
-
-      await this.usersService.createAdmin(adminDto, empresaBase);
-      this.logger.log('Admin Inicial creado.');
+        nombre: 'Admin Demo',
+        password: await bcrypt.hash('admin_password', 10),
+        rol: UserRole.ADMIN,
+        empresa: empresaBase,
+        isVerified: true,
+      });
+      await this.userRepository.save(admin);
     }
 
-    // -----------------------------------------------------------
-    // 3️⃣ Crear Usuarios (WORKERS) y Allowed Phones
-    // -----------------------------------------------------------
-const workers = [
-  { 
-    telefono: '+34600111223', 
-    nombre: 'Usuario1', 
-    dni: '11111111A', 
-    email: 'worker1@sistema.com',
-    rol: UserRole.WORKER, //
-    isActive: true, //
-    codigoOTP: { 
-      codigo: '123456',
-      expiracion: new Date(Date.now() + 3600000) // Expira en 1 hora
-    }
+   // 3️⃣ TRABAJADOR CON OTP GENERADO
+const workerPhone = '+34600111223';
+const otpGenerado = Math.floor(100000 + Math.random() * 900000).toString();
+const expiracion = new Date(Date.now() + 60 * 60 * 1000);
+
+// Objeto único de la verdad para el OTP
+const payloadOTP = {
+  codigoOTP: {
+    codigo: otpGenerado,
+    expiracion: expiracion,
   },
-  { 
-    telefono: '+34600111224', 
-    nombre: 'Usuario2', 
-    dni: '22222222B', 
-    email: 'worker2@sistema.com',
-    rol: UserRole.WORKER, //
-    isActive: true, //
-    codigoOTP: {
-      codigo: '654321',
-      expiracion: new Date(Date.now() + 3600000) //
-    }
-  },
-];
-    for (const dto of workers) {
-      // 1. Asegurar que el teléfono esté permitido
-      const isAllowed = await this.allowedPhonesService.checkPhoneAllowed(dto.telefono);
-      if (!isAllowed) {
-        await this.allowedPhonesService.addPhone(dto.telefono);
-      }
+  codigoExpiraEn: expiracion,
+};
 
-      // 2. Crear el trabajador vinculado a la empresa base
-      const exists = allUsers.some(u => u.telefono === dto.telefono);
-      if (!exists) {
-        const workerDto: CreateWorkerDto = {
-          ...dto,
-          apellidos: 'Demo',
-          empresaId: empresaBase.id
-        };
-        await this.usersService.createWorker(workerDto, empresaBase);
-        this.logger.log(`Trabajador ${dto.nombre} creado.`);
-      }
-    }
+// 1. Asegurar permiso
+if (!(await this.allowedPhonesService.checkPhoneAllowed(workerPhone))) {
+  await this.allowedPhonesService.addPhone(workerPhone);
+}
 
-    return { message: 'Seed completado con éxito' };
+// 2. Buscar o Crear
+let worker = await this.userRepository.findOneBy({ telefono: workerPhone });
 
+if (!worker) {
+  worker = this.userRepository.create({
+    telefono: workerPhone,
+    nombre: 'Trabajador Dinámico',
+    rol: UserRole.WORKER,
+    empresa: empresaBase,
+    isVerified: false,
+    ...payloadOTP // Asignamos aquí
+  });
+} else {
+  // Si ya existe, actualizamos solo lo necesario
+  worker.nombre = 'Trabajador Dinámico';
+  worker.empresa = empresaBase;
+  worker.codigoOTP = payloadOTP.codigoOTP;
+  worker.codigoExpiraEn = payloadOTP.codigoExpiraEn;
+}
 
-
-    } catch (error) {
-      this.logger.error('Error en el Seed:', error.detail || error.message);
+// 3. Guardado único
+await this.userRepository.save(worker);
     
-    // Lanzamos una excepción que NestJS sepa formatear para Postman
-    throw new InternalServerErrorException({
-      message: 'Error al ejecutar el Seed',
-      error: error.message,
-      detail: error.detail, // Aquí verás qué campo está duplicado
-    });
-    }
+    // Imprimimos el código en la consola para que sepas cuál usar en Postman
+    this.logger.log('----------------------------------------------------');
+    this.logger.log(`SEED COMPLETO`);
+    this.logger.log(`Admin Tel: ${adminPhone} / Pass: admin123`);
+    this.logger.log(`Worker Tel: ${workerPhone} / OTP GENERADO: ${otpGenerado}`);
+    this.logger.log('----------------------------------------------------');
 
+    return { 
+      message: 'Seed ejecutado', 
+      workerOtp: otpGenerado // Lo devolvemos también en la respuesta de la petición
+    };
 
+  } catch (error) {
+    this.logger.error('Error en el Seed:', error.message);
+    throw new InternalServerErrorException('Fallo al ejecutar el Seed');
   }
+}
 }

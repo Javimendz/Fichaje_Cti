@@ -106,9 +106,13 @@ export class User {
   @Column({ nullable: true })
   empresaId: string | null;
 
-  @ManyToOne(() => Empresa, (e) => e.usuarios, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'empresaId' }) // Vincula la relación a la columna empresaId
-  empresa: Empresa;
+ 
+@ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
+    nullable: true,   // Permite que la base de datos acepte NULL
+    onDelete: 'SET NULL' // Si la empresa se borra, el usuario queda con empresa null
+  })
+  @JoinColumn({ name: 'empresa_id' }) // Nombre de la columna en la DB
+  empresa?: Empresa | null; // El tipo debe aceptar null
 
   @Column({ nullable: true, name: 'horario_id' })
   horarioId?: string | null;

@@ -9,6 +9,7 @@
 2. ``` yarn install ```
 3. Clonar el archivo ``` .env.template ``` y renombrarlo a ``` .env ```
 4. Cambiar las variables de entorno
+4. Instalar cors ``` yarn add cors ```
 5. Levantar la base de datos.
 ```
   docker-compose up -d

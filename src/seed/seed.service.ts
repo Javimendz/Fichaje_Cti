@@ -1,5 +1,4 @@
-
-  import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DeepPartial, Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
@@ -22,108 +21,99 @@ export class SeedsService {
   ) {}
 
   async runSeed() {
-  try {
-    this.logger.log('Iniciando ejecución de Seed...');
+    try {
+      this.logger.log('Iniciando ejecución de Seed...');
 
-    // 1️⃣ EMPRESA (Ancla para los usuarios)
-    let empresaBase = await this.empresasService.findByName('Empresa Demo');
-    if (!empresaBase) {
-      empresaBase = await this.empresasService.create({ nombre: 'Empresa Demo' });
+      // 1️⃣ EMPRESA BASE
+      let empresaBase = await this.empresasService.findByName('Empresa Demo');
+      if (!empresaBase) {
+        empresaBase = await this.empresasService.create({ nombre: 'Empresa Demo' });
+      }
+
+      // 2️⃣ SUPERADMIN (Sin empresa vinculada)
+      const superAdminDni = '00000000S';
+      let superAdmin = await this.userRepository.findOneBy({ dni: superAdminDni });
+
+      if (!superAdmin) {
+        const superAdminData: DeepPartial<User> = {
+          dni: superAdminDni,
+          telefono: '+34600999999',
+          nombre: 'Super Usuario Global',
+          password: await bcrypt.hash('superpassword', 10),
+          rol: UserRole.SUPERADMIN,
+          empresa: null as any, // Importante: null para acceso total
+          isVerified: true,
+        };
+        const newSuperAdmin = this.userRepository.create(superAdminData);
+        await this.userRepository.save(newSuperAdmin);
+        this.logger.log('Superadmin creado.');
+      }
+
+      // 3️⃣ ADMINISTRADOR DE EMPRESA
+      const adminDni = '11111111A';
+      let admin = await this.userRepository.findOneBy({ dni: adminDni });
+
+      if (!admin) {
+        const adminData: DeepPartial<User> = {
+          dni: adminDni,
+          telefono: '+34600111222',
+          nombre: 'Admin Empresa Demo',
+          password: await bcrypt.hash('admin_password', 10),
+          rol: UserRole.ADMIN,
+          empresa: empresaBase,
+          isVerified: true,
+        };
+        const newAdmin = this.userRepository.create(adminData);
+        await this.userRepository.save(newAdmin);
+        this.logger.log('Administrador de empresa creado.');
+      }
+
+      // 4️⃣ TRABAJADOR (Preparado para OTP)
+      const workerDni = '22222222W';
+      const workerPhone = '+34600111223';
+      const otpGenerado = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiracion = new Date(Date.now() + 60 * 60 * 1000);
+
+      // Asegurar permiso en lista blanca
+      if (!(await this.allowedPhonesService.checkPhoneAllowed(workerPhone))) {
+        await this.allowedPhonesService.addPhone(workerPhone);
+      }
+
+      let worker = await this.userRepository.findOneBy({ dni: workerDni });
+
+      const payloadOTP = {
+        codigoOTP: { codigo: otpGenerado, expiracion: expiracion },
+        codigoExpiraEn: expiracion,
+      };
+
+      if (!worker) {
+        worker = this.userRepository.create({
+          dni: workerDni,
+          telefono: workerPhone,
+          nombre: 'Trabajador Demo',
+          rol: UserRole.WORKER,
+          empresa: empresaBase,
+          isVerified: false,
+          ...payloadOTP,
+        });
+      } else {
+        Object.assign(worker, payloadOTP);
+      }
+
+      await this.userRepository.save(worker);
+      
+      this.logger.log('----------------------------------------------------');
+      this.logger.log('SEED EJECUTADO EXITOSAMENTE');
+      this.logger.log(`SUPERADMIN -> DNI: ${superAdminDni} | Pass: superpassword`);
+      this.logger.log(`ADMIN      -> DNI: ${adminDni} | Pass: admin_password`);
+      this.logger.log(`WORKER     -> DNI: ${workerDni} | OTP: ${otpGenerado}`);
+      this.logger.log('----------------------------------------------------');
+
+      return { message: 'Seed completado con éxito' };
+
+    } catch (error) {
+      this.logger.error('Error en el Seed:', error.message);
+      throw new InternalServerErrorException('Fallo al ejecutar el Seed');
     }
-
-
-const superAdminPhone = '+34600999999';
-let superAdmin = await this.userRepository.findOneBy({ telefono: superAdminPhone });
-
-if (!superAdmin) {
-  const superAdminData: DeepPartial<User> = {
-    telefono: superAdminPhone,
-    nombre: 'Super Usuario',
-    password: await bcrypt.hash('superpassword', 10),
-    rol: UserRole.SUPERADMIN,
-    empresa: null as any, 
-    isVerified: true,
-  };
-
-  // Crea la instancia con los datos y guárdala
-  const newSuperAdmin = this.userRepository.create(superAdminData);
-  await this.userRepository.save(newSuperAdmin);
-  
-  this.logger.log('Superadmin creado sin empresa vinculada.');
-}
-
-    // 2️⃣ ADMINISTRADOR
-    const adminPhone = '+34600111222';
-    let admin = await this.userRepository.findOneBy({ telefono: adminPhone });
-    if (!admin) {
-      admin = this.userRepository.create({
-        telefono: adminPhone,
-        nombre: 'Admin Demo',
-        password: await bcrypt.hash('admin_password', 10),
-        rol: UserRole.ADMIN,
-        empresa: empresaBase,
-        isVerified: true,
-      });
-      await this.userRepository.save(admin);
-    }
-
-   // 3️⃣ TRABAJADOR CON OTP GENERADO
-const workerPhone = '+34600111223';
-const otpGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-const expiracion = new Date(Date.now() + 60 * 60 * 1000);
-
-// Objeto único de la verdad para el OTP
-const payloadOTP = {
-  codigoOTP: {
-    codigo: otpGenerado,
-    expiracion: expiracion,
-  },
-  codigoExpiraEn: expiracion,
-};
-
-// 1. Asegurar permiso
-if (!(await this.allowedPhonesService.checkPhoneAllowed(workerPhone))) {
-  await this.allowedPhonesService.addPhone(workerPhone);
-}
-
-// 2. Buscar o Crear
-let worker = await this.userRepository.findOneBy({ telefono: workerPhone });
-
-if (!worker) {
-  worker = this.userRepository.create({
-    telefono: workerPhone,
-    nombre: 'Trabajador Dinámico',
-    rol: UserRole.WORKER,
-    empresa: empresaBase,
-    isVerified: false,
-    ...payloadOTP // Asignamos aquí
-  });
-} else {
-  // Si ya existe, actualizamos solo lo necesario
-  worker.nombre = 'Trabajador Dinámico';
-  worker.empresa = empresaBase;
-  worker.codigoOTP = payloadOTP.codigoOTP;
-  worker.codigoExpiraEn = payloadOTP.codigoExpiraEn;
-}
-
-// 3. Guardado único
-await this.userRepository.save(worker);
-    
-    // Imprimimos el código en la consola para que sepas cuál usar en Postman
-    this.logger.log('----------------------------------------------------');
-    this.logger.log(`SEED COMPLETO`);
-    this.logger.log(`Admin Tel: ${adminPhone} / Pass: admin123`);
-    this.logger.log(`Worker Tel: ${workerPhone} / OTP GENERADO: ${otpGenerado}`);
-    this.logger.log('----------------------------------------------------');
-
-    return { 
-      message: 'Seed ejecutado', 
-      workerOtp: otpGenerado // Lo devolvemos también en la respuesta de la petición
-    };
-
-  } catch (error) {
-    this.logger.error('Error en el Seed:', error.message);
-    throw new InternalServerErrorException('Fallo al ejecutar el Seed');
   }
-}
 }

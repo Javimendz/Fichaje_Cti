@@ -1,8 +1,3 @@
-import { Ausencia } from "ausencia/entities/ausencia.entity";
-import { UserRole } from "auth/roles.enum";
-import { Empresa } from "empresas/entities/empresa.entity";
-import { Jornada } from "jornada/entities/jornada.entity";
-import { Horario } from "schedules/entities/horario.entity";
 import { 
   Column, 
   Entity, 
@@ -13,6 +8,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn 
 } from "typeorm";
+
+import { Ausencia } from "ausencia/entities/ausencia.entity";
+import { UserRole } from "auth/roles.enum";
+import { Empresa } from "empresas/entities/empresa.entity";
+import { Jornada } from "jornada/entities/jornada.entity";
+import { Horario } from "schedules/entities/horario.entity";
 
 @Entity('users')
 export class User {
@@ -25,8 +26,8 @@ export class User {
   @Column('text', { unique: true, nullable: false })
   telefono: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  dni?: string | null;
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  dni: string | null;
 
   @Column('text', { nullable: true })
   email?: string | null;
@@ -99,28 +100,29 @@ export class User {
   rol: UserRole;
 
   // ============================================
-  // RELACIONES
+  // RELACIONES (CORREGIDAS)
   // ============================================
 
-  // 1. Añadimos la columna física para evitar el error de "Overload"
-  @Column({ nullable: true })
-  empresaId: string | null;
+  // Relación con Empresa
+  @Column('uuid', { name: 'empresa_id', nullable: true })
+  empresa_id: string | null;
 
- 
-@ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
-    nullable: true,   // Permite que la base de datos acepte NULL
-    onDelete: 'SET NULL' // Si la empresa se borra, el usuario queda con empresa null
+  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
+    nullable: true, 
+    onDelete: 'SET NULL' 
   })
-  @JoinColumn({ name: 'empresa_id' }) // Nombre de la columna en la DB
-  empresa?: Empresa | null; // El tipo debe aceptar null
+  @JoinColumn({ name: 'empresa_id' }) 
+  empresa?: Empresa | null;
 
-  @Column({ nullable: true, name: 'horario_id' })
+  // Relación con Horario
+  @Column('uuid', { name: 'horario_id', nullable: true })
   horarioId?: string | null;
 
-  @ManyToOne(() => Horario, { nullable: true })
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
   horario?: Horario | null;
 
+  // Relaciones Inversas
   @OneToMany(() => Jornada, (jornada) => jornada.usuario)
   jornadas: Jornada[];
 
@@ -130,9 +132,9 @@ export class User {
   // ============================================
   // METADATA
   // ============================================
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 }

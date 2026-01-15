@@ -7,6 +7,8 @@ import { CreateAdminDto } from "./dto/create-admin.dto";
 import { UserRole } from "auth/roles.enum";
 import { Empresa } from "empresas/entities/empresa.entity";
 import { CreateWorkerDto } from "./dto/create-worker.dto";
+// ✅ Importamos el Payload en lugar de la Entidad para el usuario que ejecuta la acción
+import type { UserPayload } from "auth/interfaces/user-payload.interface"; 
 
 @Injectable()
 export class UsersService {
@@ -27,48 +29,45 @@ export class UsersService {
       isActive: true,
     });
 
-    return this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
 
   // ========================
   // CREAR WORKER (ADMIN)
   // ========================
- async createWorker(dto: CreateWorkerDto, empresa: Empresa) {
-  const { codigoOTP, ...userData } = dto;
+  async createWorker(dto: CreateWorkerDto, empresa: Empresa) {
+    const expiraEn = new Date();
+    expiraEn.setMinutes(expiraEn.getMinutes() + 5);
 
-  const expiraEn = new Date();
-  expiraEn.setMinutes(expiraEn.getMinutes() + 5); // Expira en 5 minutos
-  const user = this.userRepository.create({
-    ...userData, 
-    rol: UserRole.WORKER,
-    empresa,
-    codigoOTP,
-    codigoExpiraEn: expiraEn,
-    isVerified: false,
-    isActive: true,
-  });
+    const user = this.userRepository.create({
+      ...dto, // dni, nombre, telefono vienen aquí
+      rol: UserRole.WORKER,
+      empresa,
+      isVerified: false,
+      isActive: true,
+    });
 
-  return this.userRepository.save(user);
+    return await this.userRepository.save(user);
   }
 
   // ========================
   // LISTAR USUARIOS POR SCOPE
   // ========================
-  async findAllByUser(user: User) {
-    // El SUPERADMIN ve absolutamente todo
-    if (user.rol === UserRole.SUPERADMIN) {
-      return this.userRepository.find({
-        relations: ['empresa'], // 'rol' no es una relación, es un enum
+  async findAllByUser(currentUser: UserPayload) {
+    // 1. SUPERADMIN ve todo
+    if (currentUser.rol === UserRole.SUPERADMIN) {
+      return await this.userRepository.find({
+        relations: ['empresa'],
       });
     }
     
-// El ADMIN ve solo a los usuarios de SU empresa
-    if (!user.empresa) {
+    // 2. ADMIN ve solo su empresa
+    if (!currentUser.empresaId) {
         throw new ForbiddenException('El administrador no tiene una empresa asignada');
     }
 
-    return this.userRepository.find({
-      where: { empresa: { id: user.empresa.id } },
+    return await this.userRepository.find({
+      where: { empresa: { id: currentUser.empresaId } },
       relations: ['empresa'],
     });
   }
@@ -76,21 +75,18 @@ export class UsersService {
   // ========================
   // OBTENER USUARIO POR ID
   // ========================
-  async findOneById(id: string, currentUser: User) {
+  async findOneById(id: string, currentUser: UserPayload) {
     const user = await this.userRepository.findOne({
       where: { id },
       relations: ['empresa'],
     });
 
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
+    if (!user) throw new NotFoundException('Usuario no encontrado');
 
-    // ADMIN no puede ver usuarios de otra empresa
-   // Validación de Scope: Si no es SUPERADMIN, debe pertenecer a la misma empresa
+    // Validación de Scope usando el Payload
     if (currentUser.rol !== UserRole.SUPERADMIN) {
-      if (!currentUser.empresa || currentUser.empresa.id !== user.empresa?.id) {
-        throw new ForbiddenException('No tienes permiso para ver este usuario');
+      if (user.empresa?.id !== currentUser.empresaId) {
+        throw new ForbiddenException('No tienes permiso para acceder a este usuario');
       }
     }
     
@@ -100,26 +96,30 @@ export class UsersService {
   // ========================
   // ACTUALIZAR USUARIO
   // ========================
-  async update(id: string, dto: UpdateUserDto, currentUser: User) {
+  async update(id: string, dto: UpdateUserDto, currentUser: UserPayload) {
     const user = await this.findOneById(id, currentUser);
 
-    Object.assign(user, dto);
+    // Protección extra: Un Admin no puede promoverse a Superadmin
+    if (dto.rol && currentUser.rol !== UserRole.SUPERADMIN) {
+        delete dto.rol; 
+    }
 
-    return this.userRepository.save(user);
+    Object.assign(user, dto);
+    return await this.userRepository.save(user);
   }
 
   // ========================
   // ELIMINAR (SOFT DELETE)
   // ========================
-  async remove(id: string, currentUser: User) {
+  async remove(id: string, currentUser: UserPayload) {
     const user = await this.findOneById(id, currentUser);
     
+    // Evitar que el Admin se borre a sí mismo accidentalmente
+    if (user.id === currentUser.userId) {
+        throw new ForbiddenException('No puedes eliminar tu propia cuenta');
+    }
+
     user.isActive = false;
-
-    return this.userRepository.save(user);
-  }
-
-  async findAllRaw() {
-    return this.userRepository.find({ relations: ['empresa'] });
+    return await this.userRepository.save(user);
   }
 }

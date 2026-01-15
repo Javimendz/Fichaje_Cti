@@ -2,8 +2,11 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { User } from '../entities/user.entity';
 
 export const GetUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): User => {
+  (data: string | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    return request.user; // Passport inyecta el usuario aquí
+    const user = request.user;
+
+    // Si pasas un argumento como @GetUser('dni'), devuelve solo esa propiedad
+    return data ? user?.[data] : user;
   },
 );

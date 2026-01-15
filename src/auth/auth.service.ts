@@ -26,26 +26,79 @@ export class AuthService {
   ) {}
 
   // =====================================
-  // WORKER: Solicitar OTP
+  // LOGIN PRINCIPAL: DNI + Password
+  // (Para Admin y Superadmin)
+  // =====================================
+  async login(loginDto: LoginDto) {
+    const { dni, password } = loginDto;
+
+    if (!dni || !password) {
+      throw new BadRequestException('DNI y contraseña son requeridos');
+    }
+
+    // 1. Buscamos al usuario por DNI
+    const user = await this.userRepository.findOne({ 
+      where: { dni: dni.trim() },
+      relations: ['empresa'] 
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    // 2. Restricción de Rol (Los Workers suelen entrar por OTP)
+    if (user.rol === UserRole.WORKER) {
+      throw new UnauthorizedException(
+        'Acceso denegado. Los trabajadores deben validar su identidad vía OTP.'
+      );
+    }
+
+    // 3. Validación de Password
+    if (!user.password) {
+      throw new UnauthorizedException('El usuario no tiene una contraseña configurada');
+    }
+    
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    // 4. Generación de Token
+    // Si es Superadmin, empresaId será null automáticamente
+    const payload = { 
+      sub: user.id,
+      dni: user.dni,
+      rol: user.rol,
+      empresaId: user.empresa?.id || null 
+    };
+    
+    return { 
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        rol: user.rol,
+        empresaId: user.empresa?.id || null
+      }
+    };
+  }
+
+  // =====================================
+  // WORKER: Solicitar OTP (Opcional)
   // =====================================
   async create(createUserDto: CreateUserDto) {
     const { telefono } = createUserDto;
 
-    // 1. Buscar si el admin lo pre-registró
     const allowedUser = await this.allowedUserRepository.findOne({ 
       where: { telefono, isActive: true },
-      relations: ['empresa', 'horario'] 
+      relations: ['empresa'] 
     });
 
     if (!allowedUser) {
-      throw new UnauthorizedException('Este número no está autorizado. Contacta con tu empresa.');
+      throw new UnauthorizedException('Este número no está autorizado por ninguna empresa.');
     }
 
-    // 2. Buscar si ya tiene cuenta o crear
-    let user = await this.userRepository.findOne({ 
-        where: { telefono },
-        relations: ['empresa'] 
-    });
+    let user = await this.userRepository.findOne({ where: { telefono } });
 
     if (!user) {
       user = this.userRepository.create({
@@ -58,25 +111,20 @@ export class AuthService {
       });
     }
 
-    // 3. Generar OTP
     const codigo = this.generarCodigo();
-    const fechaExpiracion = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+    const fechaExpiracion = new Date(Date.now() + 5 * 60 * 1000);
 
-    user.codigoOTP = {
-      codigo: codigo,
-      expiracion: fechaExpiracion,
-    };
+    user.codigoOTP = { codigo, expiracion: fechaExpiracion };
     user.codigoExpiraEn = fechaExpiracion;
 
     await this.userRepository.save(user);
-
-    console.log(`[SMS SIMULATOR] Código enviado a ${telefono}: ${codigo}`);
+    console.log(`[SMS] Código para ${telefono}: ${codigo}`);
  
     return { message: 'Código enviado correctamente' };
   }
 
   // =====================================
-  // WORKER: Verificar OTP
+  // WORKER: Verificar OTP (Opcional)
   // =====================================
   async verifyCode(dto: VerifyCodeDto) {
     const { telefono, codigo } = dto;
@@ -86,112 +134,42 @@ export class AuthService {
       relations: ['empresa'],
     });
 
-    console.log('--- DEBUG BASE DE DATOS ---');
-    console.log('ID Usuario:', user?.id);
-    console.log('Teléfono:', user?.telefono);
-    console.log('Contenido Real de codigoOTP:', JSON.stringify(user?.codigoOTP));
-    console.log('---------------------------');
-
-    if (!user) throw new UnauthorizedException('Usuario no encontrado');
-
-    // 1️⃣ Verificar que exista OTP
-    if (!user.codigoOTP || !user.codigoOTP.codigo) {
-      throw new UnauthorizedException('No hay un código pendiente');
+    if (!user || !user.codigoOTP?.codigo) {
+      throw new UnauthorizedException('No hay un código pendiente para este número');
     }
 
-    // 2️⃣ Verificar expiración
     if (user.codigoExpiraEn && user.codigoExpiraEn < new Date()) {
-      throw new UnauthorizedException('Código expirado');
+      throw new UnauthorizedException('El código ha expirado');
     }
 
-    // 3️⃣ Comparación correcta
     if (user.codigoOTP.codigo !== String(codigo).trim()) {
-      throw new UnauthorizedException('Código inválido');
+      throw new UnauthorizedException('Código incorrecto');
     }
 
-    // 4️⃣ Marcar verificado y limpiar
     user.isVerified = true;
     user.codigoOTP = null;
     user.codigoExpiraEn = null;
     await this.userRepository.save(user);
 
-    // 5️⃣ Marcar en allowed-phones
     await this.allowedPhonesService.markUsed(telefono);
 
-    // Generar JWT
     const payload = {
       sub: user.id,
-      telefono: user.telefono,
+      dni: user.dni,
       rol: user.rol,
       empresaId: user.empresa?.id ?? null,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
-      user: {
-        nombre: user.nombre,
-        rol: user.rol
-      }
+      user: { nombre: user.nombre, rol: user.rol }
     };
   }
 
   // =====================================
-  // ADMIN: Login con email + password
+  // HELPERS
   // =====================================
-  async login(loginDto: LoginDto) {
-    const { telefono, password } = loginDto;
-
-    // Validar que se proporcionen ambos campos
-    if (!telefono || !password) {
-      throw new BadRequestException('Teléfono y contraseña son requeridos');
-    }
-
-    const user = await this.userRepository.findOne({ 
-      where: { telefono },
-      relations: ['empresa'] 
-    });
-
-    // 🔴 Si no existe el usuario
-    if (!user) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    // 🔴 Si es WORKER, debe usar OTP
-    if (user.rol === UserRole.WORKER) {
-      throw new UnauthorizedException(
-        'Los trabajadores deben usar acceso por OTP. Usa el endpoint /auth/request-otp'
-      );
-    }
-
-    // 🔴 Si no tiene contraseña (no debería pasar)
-    if (!user.password) {
-      throw new UnauthorizedException('El usuario no tiene contraseña definida');
-    }
-    
-    // 🔴 Verificar contraseña
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      throw new UnauthorizedException('Credenciales inválidas');
-    }
-
-    // ✅ Login exitoso
-    const payload = { 
-      sub: user.id,
-      telefono: user.telefono,
-      rol: user.rol,
-      empresaId: user.empresa?.id || null 
-    };
-    
-    return { 
-      access_token: this.jwtService.sign(payload),
-      user: {
-        nombre: user.nombre,
-        rol: user.rol
-      }
-    };
-  }
-
-  generarCodigo(): string {
+  private generarCodigo(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 

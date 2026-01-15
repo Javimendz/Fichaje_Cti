@@ -7,20 +7,23 @@ import {
   Param,
   Delete,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { CreateWorkerDto } from './dto/create-worker.dto';
-import { AuthGuard } from '@nestjs/passport';
+
+// Auth & Security
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import { GetUser } from 'auth/decorators/get-user.decorator';
-import { User } from 'auth/entities/user.entity';
 import { EmpresasService } from 'empresas/empresas.service';
+import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard) // ✅ Usamos JwtAuthGuard personalizado
 @Controller('users')
 export class UsersController {
   constructor(
@@ -35,9 +38,10 @@ export class UsersController {
   @Roles(UserRole.SUPERADMIN)
   async createAdmin(
     @Body() dto: CreateAdminDto,
+    @GetUser() currentUser: UserPayload, // ✅ Añadido para validar seguridad en EmpresasService
   ) {
-    // Obtener la empresa
-    const empresa = await this.empresasService.findOne(dto.empresaId);
+    // 1. Obtener la empresa (Pasando currentUser para evitar el error TS2554)
+    const empresa = await this.empresasService.findOne(dto.empresaId, currentUser);
     
     return this.usersService.createAdmin(dto, empresa);
   }
@@ -49,57 +53,56 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   async createWorker(
     @Body() dto: CreateWorkerDto,
-    @GetUser() currentUser: User,
+    @GetUser() currentUser: UserPayload,
   ) {
-    // El worker se crea en la empresa del admin actual
-    return this.usersService.createWorker(dto, currentUser.empresa);
+    // 1. El Admin solo puede crear trabajadores para su propia empresa
+    // Buscamos la empresa usando su empresaId del token para mayor seguridad
+    if (!currentUser.empresaId) throw new Error('El administrador no tiene empresa');
+    
+    const empresa = await this.empresasService.findOne(currentUser.empresaId, currentUser);
+    
+    return this.usersService.createWorker(dto, empresa);
   }
 
   // ========================
   // LISTAR USUARIOS
-  // SUPERADMIN ve todos
-  // ADMIN ve solo de su empresa
   // ========================
   @Get()
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
-  findAll(@GetUser() currentUser: User) {
+  findAll(@GetUser() currentUser: UserPayload) {
     return this.usersService.findAllByUser(currentUser);
   }
 
   // ========================
   // OBTENER USUARIO POR ID
-  // Con validación de permisos
   // ========================
   @Get(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.WORKER)
   async findOne(
-    @Param('id') id: string,
-    @GetUser() currentUser: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() currentUser: UserPayload,
   ) {
     return this.usersService.findOneById(id, currentUser);
   }
 
   // ========================
-  // ACTUALIZAR USUARIO
+  // ACTUALIZAR / ELIMINAR
   // ========================
   @Patch(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
-    @GetUser() currentUser: User,
+    @GetUser() currentUser: UserPayload,
   ) {
     return this.usersService.update(id, dto, currentUser);
   }
 
-  // ========================
-  // ELIMINAR USUARIO (SOFT DELETE)
-  // ========================
   @Delete(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async remove(
-    @Param('id') id: string,
-    @GetUser() currentUser: User,
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() currentUser: UserPayload,
   ) {
     return this.usersService.remove(id, currentUser);
   }

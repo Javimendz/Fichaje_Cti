@@ -1,23 +1,20 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Patch, 
-  Param, 
-  Delete,
-  UseGuards 
-} from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+// src/empresas/empresas.controller.ts
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+
+// Auth & Roles
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
+import { GetUser } from 'auth/decorators/get-user.decorator';
+import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+
 @Controller('empresas')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
@@ -29,25 +26,31 @@ export class EmpresasController {
 
   @Get()
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
-  findAll() {
-    return this.empresasService.findAll();
+  findAll(@GetUser() user: UserPayload) {
+    return this.empresasService.findAll(user);
   }
 
   @Get(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
-  findOne(@Param('id') id: string) {
-    return this.empresasService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @GetUser() user: UserPayload
+  ) {
+    return this.empresasService.findOne(id, user);
   }
 
   @Patch(':id')
   @Roles(UserRole.SUPERADMIN)
-  update(@Param('id') id: string, @Body() updateEmpresaDto: UpdateEmpresaDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @Body() updateEmpresaDto: UpdateEmpresaDto
+  ) {
     return this.empresasService.update(id, updateEmpresaDto);
   }
 
   @Delete(':id')
   @Roles(UserRole.SUPERADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.empresasService.remove(id);
   }
 }

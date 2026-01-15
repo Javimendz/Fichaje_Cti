@@ -1,36 +1,26 @@
 // src/auth/strategies/jwt.strategy.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {
+  constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'miSecretoSuperSecreto',
     });
   }
 
-async validate(payload: any) {
-  const { sub } = payload; // sub es el ID del usuario
-  
-  const user = await this.userRepository.findOne({
-    where: { id: sub },
-    relations: ['empresa'], // 
-  });
-
-  if (!user) {
-    throw new UnauthorizedException('Usuario no encontrado');
+  async validate(payload: any) {
+    // Lo que retornes aquí se inyectará en req.user
+    // Incluimos empresaId (que será null para Superadmins)
+    return { 
+      userId: payload.sub, 
+      dni: payload.dni, 
+      rol: payload.rol, 
+      empresaId: payload.empresaId || null 
+    };
   }
-
-  // Si 'telefono' sigue saliendo null, asegúrate de que no tenga { select: false } en la Entity
-  return user; 
-}
 }

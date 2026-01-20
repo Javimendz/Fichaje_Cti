@@ -1,30 +1,72 @@
-import { User } from "auth/entities/user.entity";
-import { Empresa } from "empresas/entities/empresa.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { DistribucionDia } from "./distribucion-dia.entity";
+import { 
+  Entity, 
+  PrimaryGeneratedColumn, 
+  Column, 
+  OneToMany, 
+  CreateDateColumn, 
+  UpdateDateColumn, 
+  ManyToOne,
+  JoinColumn
+} from 'typeorm';
+import { AllowedUser } from '../../allowed-user/entities/allowed-user.entity';
+import { DistribucionDia } from './distribucion-dia.entity';
+import { Empresa } from 'empresas/entities/empresa.entity';
 
-@Entity()
+@Entity('horarios')
 export class Horario {
-
- @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'date' })
-  fecha_inicio: Date;
+  @Column({ type: 'text' })
+  nombre: string;
 
-  @Column({ type: 'date' })
-  fecha_fin: Date;
+  
 
-  @Column()
-  tipo: string; // Ejemplo: 'Rotativo', 'Fijo'
+  @Column({ name: 'fecha_inicio', type: 'date' })
+  fechaInicio: Date;
 
-  @ManyToOne(() => Empresa)
+  @Column({ name: 'fecha_fin', type: 'date' })
+  fechaFin: Date;
+
+  @Column({ type: 'text' })
+  tipo: string; // Ej: 'Oficina', 'Rotativo', 'Verano'
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
+  // RELACIONES
+  // ============================================
+
+  // Relación con los días (Lunes, Martes...)
+  // cascade: true permite guardar el horario y sus días en una sola operación
+  @OneToMany(() => DistribucionDia, (distribucion) => distribucion.horario, { 
+    cascade: true,
+    eager: true // Carga automáticamente los días al consultar el horario
+  })
+  distribuciones: DistribucionDia[];
+
+  // Relación con los usuarios asignados a este horario
+  @OneToMany(() => AllowedUser, (user) => user.horario)
+  usuarios: AllowedUser[];
+
+  // AUDITORÍA
+  // ============================================
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+
+
+// Relación con Empresa (N:1)
+  @ManyToOne(() => Empresa, (empresa) => empresa.horarios, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa;
 
-  @OneToMany(() => DistribucionDia, (dist) => dist.horario, { cascade: true })
-  distribuciones: DistribucionDia[];
-  
-  @OneToMany(() => User, (u) => u.horario)
-  usuarios: User[];
+  @Column({ name: 'empresa_id' }) // Columna física en la DB
+  empresaId: string;
+
+
+
 }

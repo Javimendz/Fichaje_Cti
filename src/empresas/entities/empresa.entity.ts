@@ -1,6 +1,7 @@
+
 import { User } from "auth/entities/user.entity";
 import { Horario } from "schedules/entities/horario.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } from "typeorm";
 
 @Entity('empresas')
 export class Empresa {
@@ -25,13 +26,14 @@ export class Empresa {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;          
-    
-@OneToMany(() => User, (user) => user.empresa) // Ahora 'user' será reconocido
-  usuarios: User[];
-  
-  @OneToMany(() => Horario, (h) => h.empresa)
-  horarios: Horario[];
+  @CreateDateColumn({ name: 'created_at' }) // 👈 Usa este decorador para evitar errores de SQL
+  createdAt: Date;
 
+  // Una empresa tiene muchos Usuarios (SuperAdmins, Admins, etc.)
+  @OneToMany(() => User, (user) => user.empresa)
+  usuarios: User[];
+
+  // Una empresa tiene muchos Horarios (Turnos configurados)
+  @OneToMany(() => Horario, (horario) => horario.empresa)
+  horarios: Horario[];
 }

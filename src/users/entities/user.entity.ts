@@ -60,6 +60,7 @@ tokenExpiraEn: Date | null;
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa | null;
 
+  /** Horario tiene tal tal */
   @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
   horario: Horario | null;

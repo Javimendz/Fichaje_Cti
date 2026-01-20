@@ -12,7 +12,7 @@ export class FranjaHoraria {
   @Column()
   fin: string;    // Almacena "12:00"
 
-  @ManyToOne(() => DistribucionDia, (dist) => dist.franjas)
+  @ManyToOne(() => DistribucionDia, (dist) => dist.franjas,{ onDelete: 'CASCADE' })
   @JoinColumn({ name: 'distribucionDia_id' })
   distribucionDia: DistribucionDia;
 }

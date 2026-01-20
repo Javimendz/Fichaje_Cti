@@ -7,6 +7,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { ShiftsModule } from './shifts/shifts.module';
 import { AlarmsModule } from './alarms/alarms.module';
 import { LocationsModule } from './locations/locations.module';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
@@ -19,6 +20,7 @@ import { JornadaModule } from './jornada/jornada.module';
 import { FranjasHorariasModule } from './franja-horaria/franja-horaria.module';
 import { AusenciasModule } from './ausencia/ausencia.module';
 import { AllowedUserModule } from './allowed-user/allowed-user.module';
+
 
 @Module({
   
@@ -34,7 +36,8 @@ import { AllowedUserModule } from './allowed-user/allowed-user.module';
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: true,
+        dropSchema: true,
         extra: {
            timezone: 'UTC', // Esto asegura que el driver use UTC
         },
@@ -49,6 +52,9 @@ import { AllowedUserModule } from './allowed-user/allowed-user.module';
     CheckinsModule, 
     AttendanceModule, 
     ShiftsModule, 
+    FranjasHorariasModule,
+    SchedulesModule,
+    AusenciasModule,
     AlarmsModule, 
     SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule, AllowedUserModule
    

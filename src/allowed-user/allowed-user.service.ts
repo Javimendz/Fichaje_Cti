@@ -80,6 +80,19 @@ async findAll() {
   });
 }
 
+async assignSchedule(userId: string, horarioId: string, empresaId: string) {
+    // 1. Buscas al trabajador existente
+    const user = await this.allowedUserRepository.findOne({ 
+      where: { id: userId, empresaId } 
+    });
 
+    if (!user) throw new NotFoundException('Trabajador no encontrado');
+
+    // 2. Le asignas el ID del horario que acabas de crear
+    user.horarioId = horarioId; 
+
+    // 3. Guardas el cambio
+    return await this.allowedUserRepository.save(user);
+}
 
 }

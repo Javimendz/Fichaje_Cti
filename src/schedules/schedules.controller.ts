@@ -7,6 +7,8 @@ import { User } from '../auth/entities/user.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { AllowedUserService } from 'allowed-user/allowed-user.service';
+import { UserRole } from 'auth/roles.enum';
+import { Roles } from 'auth/decorators/roles.decorator';
 
 @Controller('schedules')
 @UseGuards(AuthGuard())
@@ -68,5 +70,19 @@ async assignSchedule(
     admin.empresaId
   );
 }
+
+@Patch(':userId/assign-worker')
+@Roles(UserRole.ADMIN)
+async assignWorkerToSchedule(
+  @Param('userId', ParseUUIDPipe) userId: string,
+  @Body('horarioId', ParseUUIDPipe) horarioId: string,
+  @GetUser() admin: User,
+) {
+  if (!admin.empresaId) throw new BadRequestException('Admin sin empresa');
+  
+  // Delegamos la unión al AllowedUserService
+  return await this.allowedUserService.assignSchedule(userId, horarioId, admin.empresaId);
+}
+
 
 }

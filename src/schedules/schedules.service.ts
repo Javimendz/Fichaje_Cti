@@ -15,42 +15,25 @@ export class SchedulesService {
    
   ) {}
 
-  async create(dto: CreateHorarioDto, admin: User) {
-    // 1. Validamos que la empresa existe (viene del admin logueado)
-    if (!admin.empresaId) {
-      throw new BadRequestException('El administrador no tiene una empresa asignada');
-    }
-
-    // 2. Creamos la estructura con el mapeo de relaciones
-    // TypeORM detectará las distribuciones y franjas dentro del objeto
-    const horario = this.horarioRepository.create({
-      nombre: dto.nombre,
-      tipo: dto.tipo,
-      fechaInicio: new Date(dto.fechaInicio),
-      fechaFin: new Date(dto.fechaFin),
-      empresaId: admin.empresaId,
-      
-      // Mapeamos las distribuciones (Días) y sus franjas
-      distribuciones: dto.distribuciones.map(dist => ({
-  diaSemana: dist.diaSemana,
-  horasDia: dist.horasDia, // 👈 ¡AÑADE ESTA LÍNEA!
-  franjas: dist.franjas.map(franja => {
-    // ... validación de horas ...
-    return {
-      inicio: franja.inicio,
-      fin: franja.fin
-    };
-  })
-}))
-    });
-
-    try {
-      // Al guardar el horario, se guardan Días y Franjas automáticamente (Cascada)
-      return await this.horarioRepository.save(horario);
-    } catch (error) {
-      throw new BadRequestException('Error al guardar el horario: ' + error.message);
-    }
+ async create(dto: CreateHorarioDto, admin: User) {
+  if (!admin.empresaId) {
+    throw new BadRequestException('El administrador debe tener una empresa asignada');
   }
+
+  // TypeORM manejará la inserción de distribuciones y franjas automáticamente 
+  // por el "cascade: true" que tienes en las entidades.
+  const horario = this.horarioRepository.create({
+    ...dto,
+    empresa: { id: admin.empresaId }, // Usamos el objeto para la relación
+    empresaId: admin.empresaId,      // Y la columna para el filtro
+  });
+
+  try {
+    return await this.horarioRepository.save(horario);
+  } catch (error) {
+    throw new BadRequestException('Error al guardar el horario: ' + error.message);
+  }
+}
 
   async findAllByEmpresa(empresaId: string) {
     return await this.horarioRepository.find({

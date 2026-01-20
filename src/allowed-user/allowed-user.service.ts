@@ -16,29 +16,20 @@ export class AllowedUserService {
 
  
 async create(dto: CreateAllowedUserDto, admin: User) {
-  
-  // 1. Verificación previa de seguridad
-  if (!dto.dni || !dto.telefono) {
-    throw new BadRequestException('DNI y Teléfono son obligatorios');
+    if (!dto.dni || !dto.telefono) throw new BadRequestException('DNI y Teléfono obligatorios');
+
+    const newAllowedUser = this.allowedUserRepository.create({
+      ...dto,
+      dni: dto.dni.toUpperCase().trim(),
+      empresaId: admin.empresaId, // Hereda automáticamente la empresa del admin
+      rol: UserRole.WORKER,
+      horarioId: null, // Nace sin horario para ser asignado después
+      isVerified: false,
+      isActive: true,
+    } as any);
+
+    return await this.allowedUserRepository.save(newAllowedUser);
   }
-
-  // 2. Mapeo con limpieza de nulos
-  // Usamos 'as any' temporalmente para que TS deje de buscar overloads de Array
-  const newAllowedUser = this.allowedUserRepository.create({
-    telefono: dto.telefono.trim(),
-    dni: dto.dni.toUpperCase().trim(),
-    nombre: dto.nombre ?? undefined,
-    email: dto.email ? dto.email.toLowerCase().trim() : undefined,
-    empresaId: admin.empresaId,
-    rol: UserRole.WORKER,
-    isVerified: false,
-    isActive: true,
-    // Agrega aquí cualquier otro campo del DTO asegurando que no sea null
-    apellidos: (dto as any).apellidos ?? undefined,
-  } as any); 
-
-  return await this.allowedUserRepository.save(newAllowedUser);
-}
 
   // Listar solo los permitidos de la empresa del Admin logueado
   async findAllByEmpresa(empresaId: string) {
@@ -81,18 +72,15 @@ async findAll() {
 }
 
 async assignSchedule(userId: string, horarioId: string, empresaId: string) {
-    // 1. Buscas al trabajador existente
+    // Buscamos al trabajador filtrando por la empresa del admin logueado
     const user = await this.allowedUserRepository.findOne({ 
       where: { id: userId, empresaId } 
     });
 
-    if (!user) throw new NotFoundException('Trabajador no encontrado');
+    if (!user) throw new NotFoundException('Trabajador no encontrado en su empresa');
 
-    // 2. Le asignas el ID del horario que acabas de crear
-    user.horarioId = horarioId; 
-
-    // 3. Guardas el cambio
+    user.horarioId = horarioId; // Asignación directa a la columna física
     return await this.allowedUserRepository.save(user);
-}
+  }
 
 }

@@ -6,9 +6,10 @@ import { UsersModule } from '../users/users.module';
 import { AllowedPhonesModule } from '../allowed-phones/allowed-phones.module';
 import { EmpresasService } from 'empresas/empresas.service';
 import { EmpresasModule } from 'empresas/empresas.module';
+import { AuthModule } from 'auth/auth.module';
 
 @Module({
-  imports: [UsersModule, AllowedPhonesModule, EmpresasModule], 
+  imports: [UsersModule, AllowedPhonesModule, EmpresasModule, AuthModule], 
   controllers: [SeedsController], // <- Controller incluido
   providers: [SeedsService, EmpresasService],
   exports: [SeedsService],

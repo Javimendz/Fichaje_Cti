@@ -36,7 +36,8 @@ import { AllowedUser } from 'allowed-user/entities/allowed-user.entity';
     AuthService, 
     JwtModule, 
     PassportModule, // ¡CRÍTICO! Exportar para que JwtAuthGuard funcione en otros módulos
-    JwtStrategy     // Exportar para que otros módulos validen el token
+    JwtStrategy,     // Exportar para que otros módulos validen el token
+    TypeOrmModule, // Exportar para que otros módulos usen UserRepository
   ],
 })
 export class AuthModule {}

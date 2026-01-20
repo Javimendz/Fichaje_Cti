@@ -58,8 +58,13 @@ Admin
 Post
 
 {
-    "Email": "admin@empresa.com", 
-    "password": "admin_password"
+    "email": "admin@alfa.com",
+    "password": "password123",
+
+-------------------------------------
+
+    "email": "contac@beta-transportes.com",
+    "password": "adminpassword123",
 
 }
 
@@ -69,9 +74,8 @@ SuperAdmin
 Post
 
 {
-    "Email": "superadmin@cti.com", 
-    "password": "superpassword"
-
+  "email": "superadmin@cti.com",
+  "password": "superpassword"
 }
 
 
@@ -154,7 +158,31 @@ Ejemplo:
 
 ```
 
+6. Registrar empresa y su administrado.
+
+```
+POST  -  http://localhost:3000/api/empresas/setup
+
+
+Body - Json
+
+{
+  "nombreEmpresa": "Taller paco Alfa S.A.",
+  "admin": {
+    "email": "contac@beta-transportes.com",
+    "password": "adminpassword123",
+    "nombre": "Juanito Administrador",
+    "dni": "98765435Y",
+    "telefono": "+34611222334"
+  }
+}
+
+
+```
+
+
 6. Dar de alta a Usuario
+
 
 
 ```
@@ -219,3 +247,14 @@ http://localhost:3000/api/allowed-phones
 }
 
 ``` 
+
+
+10. Comprobar si admin solo ve su empresa
+
+```
+
+Get - http://localhost:3000/api/empresas
+
+Body - none
+
+```

@@ -19,6 +19,8 @@ export class SeedsService {
     private readonly allowedPhonesService: AllowedPhonesService,
   ) {}
 
+
+  /*
   async runSeed() {
     try {
       this.logger.log('Iniciando ejecución de Seed...');
@@ -102,5 +104,40 @@ export class SeedsService {
       this.logger.error('Error en el Seed:', error.message);
       throw new InternalServerErrorException('Fallo al ejecutar el Seed');
     }
+  }*/
+
+
+
+async runSeed() {
+  try {
+    this.logger.log('Iniciando ejecución de Seed...');
+
+    // 1. SUPERADMIN (Único usuario necesario para arrancar el sistema)
+    const superAdminEmail = 'superadmin@cti.com';
+    let superAdmin = await this.userRepository.findOneBy({ email: superAdminEmail });
+
+    if (!superAdmin) {
+      const superAdminData = {
+        email: superAdminEmail,
+        dni: '00000000S',
+        telefono: '+34600999999',
+        nombre: 'Super Usuario Global',
+        password: await bcrypt.hash('superpassword', 10),
+        rol: UserRole.SUPERADMIN,
+        empresa: null, // El SuperAdmin no pertenece a ninguna empresa específica
+        isVerified: true,
+        isActive: true,
+      };
+      await this.userRepository.save(this.userRepository.create(superAdminData));
+      this.logger.log('Superadmin creado con éxito.');
+    }
+
+    return { message: 'Sistema inicializado. Use el SuperAdmin para crear empresas.' };
+  } catch (error) {
+    throw new InternalServerErrorException('Fallo al ejecutar el Seed');
   }
 }
+
+
+
+} 

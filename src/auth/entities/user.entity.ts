@@ -4,6 +4,7 @@ import { UserRole } from 'auth/roles.enum';
 import { Empresa } from 'empresas/entities/empresa.entity';
 import { Jornada } from 'jornada/entities/jornada.entity';
 import { Horario } from 'schedules/entities/horario.entity';
+import { Solicitud } from 'solicitud/entities/solicitud.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 
@@ -27,7 +28,7 @@ email: string | null;
   @Column({ type: 'text', unique: true })
   telefono: string;
 
-  @Column({ type: 'text', nullable: true, select: false }) // Importante para auth.service
+  @Column({ type: 'text', nullable: false, select: false }) // Importante para auth.service
   password: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER })
@@ -66,6 +67,8 @@ email: string | null;
   createdAt: Date;
 
 
+  @OneToMany(() => Solicitud, (solicitud) => solicitud.usuario)
+  solicitudes: Solicitud[];
 
   @UpdateDateColumn()
   updatedAt: Date;

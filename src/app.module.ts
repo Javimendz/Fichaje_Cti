@@ -20,6 +20,7 @@ import { JornadaModule } from './jornada/jornada.module';
 import { FranjasHorariasModule } from './franja-horaria/franja-horaria.module';
 import { AusenciasModule } from './ausencia/ausencia.module';
 import { AllowedUserModule } from './allowed-user/allowed-user.module';
+import { SolicitudesModule } from './solicitud/solicitud.module';
 
 
 @Module({
@@ -37,7 +38,7 @@ import { AllowedUserModule } from './allowed-user/allowed-user.module';
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
         synchronize: true,
-        dropSchema: true,
+        dropSchema: true,  //Para borrar la base de datos cada vez que se inicia la app
         extra: {
            timezone: 'UTC', // Esto asegura que el driver use UTC
         },
@@ -56,7 +57,7 @@ import { AllowedUserModule } from './allowed-user/allowed-user.module';
     SchedulesModule,
     AusenciasModule,
     AlarmsModule, 
-    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule, AllowedUserModule
+    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule, AllowedUserModule, SolicitudesModule
    
    ],
   

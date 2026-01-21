@@ -18,7 +18,7 @@ export class AllowedUserService {
   ) {}
 
 async create(dto: CreateAllowedUserDto, admin: User) {
-  // 1. Validación de seguridad para TS (Garantiza que empresaId no es null)
+  // 1. Validación: El administrador debe tener empresa
   if (!admin.empresaId) {
     throw new BadRequestException('El administrador debe tener una empresa asignada');
   }
@@ -28,30 +28,30 @@ async create(dto: CreateAllowedUserDto, admin: User) {
   await queryRunner.startTransaction();
 
   try {
-    // 2. Usamos el ID validado para evitar el error de "string | null"
     const empresaIdValido: string = admin.empresaId;
 
-    // Crear el registro en AllowedUser
+    // 2. Encriptar la contraseña que el administrador escribió
+    const hashedPassword = bcrypt.hashSync(dto.password, 10);
+
+    // 3. Crear el registro en AllowedUser (Pre-autorización)
     const newAllowedUser = queryRunner.manager.create(AllowedUser, {
       nombre: dto.nombre,
-      email: dto.email,
+      email: dto.email.toLowerCase().trim(),
       telefono: dto.telefono,
+      password: hashedPassword,
       dni: dto.dni.toUpperCase().trim(),
-      empresaId: empresaIdValido, // Ahora TS sabe que es string
+      empresaId: empresaIdValido,
       rol: UserRole.WORKER,
-      isVerified: true,
+      isVerified: true, // Se marca como verificado porque el admin lo creó directamente
       isActive: true,
-      // No pases horarioId: null aquí, si es opcional, simplemente no lo incluyas
     });
     
     const savedAllowed = await queryRunner.manager.save(newAllowedUser);
 
-    // Crear el registro en User
-    const tempPassword = bcrypt.hashSync(dto.dni.toUpperCase().trim(), 10);
-
+    // 4. Crear el registro en la tabla User para que pueda hacer Login
     const newUser = queryRunner.manager.create(User, {
-      email: dto.email,
-      password: tempPassword,
+      email: dto.email.toLowerCase().trim(),
+      password: hashedPassword, // Guardamos la versión encriptada
       nombre: dto.nombre,
       dni: dto.dni.toUpperCase().trim(),
       telefono: dto.telefono,
@@ -63,22 +63,30 @@ async create(dto: CreateAllowedUserDto, admin: User) {
     
     await queryRunner.manager.save(newUser);
 
+    // 5. Confirmar la transacción en la base de datos
     await queryRunner.commitTransaction();
 
     return {
-      message: 'Trabajador creado y habilitado',
-      worker: savedAllowed,
-      credentials: {
-        email: dto.email,
-        tempPassword: dto.dni.toUpperCase().trim()
+      message: 'Trabajador creado y habilitado correctamente',
+      worker: {
+        id: savedAllowed.id,
+        nombre: savedAllowed.nombre,
+        email: savedAllowed.email,
+        // Por seguridad, NO devolvemos la contraseña en la respuesta
       }
     };
 
   } catch (error) {
+    // Si algo falla (ej: email duplicado), deshacemos los cambios
     await queryRunner.rollbackTransaction();
-    // Manejo de errores...
+    
+    if (error.code === '23505') {
+      throw new BadRequestException('El correo electrónico o DNI ya está registrado');
+    }
+    
     throw error;
   } finally {
+    // Liberar la conexión del queryRunner
     await queryRunner.release();
   }
 }

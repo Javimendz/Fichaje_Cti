@@ -123,5 +123,6 @@ export class AllowedUser {
   @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
   ausencias: Ausencia[];
 
-
+  @Column()
+password: string;
 }

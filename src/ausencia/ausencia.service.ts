@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Ausencia, AusenciaEstado } from './entities/ausencia.entity';
@@ -19,19 +19,27 @@ export class AusenciasService {
     const inicio = new Date(dto.fecha_inicio);
     const fin = new Date(dto.fecha_fin);
     
-    // Cálculo de días (diferencia entre fechas + 1 para incluir el día de inicio)
+
+
+    // Cálculo de días
     const diffTime = Math.abs(fin.getTime() - inicio.getTime());
     const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+if (!usuario.empresaId) {
+    throw new BadRequestException('El usuario debe estar vinculado a una empresa para registrar ausencias.');
+  }
+
     const nuevaAusencia = this.ausenciaRepository.create({
       ...dto,
-      fecha_inicio: inicio,
-      fecha_fin: fin,
-      dias_totales: diasTotales,
-      usuario: usuario,
+      fechaInicio: inicio, // Corregido: de fecha_inicio a fechaInicio
+      fechaFin: fin,       // Corregido: de fecha_fin a fechaFin
+      diasTotales: diasTotales, // Corregido: de dias_totales a diasTotales
+      usuarioId: usuario.id,
+      empresaId: usuario.empresaId,
     });
 
     return await this.ausenciaRepository.save(nuevaAusencia);
+  
   }
 
   async updateEstado(id: string, estado: AusenciaEstado) {
@@ -42,7 +50,7 @@ export class AusenciasService {
     
     // Si se aprueba, los días totales pasan a ser consumidos
     if (estado === AusenciaEstado.APROBADA) {
-      ausencia.dias_consumidos = ausencia.dias_totales;
+      ausencia.diasConsumidos = ausencia.diasTotales;
     }
 
     return await this.ausenciaRepository.save(ausencia);
@@ -51,7 +59,7 @@ export class AusenciasService {
   async findAllByUsuario(usuarioId: string) {
     return await this.ausenciaRepository.find({
       where: { usuario: { id: usuarioId } },
-      order: { fecha_inicio: 'DESC' }
+      order: { fechaInicio: 'DESC' }
     });
   }
 

@@ -8,6 +8,6 @@ import { AusenciaController } from './ausencia.controller';
   imports: [TypeOrmModule.forFeature([Ausencia])],
   controllers:  [AusenciaController],
   providers: [AusenciasService],
-  exports: [AusenciasService],
+  exports: [AusenciasService,TypeOrmModule],
 })
 export class AusenciasModule {}

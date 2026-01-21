@@ -48,8 +48,8 @@ Worker
 Post
 
 {
-    "dni": "22222222W", 
-    "password": "worker_password"
+    "dni": "12345678Z", 
+    "password": "contraseña123",
 
 }
 

@@ -7,7 +7,8 @@ import {
   IsEnum, 
   IsDateString, 
   IsNumber, 
-  Matches 
+  Matches, 
+  MinLength
 } from 'class-validator';
 
 export class CreateAllowedUserDto {
@@ -39,6 +40,10 @@ export class CreateAllowedUserDto {
   @IsString()
   @IsOptional()
   apellidos?: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
 
   @IsDateString({}, { message: 'La fecha de nacimiento debe ser una fecha válida (ISO8601)' })
   @IsOptional()

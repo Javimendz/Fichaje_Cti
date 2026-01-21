@@ -15,26 +15,26 @@ export class SchedulesService {
    
   ) {}
 
- async create(dto: CreateHorarioDto, admin: User) {
+async create(dto: CreateHorarioDto, admin: User) {
+  // 1. Validación de seguridad (Ya la tienes, está perfecta)
   if (!admin.empresaId) {
     throw new BadRequestException('El administrador debe tener una empresa asignada');
   }
 
-  // TypeORM manejará la inserción de distribuciones y franjas automáticamente 
-  // por el "cascade: true" que tienes en las entidades.
+  // 2. Simplificación: TypeORM vincula los objetos anidados automáticamente
+  // gracias al decorador @Type(() => DistribucionDiaDto) de tu DTO.
   const horario = this.horarioRepository.create({
     ...dto,
-    empresa: { id: admin.empresaId }, // Usamos el objeto para la relación
-    empresaId: admin.empresaId,      // Y la columna para el filtro
+    empresaId: admin.empresaId, // "Anclamos" el horario a la empresa del admin
   });
 
   try {
+    // Esto guardará: Horario -> Distribuciones -> Franjas en una sola transacción
     return await this.horarioRepository.save(horario);
   } catch (error) {
     throw new BadRequestException('Error al guardar el horario: ' + error.message);
   }
 }
-
   async findAllByEmpresa(empresaId: string) {
     return await this.horarioRepository.find({
       where: { empresaId, isActive: true },

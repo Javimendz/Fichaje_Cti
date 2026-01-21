@@ -58,8 +58,8 @@ Admin
 Post
 
 {
-    "email": "admin@alfa.com",
-    "password": "password123",
+    "email": "admin@beta.com",
+    "password": "BetaPassword2026!"
 
 -------------------------------------
 

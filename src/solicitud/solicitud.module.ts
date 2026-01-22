@@ -14,6 +14,17 @@ import { Ausencia } from '../ausencia/entities/ausencia.entity';
 // Importa el AuthModule para los Guards
 import { AuthModule } from '../auth/auth.module';
 
+/**
+ * SolicitudesModule
+ * Módulo encargado de la gestión de solicitudes de los usuarios.
+ * Importa las entidades necesarias para la gestión de solicitudes,
+ * así como el módulo de autenticación para proteger las rutas.
+ * Proporciona el SolicitudesService para la lógica de negocio
+ * y el SolicitudesController para manejar las solicitudes HTTP relacionadas con las solicitudes de los usuarios.
+ * @see SolicitudesService para la lógica de gestión de solicitudes.
+ * @see SolicitudesController para los endpoints de solicitudes.
+ * 
+ */
 @Module({
   imports: [
     // Registramos las 3 entidades para que el Repositorio pueda inyectarlas
@@ -22,8 +33,7 @@ import { AuthModule } from '../auth/auth.module';
       RevisionSolicitud, 
       Ausencia
     ]),
-    // Necesario para que el @GetUser() y los Guards funcionen
-    AuthModule, 
+    AuthModule, // Importar AuthModule para autenticación
   ],
   controllers: [SolicitudesController],
   providers: [SolicitudesService],

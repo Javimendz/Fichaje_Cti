@@ -8,33 +8,66 @@ import { CreateSolicitudDto } from "./dto/create-solicitud.dto";
 import { SolicitudesService } from "./solicitud.service";
 import { AuthGuard } from "@nestjs/passport";
 
-@Controller('solicitudes')
-@UseGuards(AuthGuard())
-export class SolicitudesController {
-  constructor(private readonly solicitudesService: SolicitudesService) {}
+/**
+ * SolicitudesController
+ * Controlador encargado de gestionar las rutas relacionadas con las solicitudes.
+ * Proporciona endpoints para crear nuevas solicitudes, revisar solicitudes existentes
+ * y listar solicitudes por empresa y usuario.
+ * Métodos principales:
+ * - create: Endpoint para que un usuario cree una nueva solicitud.
+ * - revisar: Endpoint para que un administrador revise una solicitud.
+ * - findAllByUser: Endpoint para que un usuario liste sus propias solicitudes.
+ * @see SolicitudesService para la lógica de negocio relacionada con las solicitudes.
+ * @controller 'solicitudes' define la ruta base para este controlador.
+ * @UseGuards(AuthGuard()) aplica el guard de autenticación a todas las rutas del controlador. 
+ */
+@Controller('solicitudes') // prefijo de ruta
+@UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
+export class SolicitudesController { // Inyección de dependencias
+  constructor(private readonly solicitudesService: SolicitudesService) {} //
 
-  @Post()
-  create(@Body() dto: CreateSolicitudDto, @GetUser() user: User) {
-    return this.solicitudesService.create(dto, user);
+  @Post() // Endpoint para crear una solicitud
+  create(@Body() dto: CreateSolicitudDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
+    return this.solicitudesService.create(dto, user); // Llamar al servicio para crear la solicitud
   }
 
-  @Patch(':id/revisar')
+  /**
+   *  Revisa una solicitud específica, permitiendo aprobarla o rechazarla.
+   *  
+   * @param id ID de la solicitud a revisar.
+   * @param dto Datos para la revisión de la solicitud.
+   * @param admin Usuario administrador que realiza la revisión.
+   * @returns Resultado de la revisión de la solicitud.
+   * @throws BadRequestException si la solicitud no existe o ya ha sido revisada.
+   * @see RevisarSolicitudDto
+   * @see SolicitudesService.revisar
+   * 
+   */
+  @Patch(':id/revisar') // Endpoint para revisar una solicitud
   @Roles(UserRole.ADMIN) // Solo Admins
   revisar(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: RevisarSolicitudDto,
-    @GetUser() admin: User,
+    @Param('id', ParseUUIDPipe) id: string, // Validar UUID del parámetro
+    @Body() dto: RevisarSolicitudDto, // Obtener datos del cuerpo
+    @GetUser() admin: User, // Obtener usuario actual
   ) {
-    return this.solicitudesService.revisar(id, dto, admin);
+    return this.solicitudesService.revisar(id, dto, admin); // Llamar al servicio para revisar la solicitud
   }
 
-  @Get('mis-solicitudes')
-  findAllByUser(@GetUser() user: User) {
+  /**
+   *  Lista todas las solicitudes asociadas al usuario autenticado.
+   * 
+   * @param user Usuario autenticado.
+   * @returns Lista de solicitudes del usuario.
+   * @throws BadRequestException si el usuario no tiene una empresa asociada.
+   * @see SolicitudesService.findAllByEmpresa 
+   */
+  @Get('mis-solicitudes') // Endpoint para listar solicitudes del usuario
+  findAllByUser(@GetUser() user: User) { // Obtener usuario actual
 
-    if (!user.empresaId) {
-    throw new BadRequestException('El usuario no tiene una empresa asociada');
+    if (!user.empresaId) { // Validar empresa
+    throw new BadRequestException('El usuario no tiene una empresa asociada'); // Error si no tiene empresa
   }
 
-    return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id);
+    return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id); // Llamar al servicio para listar solicitudes del usuario
   }
 }

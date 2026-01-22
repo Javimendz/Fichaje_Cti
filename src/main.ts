@@ -5,6 +5,19 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  /**
+   * Global timezone setting
+   * 
+   * Configura la zona horaria globalmente para la aplicación.
+   * setGlobalPrefix('api') establece un prefijo global para todas las rutas de la API.
+   * enableCors configura las políticas de CORS para permitir solicitudes desde el frontend.
+   * useGlobalPipes aplica tuberías de validación globalmente para validar y transformar las solicitudes entrantes.
+   * Estas configuraciones aseguran que la aplicación maneje correctamente las solicitudes y respuestas
+   * de acuerdo con las necesidades del proyecto.
+   * app.listen inicia el servidor en el puerto especificado en las variables de entorno o en el puerto 3000 por defecto.
+   * @see https://docs.nestjs.com/techniques/security#global-prefix
+   * 
+   */
   process.env.TZ = 'Europe/Madrid';
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api')

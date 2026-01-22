@@ -7,75 +7,94 @@ import { Horario } from 'schedules/entities/horario.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 
-@Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+/**
+ * User Entity
+ *  Representa a un usuario en el sistema con sus propiedades y relaciones.
+ * Contiene información personal, credenciales de seguridad, estado de la cuenta,
+ * y relaciones con otras entidades como Empresa, Horario, Jornadas y Ausencias.
+ * Define las columnas de la tabla 'users' en la base de datos.
+ * 
+ * @entity 'users' define el nombre de la tabla en la base de datos.
+ * @see Empresa para la relación con la empresa a la que pertenece el usuario.
+ * @see Horario para la relación con el horario asignado al usuario.
+ * @see Jornada para la relación con las jornadas laborales del usuario.  
+ * @see Ausencia para la relación con las ausencias del usuario.
+ * @role UserRole define los posibles roles que un usuario puede tener en el sistema.
+ * @metadata createdAt y updatedAt para auditoría de registros.
+ *  
+ */
+@Entity('users') // Nombre de la tabla en la base de datos
+export class User { // Definición de la entidad User
+  // --- IDENTIFICADOR ---
+  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
+  id: string; // Identificador único del usuario
 
+  // --- DATOS PERSONALES ---
+  @Column({ type: 'text', unique: true, nullable: true }) // Email único, puede ser nulo
+  email: string | null; // Correo electrónico del usuario
 
-  @Column({ type: 'text', unique: true, nullable: true })
-email: string | null;
+  @Column({ type: 'text', nullable: true }) // Nombre puede ser nulo
+  nombre: string | null; // Nombre del usuario
 
-  @Column({ type: 'text', nullable: true })
-  nombre: string | null;
+  @Column({ type: 'text', nullable: true }) // Apellidos pueden ser nulos
+  apellidos: string | null; // Apellidos del usuario
 
-  @Column({ type: 'text', nullable: true })
-  apellidos: string | null;
+  @Column({ type: 'text', unique: true, nullable: true }) // DNI único, puede ser nulo
+  dni: string | null; // Documento Nacional de Identidad
 
-  @Column({ type: 'text', unique: true, nullable: true })
-  dni: string | null;
+  @Column({ type: 'text', unique: true }) // Teléfono único
+  telefono: string; // Número de teléfono del usuario
 
-  @Column({ type: 'text', unique: true })
-  telefono: string;
+  // --- SEGURIDAD Y ESTADO ---
+  @Column({ type: 'text', nullable: false, select: false })  // password no se selecciona por defecto 
+  password: string | null; // Contraseña del usuario (hashed)
 
-  @Column({ type: 'text', nullable: true, select: false }) // Importante para auth.service
-  password: string | null;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER }) // Rol del usuario con valor por defecto WORKER
+  rol: UserRole; // Rol del usuario en el sistema
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER })
-  rol: UserRole;
+  @Column({ type: 'boolean', default: false }) // Verificación por defecto es false
+  isVerified: boolean; // Indica si el usuario ha verificado su cuenta
 
-  @Column({ type: 'boolean', default: false })
-  isVerified: boolean;
+  @Column({ type: 'boolean', default: true }) // Cuenta activa por defecto
+  isActive: boolean; // Indica si la cuenta del usuario está activa
 
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  // --- GESTIÓN DE TOKENS Y OTP ---
+  @Column({ type: 'jsonb', nullable: true }) // Almacena código OTP y su expiración
+  codigoOTP: { codigo: string; expiracion: Date } | null; // Código OTP para verificación
+ 
+  @Column({ type: 'timestamp', nullable: true }) // Fecha de expiración del código de acceso
+  codigoExpiraEn: Date | null; // Fecha de expiración del código de acceso
 
-  @Column({ type: 'jsonb', nullable: true })
-  codigoOTP: { codigo: string; expiracion: Date } | null;
+  @Column({  // Fecha de expiración del token de restablecimiento de contraseña
+    name: 'token_expira_en',  // Nombre personalizado de la columna
+    type: 'timestamp',  // Tipo de dato timestamp
+    nullable: true  // Permite valores nulos
+  })
+  tokenExpiraEn: Date | null; // Fecha de expiración del token de restablecimiento de contraseña
 
-  @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn: Date | null;
+  // --- RELACIONES: EMPRESA ---
+  @Column('uuid', { name: 'empresa_id', nullable: true }) // Columna física en la DB
+  empresaId: string | null; // ID de la empresa a la que pertenece el usuario
 
- @Column({ 
-  name: 'token_expira_en', // Nombre exacto en la tabla SQL
-  type: 'timestamp', 
-  nullable: true 
-})
-tokenExpiraEn: Date | null;
+  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa
+  @JoinColumn({ name: 'empresa_id' }) // Llave foránea personalizada
+  empresa: Empresa | null; // Empresa a la que pertenece el usuario
 
-  @Column('uuid', { name: 'empresa_id', nullable: true })
-  empresaId: string | null;
+  // --- RELACIONES: PLANIFICACIÓN Y REGISTROS ---
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true }) // Relación con Horario
+  @JoinColumn({ name: 'horario_id' }) // Llave foránea personalizada
+  horario: Horario | null; // Horario asignado al usuario
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresa | null;
+  @OneToMany(() => Jornada, (j) => j.usuario) // Relación con Jornadas
+  jornadas: Jornada[]; // Jornadas laborales del usuario
 
-  /** Horario tiene tal tal */
-  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
-  @JoinColumn({ name: 'horario_id' })
-  horario: Horario | null;
+  @OneToMany(() => Ausencia, (a) => a.usuario) // Relación con Ausencias
+  ausencias: Ausencia[]; // Ausencias del usuario
 
-  @OneToMany(() => Jornada, (j) => j.usuario)
-  jornadas: Jornada[];
+  // --- METADATOS / AUDITORÍA ---
+  @CreateDateColumn() // Fecha de creación automática
+  createdAt: Date; // Fecha de creación del registro
 
-  @OneToMany(() => Ausencia, (a) => a.usuario)
-  ausencias: Ausencia[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-  
-   
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @UpdateDateColumn() // Fecha de actualización automática
+  updatedAt: Date; // Fecha de la última actualización del registro
 }

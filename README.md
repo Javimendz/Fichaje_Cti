@@ -25,6 +25,13 @@ La base de datos se borra cada vez, `EJECUTAR SEED` y `OBTENER TOKEN` de nuevo.
 **app.module.ts / dropSchema:** **`true`** — Poner a **`false`** para no borrar la BBDD.
 
 
+# FLUJO
+
+Ejecutar Seed -> Login SuperAdmin -> SuperAdmin crea Empresa/Admin 
+Login Admin -> Admin Crea Horario -> Admin da de Alta Trabajador ->
+Login Trabajador -> Check-in -> Check-out -> Crear Solicitud -> Obtener Solicitud -> Admin Aprueba solicitud
+
+
 
 # Endpoints
 
@@ -252,8 +259,80 @@ http://localhost:3000/api/allowed-phones
 10. Comprobar si admin solo ve su empresa
 
 ```
+Token - Worker
 
 Get - http://localhost:3000/api/empresas
+
+Body - none
+
+```
+
+11. Aprobar solicitud - Admin
+
+Requerido el token del admin.
+
+```
+
+Patch - http://localhost:3000/api/solicitudes/AQUI-PONER-ID-SOLICITUD/revisar
+
+Body - Json
+
+{
+  "estado": "APROBADA",
+  "comentarioAdmin": "Disfruta tus vacaciones"
+}
+
+```
+
+12. Solicitudes - Solicitar
+
+Crear solicitud para workers
+
+```
+Token Requerido
+
+Post - http://localhost:3000/api/solicitudes
+
+Body - Json
+
+Tipos solicitud: 
+  VACACIONES = 'VACACIONES',
+  ENFERMEDAD = 'ENFERMEDAD',
+  PERMISO = 'PERMISO',
+  ASUNTOS_PROPIOS = 'ASUNTOS_PROPIOS',
+
+{
+  "tipo": "ENFERMEDAD",
+  "fechaInicio": "2026-10-03",
+  "fechaFin": "2026-11-15",
+  "motivo": "Vacaciones de verano"
+}
+
+
+```
+
+13. Obtener todas las solicitudes 
+
+Para ver todas las solicitudes pendientes.
+
+```
+Token requerido.
+
+Get - http://localhost:3000/api/solicitudes/mis-solicitudes
+
+Body - none.
+
+```
+
+14. Obtener trabajador
+
+Obtiene el trabajador por id
+
+```
+
+Token requerido
+
+Patch - http://localhost:3000/api/users/ID-WORKER
 
 Body - none
 

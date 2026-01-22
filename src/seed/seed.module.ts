@@ -7,7 +7,18 @@ import { AllowedPhonesModule } from '../allowed-phones/allowed-phones.module';
 import { EmpresasService } from 'empresas/empresas.service';
 import { EmpresasModule } from 'empresas/empresas.module';
 import { AuthModule } from 'auth/auth.module';
-
+/**
+ * SeedModule
+ * Módulo encargado de la inicialización de datos básicos en el sistema.
+ * Importa los módulos necesarios para la gestión de usuarios,
+ * teléfonos permitidos y empresas.
+ * Proporciona el SeedsService para ejecutar el seed
+ * y el SeedsController para exponer un endpoint que permita
+ * disparar la inicialización de datos.
+ * @see SeedsService para la lógica de inicialización de datos.
+ * @see SeedsController para el endpoint de inicialización.
+ * 
+ */
 @Module({
   imports: [UsersModule, AllowedPhonesModule, EmpresasModule, AuthModule], 
   controllers: [SeedsController], // <- Controller incluido

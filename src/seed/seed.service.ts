@@ -8,15 +8,29 @@ import { UserRole } from "auth/roles.enum";
 import { EmpresasService } from '../empresas/empresas.service';
 import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
+/**
+ * SeedsService
+ * Servicio encargado de la inicialización de datos básicos en el sistema.
+ * Proporciona un método para ejecutar el seed que crea usuarios esenciales
+ * como el SuperAdmin, necesario para arrancar la aplicación.
+ * Métodos principales:
+ * - runSeed: Crea el usuario SuperAdmin si no existe.
+ * @see User para la entidad de usuarios.
+ * @see EmpresasService para la gestión de empresas.
+ * @see AllowedPhonesService para la gestión de teléfonos permitidos.
+ * @see https://docs.nestjs.com/providers
+ * //
+ *
+ */
+
 @Injectable()
 export class SeedsService {
   private readonly logger = new Logger(SeedsService.name);
 
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    private readonly empresasService: EmpresasService,
-    private readonly allowedPhonesService: AllowedPhonesService,
+    @InjectRepository(User) // Inyección del repositorio de User
+    private readonly userRepository: Repository<User>, // Repositorio para operaciones CRUD en User
+   
   ) {}
 
 
@@ -25,13 +39,11 @@ export class SeedsService {
     try {
       this.logger.log('Iniciando ejecución de Seed...');
 
-      // 1️⃣ EMPRESA BASE
       let empresaBase = await this.empresasService.findByName('Empresa Demo');
       if (!empresaBase) {
         empresaBase = await this.empresasService.create({ nombre: 'Empresa Demo' });
       }
 
-      // 2️⃣ SUPERADMIN (Login por EMAIL)
       const superAdminEmail = 'superadmin@cti.com';
       let superAdmin = await this.userRepository.findOneBy({ email: superAdminEmail });
 
@@ -51,7 +63,6 @@ export class SeedsService {
         this.logger.log('Superadmin creado.');
       }
 
-      // 3️⃣ ADMINISTRADOR DE EMPRESA (Login por EMAIL)
       const adminEmail = 'admin@empresa.com';
       let admin = await this.userRepository.findOneBy({ email: adminEmail });
 
@@ -71,7 +82,6 @@ export class SeedsService {
         this.logger.log('Administrador de empresa creado.');
       }
 
-      // 4️⃣ TRABAJADOR (Login por DNI)
       const workerDni = '22222222W';
       let worker = await this.userRepository.findOneBy({ dni: workerDni });
 
@@ -106,35 +116,43 @@ export class SeedsService {
     }
   }*/
 
-
+/**
+ *  runSeed
+ *  Método para ejecutar la inicialización de datos básicos en el sistema.
+ * Crea un usuario SuperAdmin si no existe, necesario para arrancar la aplicación.  
+ *   
+ * @returns Mensaje indicando el resultado de la operación.
+ * @throws InternalServerErrorException si ocurre un error durante la ejecución del seed.
+ * @see User para la entidad de usuarios.  
+ */
 
 async runSeed() {
   try {
     this.logger.log('Iniciando ejecución de Seed...');
 
     // 1. SUPERADMIN (Único usuario necesario para arrancar el sistema)
-    const superAdminEmail = 'superadmin@cti.com';
-    let superAdmin = await this.userRepository.findOneBy({ email: superAdminEmail });
+    const superAdminEmail = 'superadmin@cti.com'; // Email de login
+    let superAdmin = await this.userRepository.findOneBy({ email: superAdminEmail }); // Buscar por email
 
-    if (!superAdmin) {
-      const superAdminData = {
-        email: superAdminEmail,
-        dni: '00000000S',
-        telefono: '+34600999999',
-        nombre: 'Super Usuario Global',
-        password: await bcrypt.hash('superpassword', 10),
-        rol: UserRole.SUPERADMIN,
+    if (!superAdmin) { // Si no existe, lo creamos
+      const superAdminData = { // Datos del SuperAdmin
+        email: superAdminEmail, // Identificador para login
+        dni: '00000000S', // DNI ficticio
+        telefono: '+34600999999', // Teléfono ficticio
+        nombre: 'Super Usuario Global', // Nombre del SuperAdmin
+        password: await bcrypt.hash('superpassword', 10), // Contraseña hasheada
+        rol: UserRole.SUPERADMIN, // Rol de SuperAdmin
         empresa: null, // El SuperAdmin no pertenece a ninguna empresa específica
-        isVerified: true,
-        isActive: true,
+        isVerified: true, // Cuenta verificada
+        isActive: true, // Cuenta activa
       };
-      await this.userRepository.save(this.userRepository.create(superAdminData));
-      this.logger.log('Superadmin creado con éxito.');
+      await this.userRepository.save(this.userRepository.create(superAdminData)); // Guardar en la base de datos
+      this.logger.log('Superadmin creado con éxito.'); // Log de creación
     }
 
-    return { message: 'Sistema inicializado. Use el SuperAdmin para crear empresas.' };
+    return { message: 'Sistema inicializado. Use el SuperAdmin para crear empresas.' }; // Mensaje de éxito
   } catch (error) {
-    throw new InternalServerErrorException('Fallo al ejecutar el Seed');
+    throw new InternalServerErrorException('Fallo al ejecutar el Seed'); // Error genérico
   }
 }
 

@@ -2,6 +2,19 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColum
 import { Horario } from "./horario.entity";
 import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
 
+/**
+ * DistribucionDia Entity
+ * Representa la distribución de horas para un día específico dentro de un horario.
+ * Contiene información sobre el día de la semana,
+ * las horas asignadas y las franjas horarias asociadas.
+ * Define las columnas de la tabla 'distribucion_dia' en la base de datos.
+ * @entity 'distribucion_dia' define el nombre de la tabla en la base de datos.
+ * @see Horario para la relación con el horario al que pertenece este día de distribución.
+ * @see FranjaHoraria para la relación con las franjas horarias de este día.
+ * @metadata para auditoría de registros.
+ *  
+ * 
+ */
 @Entity()   
 export class DistribucionDia {
 

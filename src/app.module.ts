@@ -50,7 +50,7 @@ import { SolicitudesModule } from './solicitud/solicitud.module';
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
         synchronize: true,
-        dropSchema: true,  
+        dropSchema: false,  
         extra: {
            timezone: 'UTC', 
         },

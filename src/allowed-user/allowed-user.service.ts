@@ -1,5 +1,5 @@
 // src/allowed-user/allowed-user.service.ts
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AllowedUser } from './entities/allowed-user.entity';
@@ -7,6 +7,7 @@ import { CreateAllowedUserDto } from './dto/create-allowed-user.dto';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
 import * as bcrypt from 'bcrypt';
+import { Horario } from 'schedules/entities/schedules.entity';
 
 @Injectable()
 export class AllowedUserService {
@@ -132,27 +133,56 @@ async findAll() {
 }
 
 async assignSchedule(
-  userId: string, 
+  allowedUserId: string, 
   horarioId: string, 
   empresaId: string | null 
 ) {
-  // 1. Buscamos en la tabla de AllowedUser usando la columna directa empresaId
-  const user = await this.allowedUserRepository.findOne({
+  // 1. Buscar el registro en AllowedUser
+  const allowedUser = await this.allowedUserRepository.findOne({
     where: { 
-      id: userId, 
-      // Si hay empresaId (Admin), filtramos. Si es null (SuperAdmin), no.
+      id: allowedUserId, 
       ...(empresaId && { empresaId: empresaId }) 
     }
   });
 
-  if (!user) {
+  if (!allowedUser) {
     throw new NotFoundException('Trabajador no encontrado en su empresa');
   }
 
-  // 2. Asignar el horario. 
-  // Verifica si tu entidad usa 'horarioId' o el objeto 'horario'
-  user.horarioId = horarioId; 
-  
-  return await this.allowedUserRepository.save(user);
+  // 2. Buscar el usuario correspondiente en la tabla User (Login) por email
+  const userRepository = this.dataSource.getRepository(User);
+  const user = await userRepository.findOneBy({ email: allowedUser.email });
+
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    // Creamos el objeto de relación para que TypeORM lo procese
+    const horarioRelacion = { id: horarioId } as Horario;
+
+    // Asignamos a la propiedad 'horario' de tus entidades
+    allowedUser.horario = horarioRelacion; 
+    if (user) {
+      user.horario = horarioRelacion;
+    }
+
+    await queryRunner.manager.save(allowedUser);
+    if (user) {
+      await queryRunner.manager.save(user);
+    }
+    
+    await queryRunner.commitTransaction();
+    
+    return { 
+      message: 'Horario asignado y sincronizado correctamente', 
+      horarioId 
+    };
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw new InternalServerErrorException('Error al sincronizar el horario en las tablas');
+  } finally {
+    await queryRunner.release();
+  }
 }
 }

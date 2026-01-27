@@ -11,10 +11,9 @@
 4. Cambiar las variables de entorno
 5. Instalar cors ``` yarn add cors ```
 6. Instalar ``` yarn add class-transformer class-validator ```
-6. Levantar la base de datos.
+7. Levantar la base de datos.
 
-Falta implementar obtener todas las solicitudes para el admin
-aqui tienes el cambio
+
 
 ```
   docker-compose up -d
@@ -22,12 +21,12 @@ aqui tienes el cambio
 ```
 
 
-7. Dependencias Class-validator y Class-Transformer
+8. Dependencias Class-validator y Class-Transformer
 
 ```
 yarn add class-validator class-transformer
 ```
-8. Levantar: ``` yarn start:dev ```
+9. Levantar: ``` yarn start:dev ```
 
 La base de datos se borra cada vez, `EJECUTAR SEED` y `OBTENER TOKEN` de nuevo.
 

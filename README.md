@@ -14,6 +14,7 @@
 6. Levantar la base de datos.
 
 Falta implementar obtener todas las solicitudes para el admin
+aqui tienes el cambio
 
 ```
   docker-compose up -d

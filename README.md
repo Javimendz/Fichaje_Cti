@@ -10,7 +10,10 @@
 3. Clonar el archivo ``` .env.template ``` y renombrarlo a ``` .env ```
 4. Cambiar las variables de entorno
 5. Instalar cors ``` yarn add cors ```
+6. Instalar ``` yarn add class-transformer class-validator ```
 6. Levantar la base de datos.
+
+esto es una prueba
 
 ```
   docker-compose up -d

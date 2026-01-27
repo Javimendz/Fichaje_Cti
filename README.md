@@ -13,7 +13,7 @@
 6. Instalar ``` yarn add class-transformer class-validator ```
 7. Levantar la base de datos.
 
-
+Falta implementar obtener todas las solicitudes para el admin.
 
 ```
   docker-compose up -d

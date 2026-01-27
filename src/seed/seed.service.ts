@@ -1,12 +1,11 @@
 import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DeepPartial, Repository } from "typeorm";
+import {  Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
 
 import { User } from "auth/entities/user.entity";
 import { UserRole } from "auth/roles.enum";
-import { EmpresasService } from '../empresas/empresas.service';
-import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
+
 
 /**
  * SeedsService

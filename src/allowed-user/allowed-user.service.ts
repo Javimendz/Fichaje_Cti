@@ -131,16 +131,28 @@ async findAll() {
   });
 }
 
-async assignSchedule(userId: string, horarioId: string, empresaId: string) {
-    // Buscamos al trabajador filtrando por la empresa del admin logueado
-    const user = await this.allowedUserRepository.findOne({ 
-      where: { id: userId, empresaId } 
-    });
+async assignSchedule(
+  userId: string, 
+  horarioId: string, 
+  empresaId: string | null 
+) {
+  // 1. Buscamos en la tabla de AllowedUser usando la columna directa empresaId
+  const user = await this.allowedUserRepository.findOne({
+    where: { 
+      id: userId, 
+      // Si hay empresaId (Admin), filtramos. Si es null (SuperAdmin), no.
+      ...(empresaId && { empresaId: empresaId }) 
+    }
+  });
 
-    if (!user) throw new NotFoundException('Trabajador no encontrado en su empresa');
-
-    user.horarioId = horarioId; // Asignación directa a la columna física
-    return await this.allowedUserRepository.save(user);
+  if (!user) {
+    throw new NotFoundException('Trabajador no encontrado en su empresa');
   }
 
+  // 2. Asignar el horario. 
+  // Verifica si tu entidad usa 'horarioId' o el objeto 'horario'
+  user.horarioId = horarioId; 
+  
+  return await this.allowedUserRepository.save(user);
+}
 }

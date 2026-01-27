@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SchedulesService } from './schedules.service';
 import { SchedulesController } from './schedules.controller';
 // Importar las entidades necesarias
-import { Horario } from './entities/horario.entity';
+import { Horario } from './entities/schedules.entity';
 import { DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'franja-horaria/entities/franja-horaria.entity';
 // Importar el módulo AuthModule para la autenticación

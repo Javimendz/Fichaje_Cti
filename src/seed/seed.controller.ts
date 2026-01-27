@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UnauthorizedException, UseGuards, Headers } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
@@ -19,14 +19,19 @@ import { SeedsService } from './seed.service';
  * 
  */
 //Comentar para pruebas, DESCOMENTAR EN PRODUCCIÓN
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+//@UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('seeds')
 export class SeedsController {
   constructor(private readonly seedsService: SeedsService) {}
 
+  
   @Post('run') // Endpoint para ejecutar el seed
   @Roles(UserRole.SUPERADMIN) // solo admin puede ejecutar seeds // En producción, cambiar a SUPERADMIN
-  async runSeed() {
+async runSeed(@Headers('x-seed-key') key: string) {
+  if (key !== process.env.SEED_SECRET_KEY) {
+    throw new UnauthorizedException('No tienes permiso');
+  }
     return this.seedsService.runSeed(); // Llamar al servicio para ejecutar el seed
   }
+
 }

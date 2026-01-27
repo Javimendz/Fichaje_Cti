@@ -3,7 +3,7 @@ import { Ausencia } from 'ausencia/entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
 import { Empresa } from 'empresas/entities/empresa.entity';
 import { Jornada } from 'jornada/entities/jornada.entity';
-import { Horario } from 'schedules/entities/horario.entity';
+import { Horario } from 'schedules/entities/schedules.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 

@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Horario } from "./horario.entity";
+import { Horario } from "./schedules.entity";
 import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
 
 /**
@@ -18,15 +18,20 @@ import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
 @Entity()   
 export class DistribucionDia {
 
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  // --- IDENTIFICADOR ---
+  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
+  id: string; // Identificador único del día de distribución
 
-  @Column()
-  diaSemana: string; 
+  // --- INFORMACIÓN DEL DÍA ---
+  @Column() // Nombre del día (Ej: 'Lunes', 'Martes', etc.)
+  diaSemana: string; // Día de la semana
 
-  @Column('float')
-  horasDia: number;
+  // Número de horas asignadas para este día
+  @Column('float') // Número de horas asignadas para este día
+  horasDia: number; // Horas asignadas en este día
 
+  // --- RELACIONES ---
+  // ============================================
   // 1. Quitamos el cascade de aquí. 
   // El cascade debe ir en el @OneToMany de la entidad Horario.
   @ManyToOne(() => Horario, (horario) => horario.distribuciones, { onDelete: 'CASCADE' })

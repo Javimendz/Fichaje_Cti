@@ -22,7 +22,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api')
    app.enableCors({
-    origin: 'http://localhost:3000', // frontend
+    origin: 'http://localhost:3001', // frontend
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

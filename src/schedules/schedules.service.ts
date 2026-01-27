@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Horario } from './entities/horario.entity';
+import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { User } from '../users/entities/user.entity';
 
@@ -27,6 +27,17 @@ export class SchedulesService { // Definición del servicio SchedulesService
    
   ) {}
 
+  /**
+   *  Crea un nuevo horario asociado a la empresa del administrador proporcionado.
+   *    
+   * @param dto Datos necesarios para crear el horario.
+   * @param admin Usuario administrador que crea el horario.
+   * @returns El horario creado.
+   * @throws BadRequestException si el administrador no tiene una empresa asignada
+   *         o si ocurre un error al guardar el horario.
+   * @see Horario 
+   * @see CreateHorarioDto  
+   */
 async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
   // 1. Validación de seguridad
   if (!admin.empresaId) { // El admin debe tener empresa asignada

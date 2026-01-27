@@ -1,6 +1,6 @@
 
 import { User } from "auth/entities/user.entity";
-import { Horario } from "schedules/entities/horario.entity";
+import { Horario } from "schedules/entities/schedules.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } from "typeorm";
 
 @Entity('empresas')

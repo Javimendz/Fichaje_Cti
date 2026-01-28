@@ -4,8 +4,8 @@ import { SeedsService } from './seed.service';
 import { SeedsController } from './seed.controller';
 import { UsersModule } from '../users/users.module';
 import { AllowedPhonesModule } from '../allowed-phones/allowed-phones.module';
-import { EmpresasService } from 'empresas/empresas.service';
-import { EmpresasModule } from 'empresas/empresas.module';
+import { EmpresasService } from 'empresa/empresas.service';
+import { EmpresasModule } from 'empresa/empresas.module';
 import { AuthModule } from 'auth/auth.module';
 /**
  * SeedModule

@@ -8,7 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
 import { SeedModule } from 'seed/seed.module';
-import { EmpresasModule } from './empresas/empresas.module';
+import { EmpresasModule } from './empresa/empresas.module';
 import { RolesModule } from './roles/roles.module';
 import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
 import { SchedulesModule } from './schedules/schedules.module';

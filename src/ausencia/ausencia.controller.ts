@@ -7,6 +7,8 @@ import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import { User } from 'auth/entities/user.entity';
 
+//Falta implementar Ausencias para el admin
+
 @Controller('ausencia')
 @UseGuards(JwtAuthGuard) // Protegemos el endpoint
 export class AusenciaController {

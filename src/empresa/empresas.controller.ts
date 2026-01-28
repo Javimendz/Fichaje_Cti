@@ -26,13 +26,13 @@ export class EmpresasController {
     return this.empresasService.createWithAdmin(createEmpresaConAdminDto);
   }
 
-  @Post()
+  @Post('crear-empresa')
   @Roles(UserRole.SUPERADMIN)
   create(@Body() createEmpresaDto: CreateEmpresaDto) {
     return this.empresasService.create(createEmpresaDto);
   }
 
-  @Get()
+  @Get('get-empresas')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   findAll(@GetUser() user: UserPayload) {
     return this.empresasService.findAll(user);

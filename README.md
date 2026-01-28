@@ -3,7 +3,7 @@
 </p>
 
 
-# Fichaje-Cti
+# FICHAJE-CTI
 
 1. Clonar proyecto
 2. ``` yarn install ```
@@ -35,13 +35,13 @@ La base de datos se borra cada vez, `EJECUTAR SEED` y `OBTENER TOKEN` de nuevo.
 
 # FLUJO
 
-Ejecutar Seed -> Login SuperAdmin -> SuperAdmin crea Empresa/Admin 
-Login Admin -> Admin Crea Horario -> Admin da de Alta Trabajador ->
-Login Trabajador -> Check-in -> Check-out -> Crear Solicitud -> Obtener Solicitud -> Admin Aprueba solicitud
+```Ejecutar Seed ```-> ```Login SuperAdmin``` -> ```SuperAdmin crea Empresa/Admin ```
+```Login Admin``` -> ```Admin Crea Horario``` -> ```Admin da de Alta Trabajador``` ->
+```Login Trabajador``` -> ```Check-in``` -> ```Check-out``` -> ```Crear Solicitud``` -> ```Obtener Solicitud``` -> ```Admin Aprueba solicitud```
 
 
 
-# Endpoints
+# Endpoints - Alguna funcionalidad.
 
 
 1. Ejecutar Seed
@@ -420,3 +420,77 @@ Patch - Json
 
 
  ```
+
+
+# Endpoints - Completos
+
+```
+🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
+POST        /api/seeds/run                         Inicializa el SuperAdmin y datos base.              Header: x-seed-key
+POST        /api/auth/login                        Inicio de sesión para todos los roles.              "{ email, password }"
+POST        /api/auth/send-otp                     Envía código de verificación al teléfono.           { telefono }
+POST        /api/auth/verify-otp                   Valida el código OTP recibido.                      "{ telefono, codigo }"
+
+```
+
+```
+🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
+POST        /api/empresas/setup                    Setup Inicial: Crea empresa + Admin principal.
+POST        /api/empresas/crear-empresa            Crea una nueva empresa (SuperAdmin).
+GET         /api/empresas/get-empresas             Obtiene listado de todas las empresas.
+GET         /api/empresas/:id                      Obtiene detalles de una empresa específica.
+PATCH       /api/empresas/:id                      Actualiza datos de una empresa.
+DELETE      /api/empresas/:id                      Elimina una empresa del sistema.
+
+```
+
+```
+🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
+POST        /api/allowed-user                      Registra/Pre-autoriza un nuevo trabajador.
+GET         /api/allowed-user                      Lista todos los trabajadores de la empresa.
+GET         /api/allowed-user/:id                  Obtiene la ficha de un trabajador.
+PATCH       /api/allowed-user/:id                  Actualiza información del trabajador.
+DELETE      /api/allowed-user/:id                  Borra un trabajador autorizado.
+PATCH       /api/allowed-user/:id/assign-schedule  Asignar Horario: Vincula horario a trabajador.
+
+```
+
+```
+🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
+POST        /api/solicitudes                       El trabajador crea una nueva solicitud.
+GET         /api/solicitudes/mis-solicitudes       El trabajador ve el estado de sus pedidos.
+GET         /api/solicitudes                       El Admin ve todas las solicitudes pendientes.
+PATCH       /api/solicitudes/:id/revisar           El Admin aprueba o rechaza una solicitud.
+
+```
+
+```
+🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
+POST        /api/schedules                        Crea un nuevo horario (Fijo o Rotativo).               "{ nombre, fechaInicio, fechaFin, tipo, distribuciones: [] }"
+GET         /api/schedules                        Lista todos los horarios de la empresa del admin.      Requiere Bearer Token
+GET         /api/schedules/:id                    Obtiene el detalle de un horario específico.           ID en formato UUID
+DELETE      /api/schedules/:id                    Elimina un horario (si no está asignado).              Requiere rol ADMIN
+
+```
+
+
+```
+🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
+POST        /api/franja-horaria                   Crea una franja (ej. Mañana: 08:00 - 14:00).           "{ inicio, fin, tipo, horarioId }"
+GET         /api/franja-horaria                   Obtiene todas las franjas registradas.                 Requiere Bearer Token
+GET         /api/franja-horaria/:id               Obtiene detalle de una franja específica.              ID en formato UUID
+PATCH       /api/franja-horaria/:id               Actualiza horas o tipo de una franja.                  "{ inicio, fin } (opcional)"
+DELETE      /api/franja-horaria/:id               Borra una franja horaria.                              Requiere rol ADMIN
+
+```
+
+```
+
+🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
+POST        /api/jornadas/check-in                Registra la entrada del trabajador.                    "{ latitud, longitud }"
+PATCH       /api/jornadas/check-out               Registra la salida y cierra la jornada.                No requiere body
+GET         /api/jornadas/status                  Indica si el usuario tiene una jornada abierta.        Requiere Bearer Token
+GET         /api/jornadas/historial               Lista todos los fichajes del trabajador.               Requiere Bearer Token
+GET         /api/jornadas/rango                   Filtra fichajes por rango de fechas.                   Query Params: ?inicio=...&fin=...
+
+```

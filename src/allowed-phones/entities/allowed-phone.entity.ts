@@ -1,5 +1,5 @@
 
-import { Empresa } from 'empresas/entities/empresa.entity';
+import { Empresa } from 'empresa/entities/empresa.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 
 @Entity('allowed_phones')

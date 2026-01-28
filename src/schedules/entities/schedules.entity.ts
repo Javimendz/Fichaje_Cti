@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { AllowedUser } from '../../allowed-user/entities/allowed-user.entity';
 import { DistribucionDia } from './distribucion-dia.entity';
-import { Empresa } from 'empresas/entities/empresa.entity';
+import { Empresa } from 'empresa/entities/empresa.entity';
 
 /**
  * Horario Entity

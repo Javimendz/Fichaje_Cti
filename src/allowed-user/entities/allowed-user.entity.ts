@@ -1,7 +1,7 @@
 // src/allowed-user/entities/allowed-user.entity.ts
 import { Ausencia } from "ausencia/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
-import { Empresa } from "empresas/entities/empresa.entity";
+import { Empresa } from "empresa/entities/empresa.entity";
 import { Jornada } from "jornada/entities/jornada.entity";
 import { Horario } from "schedules/entities/schedules.entity";
 import { 

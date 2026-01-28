@@ -1,5 +1,5 @@
 import { User } from "auth/entities/user.entity";
-import { Empresa } from "empresas/entities/empresa.entity"; // Asegúrate de importar tu entidad Empresa
+import { Empresa } from "empresa/entities/empresa.entity"; // Asegúrate de importar tu entidad Empresa
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('jornadas')

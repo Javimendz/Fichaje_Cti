@@ -1,5 +1,5 @@
 import { User } from 'auth/entities/user.entity';
-import { Empresa } from 'empresas/entities/empresa.entity';
+import { Empresa } from 'empresa/entities/empresa.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { RevisionSolicitud } from './revision-solicitud.entity';
 

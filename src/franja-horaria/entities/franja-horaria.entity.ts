@@ -1,10 +1,10 @@
 import { DistribucionDia } from "schedules/entities/distribucion-dia.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('franjas_horarias')
 export class FranjaHoraria {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   inicio: string; // Almacena "08:00"
@@ -12,7 +12,11 @@ export class FranjaHoraria {
   @Column()
   fin: string;    // Almacena "12:00"
 
-  @ManyToOne(() => DistribucionDia, (dist) => dist.franjas,{ onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'distribucionDia_id' })
+  @ManyToOne(() => DistribucionDia, (dist) => dist.franjas, { 
+  onDelete: 'CASCADE' 
+})
   distribucionDia: DistribucionDia;
+
+  @CreateDateColumn({ name: 'created_at', nullable: true }) // Fecha de creación automática
+  deletedAt: Date;
 }

@@ -1,26 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAttendanceDto } from './dto/create-attendance.dto';
-import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Attendance } from './entities/attendance.entity';
 
 @Injectable()
 export class AttendanceService {
-  create(createAttendanceDto: CreateAttendanceDto) {
-    return 'This action adds a new attendance';
+  constructor(
+    @InjectRepository(Attendance)
+    private readonly attendanceRepository: Repository<Attendance>,
+  ) {}
+
+  async create(usuarioId: number, presente: boolean, motivo?: string) {
+    const record = this.attendanceRepository.create({
+      usuarioId,
+      presente,
+      motivo,
+    });
+    return await this.attendanceRepository.save(record);
   }
 
-  findAll() {
-    return `This action returns all attendance`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} attendance`;
-  }
-
-  update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
-    return `This action updates a #${id} attendance`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} attendance`;
+  async findAllByUser(usuarioId: number) {
+    return await this.attendanceRepository.find({
+      where: { usuarioId },
+      order: { fecha: 'DESC' },
+    });
   }
 }

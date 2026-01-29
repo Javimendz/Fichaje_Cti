@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
 import { AllowedUserService } from './allowed-user.service';
 import { CreateAllowedUserDto } from './dto/create-allowed-user.dto';
 import { UpdateAllowedUserDto } from './dto/update-allowed-user.dto';
@@ -38,17 +38,17 @@ export class AllowedUserController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.allowedUserService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAllowedUserDto: UpdateAllowedUserDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateAllowedUserDto) {
     return this.allowedUserService.update(id, updateAllowedUserDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.allowedUserService.remove(id);
   }
 
@@ -56,8 +56,8 @@ export class AllowedUserController {
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async assignSchedule(
-    @Param('allowedUserId', ParseUUIDPipe) allowedUserId: string,
-    @Body('horarioId', ParseUUIDPipe) horarioId: string,
+    @Param('allowedUserId', ParseIntPipe) allowedUserId: number,
+    @Body('horarioId', ParseIntPipe) horarioId: number,
     @GetUser() admin: User,
   ) {
     // Definimos el alcance de la empresa según el rol

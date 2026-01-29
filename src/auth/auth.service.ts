@@ -184,7 +184,7 @@ console.log('Usuario después de guardar:', usuarioGuardado.tokenExpiraEn);
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  async update(id: string, updateAuthDto: Partial<User>) {
+  async update(id: number, updateAuthDto: Partial<User>) {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 

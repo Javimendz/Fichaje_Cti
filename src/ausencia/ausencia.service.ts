@@ -42,21 +42,25 @@ if (!usuario.empresaId) {
   
   }
 
-  async updateEstado(id: string, estado: AusenciaEstado) {
-    const ausencia = await this.ausenciaRepository.findOne({ where: { id } });
-    if (!ausencia) throw new NotFoundException('Ausencia no encontrada');
+async updateEstado(id: number, estado: AusenciaEstado, admin: User) {
+  console.log('DATOS DEL ADMIN RECIBIDOS:', admin); // <--- DEPURACIÓN
+  
+  const ausencia = await this.ausenciaRepository.findOne({ where: { id } });
+  if (!ausencia) throw new NotFoundException('Ausencia no encontrada');
 
-    ausencia.estado = estado;
-    
-    // Si se aprueba, los días totales pasan a ser consumidos
-    if (estado === AusenciaEstado.APROBADA) {
-      ausencia.diasConsumidos = ausencia.diasTotales;
-    }
+  const nombreAdmin = admin.nombre || 'Administrador'; // Fallback por si sigue fallando
+  
+  const updateData: any = { 
+  estado,
+  diasConsumidos: estado === AusenciaEstado.APROBADA ? ausencia.diasTotales : 0,
+  motivo: `${ausencia.motivo || ''} (Procesado por: ${nombreAdmin})`.trim()
+};
 
-    return await this.ausenciaRepository.save(ausencia);
-  }
+  await this.ausenciaRepository.update(id, updateData);
+  return this.findOne(id, admin);
+}
 
-  async findAllByUsuario(usuarioId: string) {
+  async findAllByUsuario(usuarioId: number) {
     return await this.ausenciaRepository.find({
       where: { usuario: { id: usuarioId } },
       order: { fechaInicio: 'DESC' }
@@ -70,7 +74,7 @@ if (!usuario.empresaId) {
     });
   }
 
-  async findOne(id: string, user: User) {
+  async findOne(id: number, user: User) {
     const ausencia = await this.ausenciaRepository.findOne({
       where: { id },
       relations: ['usuario'],
@@ -86,7 +90,7 @@ if (!usuario.empresaId) {
     return ausencia;
   }
 
-  async update(id: string, dto: UpdateAusenciaDto, user: User) {
+  async update(id: number, dto: UpdateAusenciaDto, user: User) {
     const ausencia = await this.findOne(id, user);
     
     // Si la ausencia ya está aprobada, no debería poder editarse
@@ -98,7 +102,7 @@ if (!usuario.empresaId) {
     return await this.ausenciaRepository.save(ausencia);
   }
 
-  async remove(id: string, user: User) {
+  async remove(id: number, user: User) {
     const ausencia = await this.findOne(id, user);
     
     if (ausencia.estado !== AusenciaEstado.PENDIENTE) {

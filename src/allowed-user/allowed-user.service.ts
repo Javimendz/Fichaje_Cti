@@ -29,7 +29,7 @@ async create(dto: CreateAllowedUserDto, admin: User) {
   await queryRunner.startTransaction();
 
   try {
-    const empresaIdValido: string = admin.empresaId;
+    const empresaIdValido: number = admin.empresaId;
 
     // 2. Encriptar la contraseña que el administrador escribió
     const hashedPassword = bcrypt.hashSync(dto.password, 10);
@@ -93,7 +93,7 @@ async create(dto: CreateAllowedUserDto, admin: User) {
 }
 
   // Listar solo los permitidos de la empresa del Admin logueado
-  async findAllByEmpresa(empresaId: string) {
+  async findAllByEmpresa(empresaId: number) {
     if (!empresaId) return []; // Los SuperAdmin podrían no tener empresaId
     
     return await this.allowedUserRepository.find({
@@ -102,7 +102,7 @@ async create(dto: CreateAllowedUserDto, admin: User) {
     });
   }
   
-  async findOne(id: string): Promise<AllowedUser> {
+  async findOne(id: number): Promise<AllowedUser> {
     const user = await this.allowedUserRepository.findOneBy({ id });
     
     if (!user) {
@@ -112,7 +112,7 @@ async create(dto: CreateAllowedUserDto, admin: User) {
     return user;
   }
 
-  async update(id: string, updateDto: any) {
+  async update(id: number, updateDto: any) {
     // Si se actualiza el email o dni, normalizarlos
     if (updateDto.email) updateDto.email = updateDto.email.toLowerCase().trim();
     if (updateDto.dni) updateDto.dni = updateDto.dni.toUpperCase().trim();
@@ -121,7 +121,7 @@ async create(dto: CreateAllowedUserDto, admin: User) {
     return this.findOne(id);
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     const user = await this.findOne(id);
     return await this.allowedUserRepository.remove(user);
   }
@@ -133,9 +133,9 @@ async findAll() {
 }
 
 async assignSchedule(
-  allowedUserId: string, 
-  horarioId: string, 
-  empresaId: string | null 
+  allowedUserId: number, 
+  horarioId: number, 
+  empresaId: number | null 
 ) {
   // 1. Buscar el registro en AllowedUser
   const allowedUser = await this.allowedUserRepository.findOne({

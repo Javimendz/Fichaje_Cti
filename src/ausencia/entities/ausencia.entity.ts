@@ -1,5 +1,5 @@
 // src/ausencia/entities/ausencia.entity.ts
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 
 export enum AusenciaEstado {
@@ -10,8 +10,8 @@ export enum AusenciaEstado {
 
 @Entity('ausencias')
 export class Ausencia {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
   tipo: string; 
@@ -30,10 +30,10 @@ export class Ausencia {
   estado: AusenciaEstado;
 
   @Column({ name: 'usuario_id' })
-  usuarioId: string;
+  usuarioId: number;
 
   @Column({ name: 'empresa_id' }) 
-  empresaId: string;
+  empresaId: number;
 
   @Column({ name: 'dias_consumidos', type: 'int', default: 0 })
   diasConsumidos: number;
@@ -41,8 +41,12 @@ export class Ausencia {
   @Column({ name: 'dias_totales', type: 'int', nullable: true })
   diasTotales: number;
 
-  @ManyToOne(() => User, (user) => user.id)
-  usuario: User;
+  @ManyToOne(() => User, (user) => user.ausencias, { 
+  nullable: false, 
+  onDelete: 'CASCADE' 
+})
+@JoinColumn({ name: 'usuario_id' })
+usuario: User;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

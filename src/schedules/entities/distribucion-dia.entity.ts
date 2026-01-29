@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Horario } from "./schedules.entity";
 import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
 
@@ -19,8 +19,8 @@ import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
 export class DistribucionDia {
 
   // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
-  id: string; // Identificador único del día de distribución
+  @PrimaryGeneratedColumn() // ID único generado automáticamente
+  id: number; // Identificador único del día de distribución
 
   // --- INFORMACIÓN DEL DÍA ---
   @Column() // Nombre del día (Ej: 'Lunes', 'Martes', etc.)
@@ -34,17 +34,20 @@ export class DistribucionDia {
   // ============================================
   // 1. Quitamos el cascade de aquí. 
   // El cascade debe ir en el @OneToMany de la entidad Horario.
-  @ManyToOne(() => Horario, (horario) => horario.distribuciones, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'horario_id' })
+  @ManyToOne(() => Horario, (horario) => horario.distribuciones, { 
+  onDelete: 'CASCADE' 
+})
+@JoinColumn({ name: 'horario_id' })
   horario: Horario;
 
-  // 2. Este sí está perfecto. Permite que al guardar el día se guarden sus franjas.
-  @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
-    cascade: true, 
-    onDelete: 'CASCADE'
-  })
+ @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
+  cascade: true 
+})
   franjas: FranjaHoraria[];
 
   @Column({ name: 'horario_id' })
-  horarioId: string;
+  horarioId: number;
+
+  @CreateDateColumn({ name: 'created_at', nullable: true }) // Fecha de creación automática
+  deletedAt: Date;
 }

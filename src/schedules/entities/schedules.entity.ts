@@ -6,7 +6,8 @@ import {
   CreateDateColumn, 
   UpdateDateColumn, 
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  DeleteDateColumn
 } from 'typeorm';
 import { AllowedUser } from '../../allowed-user/entities/allowed-user.entity';
 import { DistribucionDia } from './distribucion-dia.entity';
@@ -29,8 +30,8 @@ import { Empresa } from 'empresa/entities/empresa.entity';
 @Entity('horarios') // Nombre de la tabla en la base de datos
 export class Horario {
   // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   // --- INFORMACIÓN GENERAL ---
   @Column({ type: 'text' })
@@ -58,14 +59,13 @@ export class Horario {
   empresa: Empresa; // Empresa a la que pertenece el horario
 
   @Column({ name: 'empresa_id' }) // Columna física en la DB
-  empresaId: string; //
+  empresaId: number; //
 
   // Relación con los días (Lunes, Martes...)
   // cascade: true permite guardar el horario y sus días en una sola operación
-  @OneToMany(() => DistribucionDia, (distribucion) => distribucion.horario, { 
-    cascade: true,
-    eager: true // Carga automáticamente los días al consultar el horario
-  })
+@OneToMany(() => DistribucionDia, (dist) => dist.horario, { 
+  cascade: true 
+})
   distribuciones: DistribucionDia[]; // Días de distribución del horario
 
   // Relación con los usuarios asignados a este horario
@@ -80,4 +80,7 @@ export class Horario {
 
   @UpdateDateColumn({ name: 'updated_at' }) // Fecha de última actualización automática
   updatedAt: Date; // Fecha de la última actualización del registro
+
+  @CreateDateColumn({ name: 'deleted_at', nullable: true }) // Fecha de eliminación automática
+  deletedAt: Date;
 }

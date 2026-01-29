@@ -1,6 +1,7 @@
 import { 
   Controller, Get, Post, Body, Patch, Param, Delete, 
-  ParseUUIDPipe, UseGuards 
+  ParseUUIDPipe, UseGuards, 
+  ParseIntPipe
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -9,7 +10,7 @@ import { CreateFranjaHorariaDto } from './dto/create-franja-horaria.dto';
 import { UpdateFranjaHorariaDto } from './dto/update-franja-horaria.dto';
 
 @Controller('franja-horaria')
-@UseGuards(AuthGuard()) // 👈 Obliga a estar autenticado para usar cualquier ruta
+@UseGuards(AuthGuard()) // 
 export class FranjaHorariaController {
   constructor(private readonly franjaHorariaService: FranjasHorariasService) {}
 
@@ -25,20 +26,20 @@ export class FranjaHorariaController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) { // 👈 Validamos que sea un UUID
+  findOne(@Param('id', ParseIntPipe) id: number) { 
     return this.franjaHorariaService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseIntPipe) id: number, 
     @Body() updateFranjaHorariaDto: UpdateFranjaHorariaDto
   ) {
     return this.franjaHorariaService.update(id, updateFranjaHorariaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.franjaHorariaService.remove(id);
   }
 }

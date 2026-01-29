@@ -1,8 +1,8 @@
 import { UserRole } from "auth/roles.enum";
 
 export interface UserPayload {
-  userId: string;
+  userId: number;
   dni: string;
   rol: UserRole;
-  empresaId: string | null;
+  empresaId: number | null;
 }

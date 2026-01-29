@@ -13,5 +13,5 @@ export class CreateFranjaHorariaDto {
 
   @IsOptional() // 👈 Cambia @IsNotEmpty por @IsOptional
   @IsUUID()
-  distribucionDiaId?: string; 
+  distribucionDiaId?: number; 
 }

@@ -42,14 +42,14 @@ export class FranjasHorariasService {
   });
 }
 
-  async findAllByDistribucion(distId: string) {
+  async findAllByDistribucion(distId: number) {
     return await this.franjaRepository.find({
       where: { distribucionDia: { id: distId } },
       order: { inicio: 'ASC' } // Siempre útil devolver las horas ordenadas
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const franja = await this.franjaRepository.findOne({
       where: { id },
       relations: ['distribucionDia'],
@@ -58,7 +58,7 @@ export class FranjasHorariasService {
     return franja;
   }
 
-  async update(id: string, dto: Partial<CreateFranjaHorariaDto>) {
+  async update(id: number, dto: Partial<CreateFranjaHorariaDto>) {
     const franja = await this.findOne(id);
     
     // Si se actualizan horas, re-validar
@@ -72,7 +72,7 @@ export class FranjasHorariasService {
     return await this.franjaRepository.save(franja);
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     const franja = await this.findOne(id);
     await this.franjaRepository.remove(franja);
     return { message: 'Franja eliminada correctamente' };

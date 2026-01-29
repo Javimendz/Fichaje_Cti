@@ -26,8 +26,8 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMan
 @Entity('users') // Nombre de la tabla en la base de datos
 export class User { // Definición de la entidad User
   // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
-  id: string; // Identificador único del usuario
+  @PrimaryGeneratedColumn() // ID único generado automáticamente
+  id: number; // Identificador único del usuario
 
   // --- DATOS PERSONALES ---
   @Column({ type: 'text', unique: true, nullable: true }) // Email único, puede ser nulo

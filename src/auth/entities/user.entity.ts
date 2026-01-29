@@ -10,8 +10,8 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMan
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ type: 'text', unique: true, nullable: true })
 email: string | null;
@@ -46,8 +46,8 @@ email: string | null;
   @Column({ type: 'timestamp', nullable: true })
   codigoExpiraEn: Date | null;
 
-  @Column('uuid', { name: 'empresa_id', nullable: true })
-  empresaId: string | null;
+  @Column( { name: 'empresa_id', nullable: true })
+  empresaId: number | null;
 
   @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'empresa_id' })

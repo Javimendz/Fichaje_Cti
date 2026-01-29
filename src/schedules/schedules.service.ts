@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { User } from '../users/entities/user.entity';
+import { FranjaHoraria } from 'franja-horaria/entities/franja-horaria.entity';
+import { DistribucionDia } from './entities/distribucion-dia.entity';
 
 /**
  * SchedulesService
@@ -24,7 +26,10 @@ export class SchedulesService { // Definición del servicio SchedulesService
   constructor( 
     @InjectRepository(Horario) // Inyección del repositorio de Horario
     private readonly horarioRepository: Repository<Horario>, // Repositorio para operaciones CRUD en Horario
-   
+    @InjectRepository(DistribucionDia)
+    private readonly distribucionRepository: Repository<DistribucionDia>,
+    @InjectRepository(FranjaHoraria)
+    private readonly franjaRepository: Repository<FranjaHoraria>,
   ) {}
 
   /**
@@ -65,7 +70,7 @@ async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
  * @throws NotFoundException si no se encuentran horarios para la empresa.
  * @see Horario 
  */
-  async findAllByEmpresa(empresaId: string) { // Listar horarios por empresa
+  async findAllByEmpresa(empresaId: number) { // Listar horarios por empresa
     return await this.horarioRepository.find({ // Buscar horarios por empresa
       where: { empresaId, isActive: true }, // Filtrar por empresaId e isActive
       relations: ['distribuciones', 'distribuciones.franjas'], // Cargar relaciones necesarias
@@ -82,7 +87,7 @@ async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
    * @throws NotFoundException si el horario no existe o no pertenece a la empresa.
    * @see Horario
    */
-  async findOne(id: string, empresaId: string) { // Obtener un horario específico
+  async findOne(id: number, empresaId: number) { // Obtener un horario específico
     const horario = await this.horarioRepository.findOne({ // Buscar por ID y empresa
       where: { id, empresaId }, // Condición de búsqueda
       relations: ['distribuciones', 'distribuciones.franjas'] // Cargar relaciones necesarias
@@ -102,14 +107,23 @@ async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
    * @throws NotFoundException si el horario no existe o no pertenece a la empresa.
    * @see Horario
    */
-  async remove(id: string, empresaId: string) { // Eliminar un horario específico
-    const horario = await this.findOne(id, empresaId); // Reutilizar findOne para validar existencia
+// src/schedules/schedules.service.ts
 
-    // Eliminar el horario    
-    // Debido a onDelete: 'CASCADE' en las entidades, 
-    // se borrarán también sus días y franjas de la DB.
-    return await this.horarioRepository.remove(horario);
+async remove(id: number, empresaId: number) {
+  // 1. Verificamos que existe y pertenece a la empresa
+  const schedule = await this.horarioRepository.findOne({
+    where: { id, empresaId },
+  });
+
+  if (!schedule) {
+    throw new NotFoundException('Horario no encontrado');
   }
 
+  // 2. Borrado físico (delete en lugar de softDelete/softRemove)
+  // Al ejecutar delete, la DB ejecutará el ON DELETE CASCADE
+  await this.horarioRepository.delete(id);
+
+  return { message: 'Horario y todas sus dependencias eliminados físicamente' };
+}
 
 }

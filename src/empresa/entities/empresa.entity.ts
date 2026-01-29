@@ -5,8 +5,8 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } f
 
 @Entity('empresas')
 export class Empresa {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column('text', { unique: true })
   nombre: string;

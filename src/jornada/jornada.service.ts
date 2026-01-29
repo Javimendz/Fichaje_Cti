@@ -73,14 +73,14 @@ async checkOut(usuario: User) {
 }
 
 
-async findActiveJornada(usuarioId: string): Promise<Jornada | null> {
+async findActiveJornada(usuarioId: number): Promise<Jornada | null> {
   return await this.jornadaRepository.findOne({
     where: { usuario: { id: usuarioId }, fin: IsNull() }
   });
 }
 
 // 4. VER MI HISTORIAL (Usado por /historial)
-async getHistorial(usuarioId: string) {
+async getHistorial(usuarioId: number) {
   return await this.jornadaRepository.find({
     where: { usuario: { id: usuarioId } },
     order: { inicio: 'DESC' }
@@ -88,7 +88,7 @@ async getHistorial(usuarioId: string) {
 }
 
 // 5. HISTORIAL POR RANGO (Usado por /rango)
-async findAllByRange(usuarioId: string, desde: Date, hasta: Date) {
+async findAllByRange(usuarioId: number, desde: Date, hasta: Date) {
   return await this.jornadaRepository.find({
     where: { 
       usuario: { id: usuarioId },

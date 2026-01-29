@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseUUIDPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -117,7 +118,7 @@ export class UsersController { // Inyección de dependencias
  @Get(':id') 
  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
 async findOne(
-  @Param('id', ParseUUIDPipe) id: string, 
+  @Param('id', ParseIntPipe) id: number, 
   @GetUser() currentUser: UserPayload,
 ) {
   return this.usersService.findOneById(id, currentUser);
@@ -128,7 +129,7 @@ async findOne(
   @Patch(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
     @GetUser() currentUser: UserPayload,
   ) {
@@ -138,7 +139,7 @@ async findOne(
   @Delete(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async remove(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @GetUser() currentUser: UserPayload,
   ) {
     return this.usersService.remove(id, currentUser);

@@ -94,7 +94,7 @@ export class EmpresasService {
   }
 
   // 4. Buscar una (El que te faltaba)
-  async findOne(id: string, user: UserPayload) {
+  async findOne(id: number, user: UserPayload) {
     if (user.rol !== UserRole.SUPERADMIN && user.empresaId !== id) {
       throw new ForbiddenException('No tienes permiso');
     }
@@ -104,14 +104,14 @@ export class EmpresasService {
   }
 
   // 5. Actualizar (El que te faltaba)
-  async update(id: string, dto: UpdateEmpresaDto) {
+  async update(id: number, dto: UpdateEmpresaDto) {
     const empresa = await this.empresaRepository.preload({ id, ...dto });
     if (!empresa) throw new NotFoundException('Empresa no existe');
     return await this.empresaRepository.save(empresa);
   }
 
   // 6. Eliminar / Soft Delete (El que te faltaba)
-  async remove(id: string) {
+  async remove(id: number) {
     const empresa = await this.empresaRepository.findOneBy({ id });
     if (!empresa) throw new NotFoundException('Empresa no encontrada');
     empresa.isActive = false; // Marcamos como inactiva

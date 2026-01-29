@@ -141,7 +141,7 @@ export class UsersService {
    *  
    *  
    */
-  async findOneById(id: string, currentUser: UserPayload) { // Buscar usuario por ID
+  async findOneById(id: number, currentUser: UserPayload) { // Buscar usuario por ID
     const user = await this.userRepository.findOne({ // Buscar por ID
       where: { id }, // Condición
       relations: ['empresa'], // Cargar relación con empresa
@@ -174,7 +174,7 @@ export class UsersService {
    * @throws ForbiddenException si el usuario actual no tiene permisos para actualizar el usuario especificado.
    * 
    */
-  async update(id: string, dto: UpdateUserDto, currentUser: UserPayload) { // Actualizar usuario
+  async update(id: number, dto: UpdateUserDto, currentUser: UserPayload) { // Actualizar usuario
     const user = await this.findOneById(id, currentUser); // Reutilizar método con validación
 
     // Protección extra: Un Admin no puede promoverse a Superadmin
@@ -198,7 +198,7 @@ export class UsersService {
    * @param currentUser 
    * @returns 
    */
-  async remove(id: string, currentUser: UserPayload) { // Borrado lógico
+  async remove(id: number, currentUser: UserPayload) { // Borrado lógico
     const user = await this.findOneById(id, currentUser); // Reutilizar método con validación
     
     // Evitar que el Admin se borre a sí mismo accidentalmente

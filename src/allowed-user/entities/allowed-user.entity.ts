@@ -17,8 +17,8 @@ import {
 
 @Entity('allowed_users')
 export class AllowedUser {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   // ============================================
   // IDENTIFICACIÓN
@@ -104,17 +104,19 @@ export class AllowedUser {
   // ============================================
 
   @Column({ nullable: false })
-  empresaId: string;
+  empresaId: number;
 
   @ManyToOne(() => Empresa, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empresaId' })
   empresa: Empresa;
 
   @Column({ nullable: true, name: 'horario_id' })
-  horarioId?: string;
+  horarioId?: number;
 
-  @ManyToOne(() => Horario, { nullable: true })
-  @JoinColumn({ name: 'horario_id' })
+@ManyToOne(() => Horario, (horario) => horario.usuarios, { 
+  nullable: true, 
+  onDelete: 'SET NULL' 
+})  @JoinColumn({ name: 'horario_id' })
   horario?: Horario;
 
   @OneToMany(() => Jornada, (jornada) => jornada.usuario)

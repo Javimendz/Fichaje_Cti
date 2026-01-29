@@ -1,5 +1,5 @@
 // src/empresas/empresas.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -41,7 +41,7 @@ export class EmpresasController {
   @Get(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   findOne(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseIntPipe) id: number, 
     @GetUser() user: UserPayload
   ) {
     return this.empresasService.findOne(id, user);
@@ -50,7 +50,7 @@ export class EmpresasController {
   @Patch(':id')
   @Roles(UserRole.SUPERADMIN)
   update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseIntPipe) id: number, 
     @Body() updateEmpresaDto: UpdateEmpresaDto
   ) {
     return this.empresasService.update(id, updateEmpresaDto);
@@ -58,7 +58,7 @@ export class EmpresasController {
 
   @Delete(':id')
   @Roles(UserRole.SUPERADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.empresasService.remove(id);
   }
 }

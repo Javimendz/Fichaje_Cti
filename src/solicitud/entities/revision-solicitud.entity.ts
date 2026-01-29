@@ -17,8 +17,8 @@ import { User } from 'auth/entities/user.entity';
 @Entity('revisiones_solicitudes')
 export class RevisionSolicitud { // Definición de la entidad RevisionSolicitud
   // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
-  id: string; // Identificador único de la revisión
+  @PrimaryGeneratedColumn() // ID único generado automáticamente
+  id: number; // Identificador único de la revisión
 
   // --- DATOS DE LA REVISIÓN ---
 
@@ -28,7 +28,7 @@ export class RevisionSolicitud { // Definición de la entidad RevisionSolicitud
   solicitud: Solicitud; // Solicitud asociada a esta revisión
 
   @Column({ name: 'solicitud_id' }) // Columna para la clave foránea de la solicitud
-  solicitudId: string; // ID de la solicitud asociada
+  solicitudId: number; // ID de la solicitud asociada
 
   // Quién tomó la decisión
   @ManyToOne(() => User) // Relación con User (administrador que revisa)
@@ -36,7 +36,7 @@ export class RevisionSolicitud { // Definición de la entidad RevisionSolicitud
 admin: User; // Administrador que revisó la solicitud
 
   @Column({ name: 'revisado_por_id' }) // Columna para la clave foránea del administrador
-adminId: string; // ID del administrador que revisó la solicitud
+adminId: number; // ID del administrador que revisó la solicitud
 
   @Column({ type: 'text', nullable: true }) // Comentario opcional del administrador
   comentarioAdmin: string; // Comentarios del administrador sobre la revisión

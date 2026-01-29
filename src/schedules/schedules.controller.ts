@@ -9,6 +9,7 @@ import {
   UseGuards,
   BadRequestException,
   UnauthorizedException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SchedulesService } from './schedules.service';
@@ -48,7 +49,7 @@ export class SchedulesController {
 
   @Get(':id')
   findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
   ) {
     if (!user.empresaId) {
@@ -60,7 +61,7 @@ export class SchedulesController {
 
   @Delete(':id')
   remove(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
   ) {
     if (!user.empresaId) {

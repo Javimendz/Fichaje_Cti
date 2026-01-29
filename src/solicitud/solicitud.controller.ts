@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, UseGuards } from "@nestjs/common";
 import { RevisarSolicitudDto } from "./dto/revisar-solicitud.dto";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import { Roles } from "auth/decorators/roles.decorator";
@@ -46,7 +46,7 @@ export class SolicitudesController { // Inyección de dependencias
   @Patch(':id/revisar') // Endpoint para revisar una solicitud
   @Roles(UserRole.ADMIN) // Solo Admins
   revisar(
-    @Param('id', ParseUUIDPipe) id: string, // Validar UUID del parámetro
+    @Param('id', ParseIntPipe) id: number, // Validar UUID del parámetro
     @Body() dto: RevisarSolicitudDto, // Obtener datos del cuerpo
     @GetUser() admin: User, // Obtener usuario actual
   ) {

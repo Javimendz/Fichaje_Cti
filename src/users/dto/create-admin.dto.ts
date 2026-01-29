@@ -56,7 +56,7 @@ export class CreateAdminDto {
 
   // Relación obligatoria
   @IsNotEmpty()
-  empresaId: string;
+  empresaId: number;
 
   // Datos opcionales
   @IsOptional()

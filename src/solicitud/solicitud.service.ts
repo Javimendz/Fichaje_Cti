@@ -73,7 +73,7 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
  * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
  */
 
- async revisar(id: string, dto: RevisarSolicitudDto, admin: User) { // Revisión de una solicitud existente
+ async revisar(id: number, dto: RevisarSolicitudDto, admin: User) { // Revisión de una solicitud existente
   // 1. Buscar la solicitud con su revisión para validar
   const solicitud = await this.solicitudRepo.findOne({ // Buscar por ID
     where: { id }, // Condición de búsqueda
@@ -173,7 +173,7 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
  * 
  */
 
-  async findAllByEmpresa(empresaId: string, usuarioId?: string) { // Listar solicitudes por empresa y opcionalmente por usuario
+  async findAllByEmpresa(empresaId: number, usuarioId?: number) { // Listar solicitudes por empresa y opcionalmente por usuario
     const whereCondition: any = { empresaId }; // Condición base por empresa
     if (usuarioId) whereCondition.usuarioId = usuarioId; // Agregar filtro por usuario si se proporciona
 

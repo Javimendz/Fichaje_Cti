@@ -54,8 +54,8 @@ export enum TipoSolicitud {
 export class Solicitud { // Definición de la entidad Solicitud
  
   // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn('uuid') // ID único generado automáticamente
-  id: string; // Identificador único de la solicitud
+  @PrimaryGeneratedColumn() // ID único generado automáticamente
+  id: number; // Identificador único de la solicitud
 
   // --- DATOS DE LA SOLICITUD ---
   @Column({ type: 'enum', enum: TipoSolicitud }) // Tipo de solicitud
@@ -81,14 +81,14 @@ export class Solicitud { // Definición de la entidad Solicitud
   usuario: User; // Usuario que realiza la solicitud
 
   @Column() // Columna para la clave foránea del usuario
-  usuarioId: string; // ID del usuario que realiza la solicitud
+  usuarioId: number; // ID del usuario que realiza la solicitud
 
   @ManyToOne(() => Empresa) // Relación con Empresa
   @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
   empresa: Empresa; // Empresa asociada a la solicitud
 
   @Column({ name: 'empresa_id' }) // Columna para la clave foránea de la empresa
-  empresaId: string; // ID de la empresa asociada a la solicitud
+  empresaId: number; // ID de la empresa asociada a la solicitud
 
   @OneToOne(() => RevisionSolicitud, (revision) => revision.solicitud) // Relación uno a uno con RevisionSolicitud
   revision: RevisionSolicitud; // Revisión asociada a la solicitud

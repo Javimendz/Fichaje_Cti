@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors, ClassSerializerInterceptor, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, UseInterceptors, ClassSerializerInterceptor, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -28,7 +28,7 @@ export class AttendanceController {
 
   
   @Get('user/:id')
-  async getByUserId(@Param('id', ParseUUIDPipe) id: string) {
+  async getByUserId(@Param('id', ParseIntPipe) id: number) {
     return this.attendanceService.findAllByUser(id);
   }
 }

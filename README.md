@@ -40,6 +40,7 @@ La base de datos se borra cada vez, `EJECUTAR SEED` y `OBTENER TOKEN` de nuevo.
 ```Login Trabajador``` -> ```Check-in``` -> ```Check-out``` -> ```Crear Solicitud``` -> ```Obtener Solicitud``` -> ```Admin Aprueba solicitud```
 
 
+Aplicados cambios
 
 # Endpoints - Alguna funcionalidad.
 

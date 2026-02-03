@@ -4,7 +4,7 @@ import {
   IsNotEmpty, 
   IsOptional, 
   IsEmail, 
-  IsEnum, 
+  
   IsDateString, 
   IsNumber, 
   Matches, 
@@ -17,18 +17,17 @@ export class CreateAllowedUserDto {
   // IDENTIFICACIÓN (Obligatorios)
   // ============================================
   @IsString()
-  @IsNotEmpty({ message: 'El teléfono es obligatorio para el pre-registro' })
-  // Opcional: Validación de formato de teléfono (ej. España)
+  @IsNotEmpty({ message: 'El teléfono es obligatorio' })
   @Matches(/^[0-9]{9,15}$/, { message: 'El teléfono debe tener entre 9 y 15 dígitos' })
   telefono: string;
 
   @IsString()
   @IsOptional()
-  dni: string;
+  dni?: string;
 
   @IsEmail({}, { message: 'El formato del email no es válido' })
   @IsOptional()
-  email: string;
+  email?: string;
 
   // ============================================
   // DATOS PERSONALES
@@ -42,10 +41,11 @@ export class CreateAllowedUserDto {
   apellidos?: string;
 
   @IsString()
-  @MinLength(6)
+  @IsNotEmpty({ message: 'La contraseña no puede estar vacía' })
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   password: string;
 
-  @IsDateString({}, { message: 'La fecha de nacimiento debe ser una fecha válida (ISO8601)' })
+  @IsDateString({}, { message: 'Fecha inválida (ISO8601)' })
   @IsOptional()
   fechaNacimiento?: string;
 

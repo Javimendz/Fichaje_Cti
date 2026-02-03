@@ -36,12 +36,21 @@ async create(dto: CreateAllowedUserDto, admin: User) {
 
     // 3. Crear el registro en AllowedUser (Pre-autorización)
     const newAllowedUser = queryRunner.manager.create(AllowedUser, {
+      
       nombre: dto.nombre,
-      email: dto.email.toLowerCase().trim(),
+      email: dto.email?.toLowerCase().trim() || '',
       telefono: dto.telefono,
       password: hashedPassword,
-      dni: dto.dni.toUpperCase().trim(),
-      empresaId: empresaIdValido,
+      dni: dto.dni?.toUpperCase().trim() || 'PENDIENTE',      empresaId: empresaIdValido,
+      apellidos: dto.apellidos || '',
+      fechaNacimiento: dto.fechaNacimiento,
+      calle: dto.calle,
+      poblacion: dto.poblacion,
+      provincia:  dto.provincia,
+      pais: dto.pais,
+      categoria: dto.categoria,
+      actividad: dto.actividad,
+      diaPertenece: dto.diaPertenece,
       rol: UserRole.WORKER,
       isVerified: true, // Se marca como verificado porque el admin lo creó directamente
       isActive: true,
@@ -51,11 +60,9 @@ async create(dto: CreateAllowedUserDto, admin: User) {
 
     // 4. Crear el registro en la tabla User para que pueda hacer Login
     const newUser = queryRunner.manager.create(User, {
-      email: dto.email.toLowerCase().trim(),
-      password: hashedPassword, // Guardamos la versión encriptada
+      email: dto.email?.toLowerCase().trim() || '',      password: hashedPassword, // Guardamos la versión encriptada
       nombre: dto.nombre,
-      dni: dto.dni.toUpperCase().trim(),
-      telefono: dto.telefono,
+      dni: dto.dni?.toUpperCase().trim() || 'PENDIENTE',      telefono: dto.telefono,
       rol: UserRole.WORKER,
       empresaId: empresaIdValido,
       isActive: true,

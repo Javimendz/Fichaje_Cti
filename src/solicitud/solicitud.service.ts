@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 
 import { Solicitud, SolicitudStatus } from "./entities/solicitud.entity";
 import { RevisionSolicitud } from "./entities/revision-solicitud.entity";
@@ -48,19 +48,48 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
    * @see CreateSolicitudDto
    * @see Solicitud 
    */
-  async create(dto: CreateSolicitudDto, user: User) {
-    if (!user.empresaId) { // Validación de empresa
-      throw new BadRequestException('El usuario no tiene una empresa asignada.');   // Validación de empresa
-    }
-    
-    const solicitud = this.solicitudRepo.create({ // Crear instancia de Solicitud
-      ...dto, // Spread del DTO
-      usuarioId: user.id, // Asociar al usuario
-      empresaId: user.empresaId, // Asociar a la empresa del usuario
-    });
-    
-    return await this.solicitudRepo.save(solicitud); // Guardar en la base de datos
+ async create(dto: CreateSolicitudDto, user: User) {
+  // 1. Validación de seguridad (Empresa)
+  if (!user.empresaId) {
+    throw new BadRequestException('El usuario no tiene una empresa asignada.');
   }
+
+  // 2. Validación de Cronología (Inicio vs Fin)
+  const inicio = new Date(dto.fechaInicio);
+  const fin = new Date(dto.fechaFin);
+
+  if (inicio > fin) {
+    throw new BadRequestException('La fecha de fin no puede ser anterior a la fecha de inicio.');
+  }
+
+  // 3. Validación de Solapamiento (Overlap)
+  // Evita que el usuario pida dos solicitudes que choquen en el calendario
+  const solicitudExistente = await this.solicitudRepo.findOne({
+  where: {
+    usuarioId: user.id,
+    // 2. Usa el valor del Enum en lugar del string "RECHAZADA"
+    estado: Not(SolicitudStatus.RECHAZADA), 
+    fechaInicio: LessThanOrEqual(new Date(dto.fechaFin)),
+    fechaFin: MoreThanOrEqual(new Date(dto.fechaInicio)),
+  },
+  });
+
+  if (solicitudExistente) {
+    throw new BadRequestException(
+      `Ya tienes una solicitud para este periodo (${solicitudExistente.fechaInicio} al ${solicitudExistente.fechaFin})`
+    );
+  }
+
+  // 4. Creación y Persistencia
+  const solicitud = this.solicitudRepo.create({
+  ...dto,
+  usuario: user, 
+  empresa: { id: user.empresaId }, 
+  estado: SolicitudStatus.PENDIENTE, 
+});
+
+  return await this.solicitudRepo.save(solicitud);
+}
 
 /**
  *  Revisa una solicitud existente, actualizando su estado y creando una ausencia si es aprobada.
@@ -107,7 +136,7 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
       solicitudId: solicitud.id, // Asociar a la solicitud
       adminId: admin.id, // Asociar al admin que revisa
       estadoResultante: dto.estado, 
-      comentarios: dto.comentarioAdmin, // Comentarios opcionales
+      comentarioAdmin: dto.comentarioAdmin, // Comentarios opcionales
     });
     await queryRunner.manager.save(nuevaRevision); // Guardar la revisión en la transacción
 
@@ -116,9 +145,10 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
       // Cálculo de días para la tabla de ausencias
       const inicio = new Date(solicitud.fechaInicio); // Fecha de inicio
       const fin = new Date(solicitud.fechaFin); // Fecha de fin
-      const diffTime = Math.abs(fin.getTime() - inicio.getTime()); // Diferencia en milisegundos
-      const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Convertir a días (+1 para incluir ambos días)
-
+      inicio.setHours(0, 0, 0, 0);
+      fin.setHours(0, 0, 0, 0);
+      const diffTime = fin.getTime() - inicio.getTime();
+    const diasTotales = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
       // Crear la ausencia asociada
 
       const nuevaAusencia = queryRunner.manager.create(Ausencia, { // Crear instancia de Ausencia

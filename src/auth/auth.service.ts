@@ -28,64 +28,61 @@ export class AuthService {
   // LOGIN PRINCIPAL: DNI + Password
   // (Para Admin y Superadmin)
   // =====================================
-  async login(loginDto: LoginDto) {
-    const { email, dni, password } = loginDto;
+  // auth.service.ts
 
-    if (!email && !dni) {
-      throw new BadRequestException('Debe proporcionar email o dni');
-    }
+async login(loginDto: LoginDto) {
+  const { email, dni, password } = loginDto;
 
-    // 1. Construir la consulta con QueryBuilder para incluir la contraseña (select: false)
-    const queryBuilder = this.userRepository.createQueryBuilder('user')
-      .addSelect('user.password') // <--- CAMBIO CLAVE: Traemos la pass explícitamente
-      .leftJoinAndSelect('user.empresa', 'empresa'); // Opcional: traer relación empresa
-
-    if (email) {
-      queryBuilder.where('LOWER(user.email) = :email', { email: email.trim().toLowerCase() });
-    } else {
-      queryBuilder.where('UPPER(user.dni) = :dni', { dni: dni!.trim().toUpperCase() });
-    }
-
-    const user = await queryBuilder.getOne();
-
-    // 2. Validaciones básicas
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
-    if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
-
-    // 3. Comparar contraseña (user.password ahora sí existe)
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
-
-    // 4. Lógica de Tiempos
-    const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
-    const tiempoExpiracionString = isAdmin ? '12h' : '1h';
-    const horasMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
-    const fechaExpiracion = new Date(Date.now() + horasMilisegundos);
-
-    // 5. Actualizar la fecha de expiración en el usuario y GUARDAR
-    user.tokenExpiraEn = fechaExpiracion;
-    await this.userRepository.save(user);
-
-    // 6. Generar Payload y Token
-    // Usamos 'sub' para el ID del usuario como es estándar en JWT
-    const isSuperAdmin = user.rol === UserRole.SUPERADMIN;
-    const payload = { 
-      sub: user.id, 
-      rol: user.rol, 
-      ...( !isSuperAdmin && { empresaId: user.empresaId } ) 
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload, { expiresIn: tiempoExpiracionString }),
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        rol: user.rol,
-        identificadorUsado: email ? user.email : user.dni,
-        ...( !isSuperAdmin && { empresaId: user.empresaId } ),
-        tokenExpiraEn: fechaExpiracion.toISOString(),
-        expiresIn: tiempoExpiracionString
-      }
-    };
+  if (!email && !dni) {
+    throw new BadRequestException('Debe proporcionar email o dni');
   }
+
+  const queryBuilder = this.userRepository.createQueryBuilder('user')
+    .addSelect('user.password')
+    .leftJoinAndSelect('user.empresa', 'empresa');
+
+  if (email) {
+    queryBuilder.where('LOWER(user.email) = :email', { email: email.trim().toLowerCase() });
+  } else {
+    // Usamos el operador ? para evitar errores si dni es undefined
+    queryBuilder.where('UPPER(user.dni) = :dni', { dni: dni?.trim().toUpperCase() });
+  }
+
+  const user = await queryBuilder.getOne();
+
+  if (!user) throw new UnauthorizedException('Credenciales inválidas');
+  if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
+
+  // Lógica de Tiempos
+  const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
+  const tiempoExpiracionString = isAdmin ? '12h' : '1h';
+  const horasMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
+  const fechaExpiracion = new Date(Date.now() + horasMilisegundos);
+
+  // Actualización rápida: solo el campo necesario
+  await this.userRepository.update(user.id, { tokenExpiraEn: fechaExpiracion });
+
+  // Generar Payload
+  const payload = { 
+    sub: user.id, 
+    rol: user.rol, 
+    // Solo incluimos empresaId si no es SuperAdmin y el ID existe
+    ...(user.rol !== UserRole.SUPERADMIN && { empresaId: user.empresaId }) 
+  };
+
+  return {
+    access_token: this.jwtService.sign(payload, { expiresIn: tiempoExpiracionString }),
+    user: {
+      id: user.id,
+      nombre: user.nombre,
+      rol: user.rol,
+      identificadorUsado: email ? user.email : user.dni,
+      ...(user.rol !== UserRole.SUPERADMIN && { empresaId: user.empresaId }),
+      tokenExpiraEn: fechaExpiracion.toISOString(),
+    }
+  };
+}
 }

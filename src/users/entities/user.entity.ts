@@ -61,13 +61,7 @@ export class User { // Definición de la entidad User
   @Column({ type: 'boolean', default: true }) // Cuenta activa por defecto
   isActive: boolean; // Indica si la cuenta del usuario está activa
 
-  // --- GESTIÓN DE TOKENS Y OTP ---
-  @Column({ type: 'jsonb', nullable: true }) // Almacena código OTP y su expiración
-  codigoOTP: { codigo: string; expiracion: Date } | null; // Código OTP para verificación
- 
-  @Column({ type: 'timestamp', nullable: true }) // Fecha de expiración del código de acceso
-  codigoExpiraEn: Date | null; // Fecha de expiración del código de acceso
-
+  
   @Column({  // Fecha de expiración del token de restablecimiento de contraseña
     name: 'token_expira_en',  // Nombre personalizado de la columna
     type: 'timestamp',  // Tipo de dato timestamp

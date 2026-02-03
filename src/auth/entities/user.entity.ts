@@ -40,11 +40,7 @@ email: string | null;
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'jsonb', nullable: true })
-  codigoOTP: { codigo: string; expiracion: Date } | null;
-
-  @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn: Date | null;
+ 
 
   @Column( { name: 'empresa_id', nullable: true })
   empresaId: number | null;

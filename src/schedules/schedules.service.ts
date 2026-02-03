@@ -43,22 +43,31 @@ export class SchedulesService { // Definición del servicio SchedulesService
    * @see Horario 
    * @see CreateHorarioDto  
    */
-async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
+async create(dto: CreateHorarioDto, admin: User) {
   // 1. Validación de seguridad
-  if (!admin.empresaId) { // El admin debe tener empresa asignada
-    throw new BadRequestException('El administrador debe tener una empresa asignada'); // Validación de empresa
+  if (!admin.empresaId) {
+    throw new BadRequestException('El administrador debe tener una empresa asignada');
   }
 
-  // 2. Simplificación: TypeORM vincula los objetos anidados automáticamente
-  const horario = this.horarioRepository.create({ // Crear instancia de Horario
-    ...dto, // Spread del DTO
-    empresaId: admin.empresaId, // Asociar a la empresa del admin
+  // 2. Validación de integridad temporal
+  const inicio = new Date(dto.fechaInicio);
+  const fin = new Date(dto.fechaFin);
+  if (inicio >= fin) {
+    throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+  }
+
+  // 3. Mapeo explícito (opcional pero recomendado para control total)
+  const nuevoHorario = this.horarioRepository.create({
+    ...dto,
+    empresa: { id: admin.empresaId }, // Usar el objeto relación es más robusto que solo el ID
   });
 
   try {
-    return await this.horarioRepository.save(horario); // Guardar en la base de datos
+    // Al tener cascade: true, esto guardará Horario -> Distribuciones -> Franjas
+    return await this.horarioRepository.save(nuevoHorario);
   } catch (error) {
-    throw new BadRequestException('Error al guardar el horario: ' + error.message); // Manejo de errores
+    // Manejo de errores de base de datos (ej. violación de unicidad de nombre)
+    throw new BadRequestException('No se pudo guardar el esquema de horario. Verifique los datos.');
   }
 }
 
@@ -70,13 +79,19 @@ async create(dto: CreateHorarioDto, admin: User) { // Crear nuevo horario
  * @throws NotFoundException si no se encuentran horarios para la empresa.
  * @see Horario 
  */
-  async findAllByEmpresa(empresaId: number) { // Listar horarios por empresa
-    return await this.horarioRepository.find({ // Buscar horarios por empresa
-      where: { empresaId, isActive: true }, // Filtrar por empresaId e isActive
-      relations: ['distribuciones', 'distribuciones.franjas'], // Cargar relaciones necesarias
-      order: { createdAt: 'DESC' } // Ordenar por fecha de creación descendente
-    });
-  }
+  async findAllByEmpresa(empresaId: number) {
+  return await this.horarioRepository.find({
+    where: { empresaId, isActive: true },
+    relations: ['distribuciones', 'distribuciones.franjas'],
+    order: { 
+      createdAt: 'DESC',
+      distribuciones: { 
+        id: 'ASC', // O por día de la semana si tienes ese campo
+        franjas: { inicio: 'ASC' } // 👈 Muy útil: las horas salen ordenadas
+      }
+    }
+  });
+}
 
   /**
    *  Obtiene un horario específico por su ID y empresa.

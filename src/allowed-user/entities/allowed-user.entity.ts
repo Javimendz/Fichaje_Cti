@@ -80,8 +80,7 @@ export class AllowedUser {
   // ============================================
   // ESTADO DE ACTIVACIÓN
   // ============================================
-  @Column({ type: 'text', nullable: true })
-  codigoOTP?: string;
+  
 
   @Column({ type: 'timestamp', nullable: true })
   codigoExpiraEn?: Date;

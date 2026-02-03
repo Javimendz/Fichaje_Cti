@@ -1,13 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { UserBaseDto } from './user-base.dto';
+import { CreateAdminDto } from './create-admin.dto';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
-/**
- * UpdateUserDto
- *  DTO para la actualización de usuarios.
- * Extiende de CreateUserDto utilizando PartialType para hacer todos los campos opcionales.
- * Esto permite actualizar solo los campos necesarios sin requerir todos los datos del usuario.
- * 
- * @see UserBaseDto para los campos originales.
- * @extends PartialType<UserBaseDto>
- */
-export class UpdateUserDto extends PartialType(UserBaseDto) {}
+export class UpdateUserDto extends PartialType(CreateAdminDto) {
+  // Al extender de CreateAdminDto, si este ya tiene password, no necesitas hacer nada.
+  // Pero si no la tiene, agrégala aquí:
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
+}

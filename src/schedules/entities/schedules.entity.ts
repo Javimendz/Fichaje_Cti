@@ -81,6 +81,5 @@ export class Horario {
   @UpdateDateColumn({ name: 'updated_at' }) // Fecha de última actualización automática
   updatedAt: Date; // Fecha de la última actualización del registro
 
-  @CreateDateColumn({ name: 'deleted_at', nullable: true }) // Fecha de eliminación automática
-  deletedAt: Date;
+@DeleteDateColumn({ name: 'deleted_at', nullable: true })  deletedAt: Date;
 }

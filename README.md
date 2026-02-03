@@ -174,7 +174,7 @@ Ejemplo:
 
 ```
 
-6. Registrar empresa y su administrado.
+6. Registrar empresa y su administrador.
 
 ```
 POST  -  http://localhost:3000/api/empresas/setup
@@ -183,13 +183,17 @@ POST  -  http://localhost:3000/api/empresas/setup
 Body - Json
 
 {
-  "nombreEmpresa": "Taller paco Alfa S.A.",
+  "nombreEmpresa": "Servicios Logísticos Beta S.L.",
+  "cif": "B12345678",
+  "direccion": "Avenida de la Innovación, 42",
+  "poblacion": "Madrid",
+  "provincia": "Madrid",
+  "pais": "España",
+  "email": "contacto@beta.com",
   "admin": {
-    "email": "contac@beta-transportes.com",
-    "password": "adminpassword123",
-    "nombre": "Juanito Administrador",
-    "dni": "98765435Y",
-    "telefono": "+34611222334"
+    "telefono": "+34655999888",
+    "email": "admin@beta.com",
+    "password": "BetaPassword2026!"
   }
 }
 

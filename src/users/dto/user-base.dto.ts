@@ -3,25 +3,27 @@ import { Type } from 'class-transformer';
 
 export class UserBaseDto {
   @IsString()
-  @IsNotEmpty()
-  nombre: string;
+  @IsOptional()
+  nombre?: string;
 
   @IsOptional()
   @IsString()
   apellidos?: string;
 
+  // CAMBIO: Ahora es opcional para que el hijo decida si lo pide o no
+  @IsOptional() 
   @IsString()
-  @IsNotEmpty()
-  @Matches(/^[0-9]{8}[A-Z]$/, { message: 'DNI inválido' })
-  dni: string;
+  @Matches(/^[0-9]{8}[A-Z]$/i, { message: 'Formato de DNI inválido (Ej: 12345678Z)' })
+  dni?: string;
 
+  // CAMBIO: Ahora es opcional
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @Matches(/^\+?[0-9]{9,15}$/, { message: 'Teléfono inválido' })
-  telefono: string;
+  telefono?: string;
 
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: 'Email de usuario inválido' })
   email?: string;
 
   @IsOptional()
@@ -31,38 +33,33 @@ export class UserBaseDto {
   @IsOptional()
   @IsString()
   pais?: string;
-    
-   
-    @IsString()
-    @IsOptional()
-    calle?: string;
 
-    @IsString()
-    @IsOptional()
-    poblacion?: string;
+  @IsString()
+  @IsOptional()
+  calle?: string;
 
-    @IsString()
-    @IsOptional()
-    provincia?: string;
+  @IsString()
+  @IsOptional()
+  poblacion?: string;
 
-   
-    // --- CATEGORÍA Y ACTIVIDAD LABORAL ---
-    @IsString()
-    @IsOptional()
-    categoria?: string;
+  @IsString()
+  @IsOptional()
+  provincia?: string;
 
-    @IsString()
-    @IsOptional()
-    actividad?: string;
+  @IsString()
+  @IsOptional()
+  categoria?: string;
 
-    @IsNumber()
-    @IsOptional()
-    diaPertenece?: number;
+  @IsString()
+  @IsOptional()
+  actividad?: string;
 
-    // --- ROLES Y SEGURIDAD ---
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    rol?: string[];
+  @IsNumber()
+  @IsOptional()
+  diaPertenece?: number;
 
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  rol?: string[];
 }

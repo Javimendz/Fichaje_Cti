@@ -11,7 +11,6 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { CreateAdminDto } from "./dto/create-admin.dto";
 import { CreateWorkerDto } from "./dto/create-worker.dto";
 import { UserRole } from "auth/roles.enum";
-import { Empresa } from "empresa/entities/empresa.entity";
 import type { UserPayload } from "auth/interfaces/user-payload.interface"; 
 import { User } from "./entities/user.entity";
 import * as bcrypt from 'bcrypt';
@@ -54,14 +53,14 @@ export class UsersService {
     : await bcrypt.hash('Temporal123!', 10); // Contraseña por defecto si no viene
 
   // 4. Crear objeto compatible con la Entidad
-  const newUser = this.userRepository.create({
-    ...dto,
-    password: passwordHash,
-    rol: rolSolicitado as UserRole,
-    empresaId: empresaIdFinal, // Usamos la columna directa
-    isActive: true,
-    isVerified: true,
-  });
+ const newUser = this.userRepository.create({
+  ...dto,            // Campos generales (nombre, email, etc.)
+  password: passwordHash,
+  rol: rolSolicitado as UserRole,
+  empresaId: empresaIdFinal, // Esto pisa cualquier empresaId que viniera en el spread del dto
+  isActive: true,
+  isVerified: true,
+});
 
   try {
     return await this.userRepository.save(newUser);
@@ -112,17 +111,22 @@ export class UsersService {
   // ========================
   // ACTUALIZAR USUARIO
   // ========================
-  async update(id: number, dto: UpdateUserDto, currentUser: UserPayload) {
-    const user = await this.findOneById(id, currentUser);
+ async update(id: number, dto: UpdateUserDto, currentUser: UserPayload) {
+  const user = await this.findOneById(id, currentUser);
 
-    if (dto.rol && currentUser.rol !== UserRole.SUPERADMIN) {
-        delete dto.rol;
-    }
-
-    Object.assign(user, dto);
-    return await this.userRepository.save(user);
+  // 1. Protección de Rol
+  if (dto.rol && currentUser.rol !== UserRole.SUPERADMIN) {
+    delete dto.rol;
   }
 
+  // 2. Hashing de contraseña si viene en el update
+    if (dto.password) {
+      dto.password = await bcrypt.hash(dto.password, 10);
+    }
+
+  Object.assign(user, dto);
+  return await this.userRepository.save(user);
+}
   // ========================
   // ELIMINAR (SOFT DELETE)
   // ========================

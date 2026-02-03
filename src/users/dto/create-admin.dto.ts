@@ -35,14 +35,16 @@ export class CreateAdminDto extends UserBaseDto {
   // Datos obligatorios
  
 
- 
 
+
+  @IsEmail({}, { message: 'El email es obligatorio para el Admin' })
+  @IsNotEmpty()
+  declare email: string; // 'declare' soluciona el error de TypeScript
 
   @IsString()
-  @MinLength(8)
+  @IsNotEmpty()
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   password: string;
-
-  
 
   // Relación obligatoria
   @IsOptional()

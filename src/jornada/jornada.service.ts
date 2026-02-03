@@ -57,7 +57,7 @@ async checkIn(dto: CheckInDto, usuario: User) {
 }
 // FINALIZAR JORNADA (Check-out)
 // Cambiamos 'usuarioId: string' por 'usuario: User'
-async checkOut(usuario: User) {
+async checkOut(dto: CheckInDto, usuario: User) { // 👈 Añadimos el DTO para capturar GPS al salir
   const jornada = await this.jornadaRepository.findOne({
     where: { usuario: { id: usuario.id }, fin: IsNull() }
   });
@@ -66,12 +66,18 @@ async checkOut(usuario: User) {
     throw new BadRequestException('No hay jornada activa para cerrar.');
   }
 
-  jornada.fin = new Date();
-  jornada.total_minutos = Math.floor((jornada.fin.getTime() - jornada.inicio.getTime()) / 60000);
-  jornada.tipo = 'Salida';
+  const ahora = new Date();
+  jornada.fin = ahora;
+  // Guardamos también la ubicación de salida si se desea
+  jornada.latitud = dto.latitud; 
+  jornada.longitud = dto.longitud;
+  
+  // Cálculo de minutos exactos
+  jornada.total_minutos = Math.floor((ahora.getTime() - jornada.inicio.getTime()) / 60000);
+  jornada.tipo = 'Salida'; // Podrías usar un Enum aquí
+
   return await this.jornadaRepository.save(jornada);
 }
-
 
 async findActiveJornada(usuarioId: number): Promise<Jornada | null> {
   return await this.jornadaRepository.findOne({
@@ -89,12 +95,17 @@ async getHistorial(usuarioId: number) {
 
 // 5. HISTORIAL POR RANGO (Usado por /rango)
 async findAllByRange(usuarioId: number, desde: Date, hasta: Date) {
+  // Ajustamos 'hasta' para que incluya todo el día final (23:59:59)
+  const fechaFin = new Date(hasta);
+  fechaFin.setHours(23, 59, 59, 999);
+
   return await this.jornadaRepository.find({
     where: { 
       usuario: { id: usuarioId },
-      inicio: Between(desde, hasta) 
+      inicio: Between(desde, fechaFin) 
     },
-    order: { inicio: 'DESC' }
+    order: { inicio: 'DESC' },
+    relations: ['empresa'] // Útil para el reporte
   });
 }
 

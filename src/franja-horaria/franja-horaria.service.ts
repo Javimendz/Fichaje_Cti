@@ -13,28 +13,37 @@ export class FranjasHorariasService {
   ) {}
 
   async create(dto: CreateFranjaHorariaDto) {
-    // 1. Validación de lógica horaria (Imprescindible)
+    // 1. Validación de lógica horaria simple
     if (dto.inicio >= dto.fin) {
       throw new BadRequestException('La hora de inicio debe ser menor a la hora de fin');
     }
 
-    // 2. Creación eficiente
-    // No necesitas buscar la DistribucionDia en la DB primero. 
-    // TypeORM puede crear la relación usando solo el ID.
+    // 2. EVITAR SOLAPAMIENTO (OPCIONAL pero recomendado)
+    // Buscamos si ya existe una franja que choque con el nuevo horario en esa misma distribución
+    const choque = await this.franjaRepository.createQueryBuilder('franja')
+      .where('franja.distribucionDiaId = :distId', { distId: dto.distribucionDiaId })
+      .andWhere('(franja.inicio < :fin AND franja.fin > :inicio)', { 
+        inicio: dto.inicio, 
+        fin: dto.fin 
+      })
+      .getOne();
+
+    if (choque) {
+      throw new BadRequestException(`El horario solapa con una franja existente (${choque.inicio} - ${choque.fin})`);
+    }
+
     const nuevaFranja = this.franjaRepository.create({
-      inicio: dto.inicio,
-      fin: dto.fin,
+      ...dto,
       distribucionDia: { id: dto.distribucionDiaId } 
     });
 
     try {
       return await this.franjaRepository.save(nuevaFranja);
     } catch (error) {
-      // Si el UUID de la distribución no existe, saltará el error de FK aquí
-      throw new BadRequestException('La Distribución de Día no existe o el ID es inválido');
+      // Error de Foreign Key (la distribución no existe en la DB)
+      throw new BadRequestException('La Distribución de Día no existe');
     }
   }
-
   async findAll() {
   return await this.franjaRepository.find({
     relations: ['distribucionDia'], // Esto cargará la info del día al que pertenece
@@ -58,15 +67,18 @@ export class FranjasHorariasService {
     return franja;
   }
 
-  async update(id: number, dto: Partial<CreateFranjaHorariaDto>) {
+ async update(id: number, dto: Partial<CreateFranjaHorariaDto>) {
     const franja = await this.findOne(id);
     
-    // Si se actualizan horas, re-validar
     const inicioFinal = dto.inicio || franja.inicio;
     const finFinal = dto.fin || franja.fin;
+
     if (inicioFinal >= finFinal) {
         throw new BadRequestException('Conflicto de horas: inicio >= fin');
     }
+
+    // Nota: Si implementas el check de solapamiento, aquí deberías 
+    // excluir el ID actual de la búsqueda para que no choque consigo misma.
 
     Object.assign(franja, dto);
     return await this.franjaRepository.save(franja);

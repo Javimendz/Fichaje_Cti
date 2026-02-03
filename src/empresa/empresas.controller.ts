@@ -12,7 +12,7 @@ import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
-import { CreateEmpresaConAdminDto } from 'auth/dto/CreateEmpresaConAdminDto';
+import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 
 @Controller('empresas')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,8 +22,8 @@ export class EmpresasController {
   // --- NUEVO MÉTODO SETUP ---
   @Post('setup')
   @Roles(UserRole.SUPERADMIN) // Solo el SuperAdmin puede crear Empresa + Admin
-  async setupEmpresa(@Body() createEmpresaConAdminDto: CreateEmpresaConAdminDto) {
-    return this.empresasService.createWithAdmin(createEmpresaConAdminDto);
+  async setupEmpresa(@Body() setupEmpresaDto: SetupEmpresaDto) {
+    return this.empresasService.createWithAdmin(setupEmpresaDto);
   }
 
   @Post('crear-empresa')

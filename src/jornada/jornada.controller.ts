@@ -22,9 +22,9 @@ export class JornadaController {
 
   // 2. Finalizar Jornada
   @Patch('check-out')
-  async update(@GetUser() usuario: User) {
+  async update(@Body() dto: CheckInDto,@GetUser() usuario: User) {
     // Ahora enviamos el objeto 'usuario' completo
-    return this.jornadasService.checkOut(usuario);
+    return this.jornadasService.checkOut(dto, usuario);
   }
 
   // 3. Ver Estado Actual (GET /jornadas/status)

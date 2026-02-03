@@ -8,9 +8,9 @@ import { Empresa } from './entities/empresa.entity';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
-import { CreateEmpresaConAdminDto } from 'auth/dto/CreateEmpresaConAdminDto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
+import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 
 @Injectable()
 export class EmpresasService {
@@ -20,65 +20,77 @@ export class EmpresasService {
     private readonly dataSource: DataSource, // Inyectado para transacciones
   ) {}
 
-  async createWithAdmin(dto: CreateEmpresaConAdminDto) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos los campos
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
 
-    try {
-      // 1. Crear la Empresa
-      const nuevaEmpresa = queryRunner.manager.create(Empresa, {
-        nombre: dto.nombreEmpresa,
-      });
-      const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
-      const { empresaId, ...adminData } = dto.admin;
-      // 2. Crear el Administrador vinculado a esa Empresa
-      const nuevoAdmin = queryRunner.manager.create(User, {
-        ...dto.admin,
-        password: bcrypt.hashSync(dto.admin.password, 10),
-        rol: UserRole.ADMIN,
-        empresa: empresaGuardada, // Relación directa
-        empresaId: empresaGuardada.id, // Relación explícita por ID (number)
-        isVerified: true,
-        isActive: true,
-      });
-      await queryRunner.manager.save(nuevoAdmin);
-
-      // Si llegamos aquí sin errores, confirmamos en la DB
-      await queryRunner.commitTransaction();
-
-
-// LOG DE DEPURACIÓN (Borrar antes de subir a producción)
-    console.log('--- DEPURACIÓN SETUP ---');
-    console.log('Empresa:', dto.nombreEmpresa);
-    console.log('Admin Email:', dto.admin.email);
-    console.log('Admin Password Recibido:', dto.admin.password); // 👈 Aquí la ves
-    console.log('------------------------');
-
-      return {
-        message: 'Setup de empresa completado con éxito',
-        empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
-        admin: { id: nuevoAdmin.id, email: nuevoAdmin.email }
-      };
-
-    } catch (error) {
-      // Si algo falla, revertimos (Rollback)
-      await queryRunner.rollbackTransaction();
+  try {
+    // 1. Crear la Empresa con el mapeo completo de campos
+    const nuevaEmpresa = queryRunner.manager.create(Empresa, {
+      nombre: dto.nombreEmpresa,
+      cif: dto.cif,
+      direccion: dto.direccion,
+      poblacion: dto.poblacion,
+      provincia: dto.provincia,
+      pais: dto.pais,
+      email: dto.email,
+      contactoNombre: dto.nombreContacto,   // Mapeo manual si los nombres difieren
+      telefonoContacto: dto.telefonoContacto,
       
-      if (error.code === '23505') {
-        throw new BadRequestException('El email o DNI ya están registrados en el sistema');
-      }
-      throw new InternalServerErrorException('No se pudo procesar el alta: ' + error.message);
-    } finally {
-      // Liberar el queryRunner obligatoriamente
-      await queryRunner.release();
+      telefonoEmpresa: dto.telefonoEmpresa,
+    });
+    
+    const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
+
+    // 2. Extraer datos del admin y limpiar el objeto
+    // Quitamos 'empresaId' si viene en el DTO para evitar conflictos, 
+    // ya que usaremos el ID generado arriba.
+    const { empresaId, ...adminData } = dto.admin;
+
+    // 3. Crear el Administrador vinculado
+    const nuevoAdmin = queryRunner.manager.create(User, {
+      ...adminData,
+      password: bcrypt.hashSync(dto.admin.password, 10),
+      rol: UserRole.ADMIN,
+      empresa: empresaGuardada,        // Vinculación de objeto (TypeORM)
+      empresaId: empresaGuardada.id,  // Vinculación de FK (Base de datos)
+      isVerified: true,
+      isActive: true,
+    });
+    
+    await queryRunner.manager.save(nuevoAdmin);
+
+    // 4. Confirmar cambios
+    await queryRunner.commitTransaction();
+
+    return {
+      message: 'Setup de empresa completado con éxito',
+      empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
+      admin: { id: nuevoAdmin.id, email: nuevoAdmin.email }
+    };
+
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    
+    if (error.code === '23505') {
+      throw new BadRequestException('El email o DNI ya están registrados');
     }
+    throw new InternalServerErrorException('No se pudo procesar el alta: ' + error.message);
+  } finally {
+    await queryRunner.release();
   }
+}
 
   // 2. Crear empresa simple (El que te faltaba)
   async create(dto: CreateEmpresaDto) {
-    const empresa = this.empresaRepository.create(dto);
-    return await this.empresaRepository.save(empresa);
+    if (dto.cif) {
+    const existe = await this.empresaRepository.findOneBy({ cif: dto.cif.toUpperCase() });
+    if (existe) throw new BadRequestException('Ya existe una empresa con ese CIF');
+  }
+  
+  const nuevaEmpresa = this.empresaRepository.create(dto);
+  return await this.empresaRepository.save(nuevaEmpresa);
   }
 
   // 3. Listar empresas con filtro de seguridad

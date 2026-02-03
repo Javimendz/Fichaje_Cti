@@ -1,4 +1,4 @@
-import { IsEnum, IsDateString, IsString, IsOptional, MinLength } from 'class-validator';
+import { IsEnum, IsDateString, IsString, IsOptional, MinLength, IsNotEmpty, IsDate } from 'class-validator';
 import { TipoSolicitud } from '../entities/solicitud.entity';
 
 /**
@@ -15,17 +15,20 @@ import { TipoSolicitud } from '../entities/solicitud.entity';
  */
 
 export class CreateSolicitudDto {
-  @IsEnum(TipoSolicitud) // Validar que el tipo es uno de los definidos en el enum
-  tipo: TipoSolicitud; // Tipo de solicitud
+  @IsEnum(TipoSolicitud, { 
+    message: 'El tipo debe ser: VACACIONES, ENFERMEDAD, PERMISO o ASUNTOS_PROPIOS' 
+  })
+  tipo: TipoSolicitud;
 
-  @IsDateString() // Validar formato de fecha ISO 8601
-  fechaInicio: string; // Fecha de inicio de la solicitud
+  @IsDateString({}, { message: 'La fecha de inicio debe tener un formato ISO válido' })
+fechaInicio: string;
 
-  @IsDateString() // Validar formato de fecha ISO 8601
-  fechaFin: string; // Fecha de fin de la solicitud
+@IsDateString({}, { message: 'La fecha de fin debe tener un formato ISO válido' })
+fechaFin: string;
 
-  @IsOptional() // Motivo es opcional
-  @IsString() // Debe ser una cadena de texto
-  @MinLength(5) // Mínimo 5 caracteres si se proporciona
-  motivo?: string; // Motivo de la solicitud
+
+  @IsOptional()
+  @IsString()
+  @MinLength(5, { message: 'El motivo debe tener al menos 5 caracteres' })
+  motivo?: string;
 }

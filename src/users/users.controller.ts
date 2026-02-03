@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   ParseIntPipe,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -26,6 +28,7 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
  * * Gestiona el ciclo de vida de los usuarios. La seguridad de "empresaId" y 
  * jerarquía de roles se delega al UsersService para mantener el controlador limpio.
  */
+@UseInterceptors(ClassSerializerInterceptor) 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
@@ -65,6 +68,7 @@ export class UsersController {
   // ========================
   // OBTENER USUARIO POR ID
   // ========================
+  
   @Get(':id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async findOne(

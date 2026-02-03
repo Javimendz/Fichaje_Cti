@@ -1,5 +1,5 @@
 // src/empresas/dto/create-empresa-con-admin.dto.ts
-import { IsEmail, IsNotEmpty, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class AdminDataDto {
@@ -21,6 +21,12 @@ class AdminDataDto {
   @IsString()
   @IsNotEmpty()
   telefono: string;
+
+  
+ @IsOptional() 
+  @IsNumber()
+  @Type(() => Number)
+  empresaId?: number;
 }
 
 export class CreateEmpresaConAdminDto {

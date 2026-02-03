@@ -31,13 +31,14 @@ export class EmpresasService {
         nombre: dto.nombreEmpresa,
       });
       const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
-
+      const { empresaId, ...adminData } = dto.admin;
       // 2. Crear el Administrador vinculado a esa Empresa
       const nuevoAdmin = queryRunner.manager.create(User, {
         ...dto.admin,
         password: bcrypt.hashSync(dto.admin.password, 10),
         rol: UserRole.ADMIN,
         empresa: empresaGuardada, // Relación directa
+        empresaId: empresaGuardada.id, // Relación explícita por ID (number)
         isVerified: true,
         isActive: true,
       });

@@ -1,3 +1,4 @@
+import { User } from 'auth/entities/user.entity';
 import {
   IsNotEmpty,
   IsString,
@@ -5,7 +6,9 @@ import {
   IsOptional,
   MinLength,
   Matches,
+  IsNumber,
 } from 'class-validator';
+import { UserBaseDto } from './user-base.dto';
 /**
  * 
  * CreateAdminDto
@@ -28,49 +31,25 @@ import {
  * @uses class-validator para validación de datos.
  * 
  */
-export class CreateAdminDto {
+export class CreateAdminDto extends UserBaseDto {
   // Datos obligatorios
-  @IsString()
-  @IsNotEmpty()
-  nombre: string;
+ 
 
-  @IsOptional()
-  @IsString()
-  apellidos?: string;
+ 
 
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[0-9]{8}[A-Z]$/, { message: 'DNI inválido' })
-  dni: string;
-
-  @IsEmail()
-  email: string;
 
   @IsString()
   @MinLength(8)
   password: string;
 
-  @IsString()
-  @Matches(/^\+?[0-9]{9,15}$/, { message: 'Teléfono inválido' })
-  telefono: string;
+  
 
   // Relación obligatoria
-  @IsNotEmpty()
-  empresaId: number;
-
-  // Datos opcionales
   @IsOptional()
-  fechaNacimiento?: Date;
+  @IsNumber()
+  empresaId?: number;
 
-  @IsOptional()
-  calle?: string;
 
-  @IsOptional()
-  poblacion?: string;
 
-  @IsOptional()
-  provincia?: string;
-
-  @IsOptional()
-  pais?: string;
+  
 }

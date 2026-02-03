@@ -46,8 +46,11 @@ export class User { // Definición de la entidad User
   telefono: string; // Número de teléfono del usuario
 
   // --- SEGURIDAD Y ESTADO ---
-  @Column({ type: 'text', nullable: false, select: false })  // password no se selecciona por defecto 
-  password: string | null; // Contraseña del usuario (hashed)
+@Column({ 
+  type: 'text', 
+  nullable: false, // La base de datos no permitirá nulos
+  select: false    // Seguridad: No se envía en los GET
+})  password: string | null; // Contraseña del usuario (hashed)
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER }) // Rol del usuario con valor por defecto WORKER
   rol: UserRole; // Rol del usuario en el sistema

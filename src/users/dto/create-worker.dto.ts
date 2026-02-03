@@ -9,7 +9,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
+import { UserBaseDto } from './user-base.dto';
 /**
  * CreateWorkerDto
  * * DTO para crear un usuario con rol de WORKER.
@@ -37,66 +37,18 @@ import { Type } from 'class-transformer';
  * @uses class-validator para validación de datos.
  * 
  */
-export class CreateWorkerDto { // DTO para crear un WORKER
+export class CreateWorkerDto extends UserBaseDto { // DTO para crear un WORKER
 
   // --- IDENTIFICACIÓN Y CONTACTO ---
-  @IsString() // Valida que sea una cadena
-  @IsNotEmpty() // No puede estar vacío
-  @Matches(/^\+?[0-9]{9,15}$/, { message: 'Teléfono inválido' }) // Formato válido
-  telefono: string; // Teléfono del trabajador
-
-  @IsString() // Valida que sea una cadena
-  @IsNotEmpty() // No puede estar vacío
-  @Matches(/^[0-9]{8}[A-Z]$/, { message: 'DNI inválido' }) // Formato válido
-  dni: string; // Documento Nacional de Identidad
-
-  @IsString() // Valida que sea una cadena
-  @IsNotEmpty() // No puede estar vacío
-  nombre: string; // Nombre del trabajador
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  apellidos?: string; // Apellidos del trabajador
-
-  @IsOptional() // Campo opcional
-  @IsEmail() // Valida que sea un email válido
-  email?: string;  // Correo electrónico
-
-  // --- DATOS PERSONALES Y LOCALIZACIÓN ---
-  @IsOptional() // Campo opcional
-  @IsDateString() // Valida que sea una cadena en formato de fecha ISO
-  fechaNacimiento?: string; // Fecha de nacimiento
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  calle?: string; // Calle de la dirección
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  poblacion?: string; // Población de la dirección
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  provincia?: string; // Provincia de la dirección
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  pais?: string; // País de la dirección
-
-  // --- CATEGORÍA Y ACTIVIDAD LABORAL ---
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena 
-  categoria?: string; // Categoría del trabajador
-
-  @IsOptional() // Campo opcional
-  @IsString() // Valida que sea una cadena
-  actividad?: string; // Actividad del trabajador
-
-  @IsOptional() // Campo opcional
-  @IsNumber() // Valida que sea un número
-  @Type(() => Number) // Convierte a número
-  diaPertenece?: number; // Día de pertenencia
-
+ 
+ 
+  
+ 
+  
+  
+ 
+ 
+  
   @IsOptional() // Campo opcional
   @IsNumber() // Valida que sea un número
   @Type(() => Number) // Convierte a número
@@ -111,9 +63,5 @@ export class CreateWorkerDto { // DTO para crear un WORKER
   @IsString() // Valida que sea una cadena
   password?: string; // Contraseña
 
-  @IsNotEmpty() // No puede estar vacío
-  codigoOTP?: {  // Código OTP y su expiración
-    codigo: string; // Código OTP
-    expiracion: Date; // Fecha de expiración del código OTP
-  };
+
 }

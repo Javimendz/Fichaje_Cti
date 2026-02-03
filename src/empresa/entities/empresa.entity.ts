@@ -17,16 +17,32 @@ export class Empresa {
   @Column('text', { nullable: true })
   direccion?: string;
 
+  
+
   @Column('text', { nullable: true })
-  telefono?: string;
+  provincia?: string;
+  
+  @Column('text', { nullable: true })
+  poblacion?: string;
+
+  @Column('text', { nullable: true })
+  contactoNombre?: string;
+
+  @Column('text', { nullable: true })
+  telefonoContacto?: string;
+
+  @Column('text', { nullable: true })
+  telefonoEmpresa?: string;
+  @Column('text', { nullable: true })
+  pais?: string;
 
   @Column('text', { nullable: true })
   email?: string;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true }) // Mapeo explícito
   isActive: boolean;
 
-  @CreateDateColumn({ name: 'created_at' }) // 👈 Usa este decorador para evitar errores de SQL
+  @CreateDateColumn({ name: 'created_at' }) 
   createdAt: Date;
 
   // Una empresa tiene muchos Usuarios (SuperAdmins, Admins, etc.)

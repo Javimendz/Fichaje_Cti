@@ -6,7 +6,6 @@ import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
 import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
-import { CreateUserDto } from "./dto/createUserDto";
 import { VerifyCodeDto } from "./dto/verify-code.dto";
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
@@ -25,170 +24,68 @@ export class AuthService {
     private readonly allowedUserRepository: Repository<AllowedUser>,
   ) {}
 
-
-
-
-  
   // =====================================
   // LOGIN PRINCIPAL: DNI + Password
   // (Para Admin y Superadmin)
   // =====================================
- async login(loginDto: LoginDto) {
-  const { email, dni, password } = loginDto;
+  async login(loginDto: LoginDto) {
+    const { email, dni, password } = loginDto;
 
-  if (!email && !dni) {
-    throw new BadRequestException('Debe proporcionar email o dni');
-  }
-
-  const searchCriteria = email 
-    ? { email: email.trim().toLowerCase() } 
-    : { dni: dni!.trim().toUpperCase() };
-
-  // Buscamos al usuario
-  const user = await this.userRepository.findOne({
-    where: searchCriteria,
-    select: ['id', 'nombre', 'email', 'dni', 'password', 'rol', 'empresaId', 'isActive']
-  });
-
-  if (!user) throw new UnauthorizedException('Credenciales inválidas');
-  if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
-
-  const isPasswordValid = await bcrypt.compare(password, user.password || '');
-  if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
-
-  // 1. Lógica de Tiempos
-  const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
-  const tiempoExpiracionString = isAdmin ? '12h' : '1h';
-  const horasMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
-
-  // 2. Calcular la FECHA exacta
-  const fechaExpiracion = new Date(Date.now() + horasMilisegundos);
-
-  // 3. GUARDAR en la Base de Datos
-  user.tokenExpiraEn = fechaExpiracion;
-  await this.userRepository.save(user); // Aquí se persiste el cambio
-
-  // 4. Generar Token y Respuesta
-  const isSuperAdmin = user.rol === UserRole.SUPERADMIN;
-  const payload = { 
-    sub: user.id, 
-    rol: user.rol, 
-    ...( !isSuperAdmin && { empresaId: user.empresaId } ) 
-  };
-console.log('Fecha calculada:', fechaExpiracion);
-user.tokenExpiraEn = fechaExpiracion;
-const usuarioGuardado = await this.userRepository.save(user);
-console.log('Usuario después de guardar:', usuarioGuardado.tokenExpiraEn);
-
-
-  return {
-    access_token: this.jwtService.sign(payload, { expiresIn: tiempoExpiracionString }),
-    user: {
-      id: user.id,
-      nombre: user.nombre,
-      rol: user.rol,
-      identificadorUsado: email ? user.email : user.dni,
-      ...( !isSuperAdmin && { empresaId: user.empresaId } ),
-      tokenExpiraEn: fechaExpiracion.toISOString(), // Lo devolvemos para el front
-      expiresIn: tiempoExpiracionString
-    }
-  };
-}
-  // =====================================
-  // WORKER: Solicitar OTP (Opcional)
-  // =====================================
-  async create(createUserDto: CreateUserDto) {
-    const { telefono } = createUserDto;
-
-    const allowedUser = await this.allowedUserRepository.findOne({ 
-      where: { telefono, isActive: true },
-      relations: ['empresa'] 
-    });
-
-    if (!allowedUser) {
-      throw new UnauthorizedException('Este número no está autorizado por ninguna empresa.');
+    if (!email && !dni) {
+      throw new BadRequestException('Debe proporcionar email o dni');
     }
 
-    let user = await this.userRepository.findOne({ where: { telefono } });
+    // 1. Construir la consulta con QueryBuilder para incluir la contraseña (select: false)
+    const queryBuilder = this.userRepository.createQueryBuilder('user')
+      .addSelect('user.password') // <--- CAMBIO CLAVE: Traemos la pass explícitamente
+      .leftJoinAndSelect('user.empresa', 'empresa'); // Opcional: traer relación empresa
 
-    if (!user) {
-      user = this.userRepository.create({
-        telefono: allowedUser.telefono,
-        nombre: allowedUser.nombre ?? '',
-        dni: allowedUser.dni ?? '',
-        empresa: allowedUser.empresa,
-        rol: UserRole.WORKER,
-        isVerified: false,
-      });
+    if (email) {
+      queryBuilder.where('LOWER(user.email) = :email', { email: email.trim().toLowerCase() });
+    } else {
+      queryBuilder.where('UPPER(user.dni) = :dni', { dni: dni!.trim().toUpperCase() });
     }
 
-    const codigo = this.generarCodigo();
-    const fechaExpiracion = new Date(Date.now() + 5 * 60 * 1000);
+    const user = await queryBuilder.getOne();
 
-    user.codigoOTP = { codigo, expiracion: fechaExpiracion };
-    user.codigoExpiraEn = fechaExpiracion;
+    // 2. Validaciones básicas
+    if (!user) throw new UnauthorizedException('Credenciales inválidas');
+    if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
 
-    await this.userRepository.save(user);
-    console.log(`[SMS] Código para ${telefono}: ${codigo}`);
- 
-    return { message: 'Código enviado correctamente' };
-  }
+    // 3. Comparar contraseña (user.password ahora sí existe)
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
 
-  // =====================================
-  // WORKER: Verificar OTP (Opcional)
-  // =====================================
-  async verifyCode(dto: VerifyCodeDto) {
-    const { telefono, codigo } = dto;
+    // 4. Lógica de Tiempos
+    const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
+    const tiempoExpiracionString = isAdmin ? '12h' : '1h';
+    const horasMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
+    const fechaExpiracion = new Date(Date.now() + horasMilisegundos);
 
-    const user = await this.userRepository.findOne({
-      where: { telefono: telefono.trim() },
-      relations: ['empresa'],
-    });
-
-    if (!user || !user.codigoOTP?.codigo) {
-      throw new UnauthorizedException('No hay un código pendiente para este número');
-    }
-
-    if (user.codigoExpiraEn && user.codigoExpiraEn < new Date()) {
-      throw new UnauthorizedException('El código ha expirado');
-    }
-
-    if (user.codigoOTP.codigo !== String(codigo).trim()) {
-      throw new UnauthorizedException('Código incorrecto');
-    }
-
-    user.isVerified = true;
-    user.codigoOTP = null;
-    user.codigoExpiraEn = null;
+    // 5. Actualizar la fecha de expiración en el usuario y GUARDAR
+    user.tokenExpiraEn = fechaExpiracion;
     await this.userRepository.save(user);
 
-    await this.allowedPhonesService.markUsed(telefono);
-
-    const payload = {
-      sub: user.id,
-      dni: user.dni,
-      rol: user.rol,
-      empresaId: user.empresa?.id ?? null,
+    // 6. Generar Payload y Token
+    // Usamos 'sub' para el ID del usuario como es estándar en JWT
+    const isSuperAdmin = user.rol === UserRole.SUPERADMIN;
+    const payload = { 
+      sub: user.id, 
+      rol: user.rol, 
+      ...( !isSuperAdmin && { empresaId: user.empresaId } ) 
     };
 
     return {
-      access_token: this.jwtService.sign(payload),
-      user: { nombre: user.nombre, rol: user.rol }
+      access_token: this.jwtService.sign(payload, { expiresIn: tiempoExpiracionString }),
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        rol: user.rol,
+        identificadorUsado: email ? user.email : user.dni,
+        ...( !isSuperAdmin && { empresaId: user.empresaId } ),
+        tokenExpiraEn: fechaExpiracion.toISOString(),
+        expiresIn: tiempoExpiracionString
+      }
     };
-  }
-
-  // =====================================
-  // HELPERS
-  // =====================================
-  private generarCodigo(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  async update(id: number, updateAuthDto: Partial<User>) {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
-
-    Object.assign(user, updateAuthDto);
-    return this.userRepository.save(user);
   }
 }

@@ -68,7 +68,7 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
   where: {
     usuarioId: user.id,
     // 2. Usa el valor del Enum en lugar del string "RECHAZADA"
-    estado: Not(SolicitudStatus.RECHAZADA), 
+    estado: SolicitudStatus.APROBADA, 
     fechaInicio: LessThanOrEqual(new Date(dto.fechaFin)),
     fechaFin: MoreThanOrEqual(new Date(dto.fechaInicio)),
   },

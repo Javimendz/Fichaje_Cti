@@ -22,11 +22,14 @@ import { AuthGuard } from "@nestjs/passport";
  * @UseGuards(AuthGuard()) aplica el guard de autenticación a todas las rutas del controlador. 
  */
 @Controller('solicitudes') // prefijo de ruta
-@UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
+@
+UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
 export class SolicitudesController { // Inyección de dependencias
   constructor(private readonly solicitudesService: SolicitudesService) {} //
 
-  @Post() // Endpoint para crear una solicitud
+  @Post()
+  @Roles(UserRole.ADMIN, UserRole.WORKER) // Endpoint para crear una solicitud
   create(@Body() dto: CreateSolicitudDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
     return this.solicitudesService.create(dto, user); // Llamar al servicio para crear la solicitud
   }
@@ -62,6 +65,7 @@ export class SolicitudesController { // Inyección de dependencias
    * @see SolicitudesService.findAllByEmpresa 
    */
   @Get('mis-solicitudes') // Endpoint para listar solicitudes del usuario
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
   findAllByUser(@GetUser() user: User) { // Obtener usuario actual
 
     if (!user.empresaId) { // Validar empresa
@@ -70,4 +74,13 @@ export class SolicitudesController { // Inyección de dependencias
 
     return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id); // Llamar al servicio para listar solicitudes del usuario
   }
+  @Get('empresa')
+  @Roles(UserRole.ADMIN) // Solo el admin ve todas las solicitudes de la empresa
+  findAllByEmpresa(@GetUser() admin: User) {
+    if (!admin.empresaId) {
+    throw new BadRequestException('El administrador no tiene una empresa asociada.');
+  }
+    return this.solicitudesService.findAllByEmpresa(admin.empresaId );
+  }
+
 }

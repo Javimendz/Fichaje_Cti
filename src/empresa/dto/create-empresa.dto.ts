@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 
 export class CreateEmpresaDto {
@@ -103,5 +103,51 @@ export class CreateEmpresaDto {
     message: 'El código postal debe ser un formato válido de España (5 dígitos)' 
   })
   codigoPostal: string;
+
+
+   @IsOptional()
+  @IsString({ message: 'El nombre de contacto debe ser texto' })
+  @MinLength(3, { message: 'El nombre de contacto es muy corto' })
+  contactoNombre?: string;
+
+
+  @IsOptional()
+  @IsString({ message: 'El teléfono de contacto debe ser texto' })
+  @Matches(/^\+?[0-9]{9,15}$/, { 
+    message: 'Formato de teléfono de contacto no válido (mínimo 9 dígitos)' 
+  })
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    return value.trim().replace(/[^\d+]/g, '');
+  })
+  @Expose()
+  telefonoContacto?: string;
+
+ @IsOptional()
+  @IsString({ message: 'El teléfono debe ser una cadena de texto' })
+  // Valida: Opcional '+', seguido de 9 a 15 números (Estándar E.164)
+  @Matches(/^\+?[0-9]{9,15}$/, { 
+    message: 'El teléfono debe tener entre 9 y 15 dígitos y puede incluir el prefijo +' 
+  })
+  // Saneamiento: Elimina espacios, guiones o paréntesis que el usuario pueda incluir
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    return value.replace(/[\s\-\(\)]/g, ''); 
+  })
+  @Expose()
+  telefonoEmpresa?: string;
+
+ @IsOptional()
+  @IsBoolean({ message: 'El estado debe ser un valor booleano (true/false)' })
+  // Saneamiento: Convierte strings como "true" o "1" a booleano real
+  @Transform(({ value }) => {
+    if (value === 'true' || value === 1 || value === true) return true;
+    if (value === 'false' || value === 0 || value === false) return false;
+    return value;
+  })
+  @Expose()
+  isActive?: boolean;
+
+ 
 
 }

@@ -139,7 +139,7 @@ async runSeed() {
         dni: '00000000S', // DNI ficticio
         telefono: '+34600999999', // Teléfono ficticio
         nombre: 'Super Usuario Global', // Nombre del SuperAdmin
-        password: await bcrypt.hash('superpassword', 10), // Contraseña hasheada
+        password: await bcrypt.hash('superpassword123M', 10), // Contraseña hasheada
         rol: UserRole.SUPERADMIN, // Rol de SuperAdmin
         empresa: null, // El SuperAdmin no pertenece a ninguna empresa específica
         isVerified: true, // Cuenta verificada

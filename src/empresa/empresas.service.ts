@@ -28,18 +28,20 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
   try {
     // 1. Crear la Empresa con el mapeo completo de campos
     const nuevaEmpresa = queryRunner.manager.create(Empresa, {
-      nombre: dto.nombreEmpresa,
-      cif: dto.cif,
-      direccion: dto.direccion,
-      poblacion: dto.poblacion,
-      provincia: dto.provincia,
-      pais: dto.pais,
-      email: dto.email,
-      contactoNombre: dto.nombreContacto,   // Mapeo manual si los nombres difieren
-      telefonoContacto: dto.telefonoContacto,
-      
-      telefonoEmpresa: dto.telefonoEmpresa,
-    });
+  nombre: dto.nombreEmpresa,
+  cif: dto.cif,
+  direccion: dto.direccion,
+  poblacion: dto.poblacion,
+  provincia: dto.provincia,
+  pais: dto.pais,
+  email: dto.email,
+  contactoNombre: dto.nombreContacto,
+  telefonoContacto: dto.telefonoContacto,
+  telefonoEmpresa: dto.telefonoEmpresa,
+  
+  // AÑADE ESTOS CAMPOS AQUÍ:
+  isActive: true               // Por defecto al crearla
+});
     
     const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
 

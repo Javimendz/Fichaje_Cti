@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
-import { AllowedUserService } from './allowed-user.service';
-import { CreateAllowedUserDto } from './dto/create-allowed-user.dto';
-import { UpdateAllowedUserDto } from './dto/update-allowed-user.dto';
+import { WorkerService } from './worker.service';
+import { CreateWorkerDto } from './dto/worker.dto';
+import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { User } from 'auth/entities/user.entity';
 import { GetUser } from 'auth/decorators/get-user.decorator';
@@ -11,12 +11,12 @@ import { Roles } from 'auth/decorators/roles.decorator';
 
 @Controller('allowed-user')
 @UseGuards(JwtAuthGuard)
-export class AllowedUserController {
-  constructor(private readonly allowedUserService: AllowedUserService) {}
+export class WorkerController {
+  constructor(private readonly allowedUserService: WorkerService) {}
 
   @Post()
   create(
-    @Body() createAllowedUserDto: CreateAllowedUserDto,
+    @Body() createAllowedUserDto: CreateWorkerDto,
     @GetUser() admin: User 
   ) {
     return this.allowedUserService.create(createAllowedUserDto, admin);
@@ -43,7 +43,7 @@ export class AllowedUserController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateAllowedUserDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateWorkerDto) {
     return this.allowedUserService.update(id, updateAllowedUserDto);
   }
 

@@ -1,6 +1,6 @@
 import { IsDateString, IsBoolean, IsString, IsNotEmpty, IsNumber, IsOptional, ValidateNested, IsInt, Min, Matches, MinLength, MaxLength } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { UserDto } from 'auth/dto/user.dto';
+import { AuthUserDto } from 'auth/dto/Authuser.dto';
 
 export class AttendanceDto {
   @IsNumber({}, { message: 'El ID debe ser un valor numérico' })
@@ -44,7 +44,7 @@ export class AttendanceDto {
 
   @IsOptional()
   @ValidateNested({ message: 'Los datos del usuario vinculado no son válidos' })
-  @Type(() => UserDto) // Indica a class-transformer cómo instanciar el objeto
+  @Type(() => AuthUserDto) // Indica a class-transformer cómo instanciar el objeto
   @Expose() // Asegura que el campo sea visible durante la transformación
-  usuario: UserDto;
+  usuario: AuthUserDto;
 }

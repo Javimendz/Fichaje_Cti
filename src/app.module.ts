@@ -1,20 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { UserModule } from './users/user.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { AlarmsModule } from './alarms/alarms.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
 import { SeedModule } from 'seed/seed.module';
-import { EmpresasModule } from './empresa/empresas.module';
+import { EmpresaModule } from './empresa/empresa.module';
 import { RolesModule } from './roles/roles.module';
 import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
-import { SchedulesModule } from './schedules/schedules.module';
+import { ScheduleModule } from './schedule/schedule.module';
 import { JornadaModule } from './jornada/jornada.module';
-import { FranjasHorariasModule } from './franja-horaria/franja-horaria.module';
+import { FranjaHorariaModule } from './franja-horaria/franja-horaria.module';
 import { AusenciasModule } from './ausencia/ausencia.module';
-import { AllowedUserModule } from './allowed-user/allowed-user.module';
+import { WorkerModule } from './worker/worker.module';
 import { SolicitudesModule } from './solicitud/solicitud.module';
 
 /**
@@ -60,14 +60,14 @@ import { SolicitudesModule } from './solicitud/solicitud.module';
     }),
     AuthModule, 
     AllowedPhonesModule,
-    UsersModule, 
+    UserModule, 
     
     AttendanceModule, 
-    FranjasHorariasModule,
-    SchedulesModule,
+    FranjaHorariaModule,
+    ScheduleModule,
     AusenciasModule,
     AlarmsModule, 
-    SeedModule, EmpresasModule, RolesModule, CodigoAccesoModule, SchedulesModule, JornadaModule, FranjasHorariasModule, AusenciasModule, AllowedUserModule, SolicitudesModule
+    SeedModule, EmpresaModule, RolesModule, CodigoAccesoModule, ScheduleModule, JornadaModule, FranjaHorariaModule, AusenciasModule, WorkerModule, SolicitudesModule
    
    ],
   

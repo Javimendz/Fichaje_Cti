@@ -5,14 +5,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-import { FranjasHorariasService } from './franja-horaria.service';
+import { FranjaHorariaService } from './franja-horaria.service';
 import { CreateFranjaHorariaDto } from './dto/create-franja-horaria.dto';
 import { UpdateFranjaHorariaDto } from './dto/update-franja-horaria.dto';
 
 @Controller('franja-horaria')
 @UseGuards(AuthGuard()) // 
 export class FranjaHorariaController {
-  constructor(private readonly franjaHorariaService: FranjasHorariasService) {}
+  constructor(private readonly franjaHorariaService: FranjaHorariaService) {}
 
   @Post()
   create(@Body() createFranjaHorariaDto: CreateFranjaHorariaDto) {

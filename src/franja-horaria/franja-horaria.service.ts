@@ -5,7 +5,7 @@ import { FranjaHoraria } from './entities/franja-horaria.entity';
 import { CreateFranjaHorariaDto } from './dto/create-franja-horaria.dto';
 
 @Injectable()
-export class FranjasHorariasService {
+export class FranjaHorariaService {
   constructor(
     @InjectRepository(FranjaHoraria)
     private readonly franjaRepository: Repository<FranjaHoraria>,

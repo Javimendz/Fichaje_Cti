@@ -1,4 +1,4 @@
-import { DistribucionDia } from "schedules/entities/distribucion-dia.entity";
+import { DistribucionDia } from "schedule/entities/distribucion-dia.entity";
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('franjas_horarias')

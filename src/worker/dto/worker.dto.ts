@@ -17,7 +17,7 @@ import {
 } from 'class-validator';
 import { IsDni } from '../../auth/decorators/isDniConstraint';
 
-export class CreateAllowedUserDto {
+export class CreateWorkerDto {
   
   // ============================================
   // IDENTIFICACIÓN (Obligatorios)

@@ -6,7 +6,7 @@ import { CheckInDto } from './dto/check-in.dto';
 import { User } from 'auth/entities/user.entity';
 
 @Injectable()
-export class JornadasService {
+export class JornadaService {
   constructor(
     @InjectRepository(Jornada)
     private readonly jornadaRepository: Repository<Jornada>,

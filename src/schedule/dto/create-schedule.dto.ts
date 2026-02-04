@@ -12,7 +12,7 @@ import {
 } from "class-validator";
 import { DistribucionDiaDto } from "./DistribucionDiaDto";
 import { OneToMany } from "typeorm";
-import { DistribucionDia } from "schedules/entities/distribucion-dia.entity";
+import { DistribucionDia } from "schedule/entities/distribucion-dia.entity";
 
 // Definir un Enum para el tipo ayuda a que no escriban cualquier cosa
 export enum HorarioTipo {

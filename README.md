@@ -98,6 +98,71 @@ Post
 ```
 
 
+3. Setup Inicial: Crea empresa + Admin principal.
+
+
+```
+Post - http://localhost:3000/api/empresas/setup
+
+Token - Super
+
+Body - raw
+
+{
+  "nombreEmpresa": "Global Tech Logistics S.A.",
+  "cif": "A87654321",
+  "direccion": "Avenida Central 100, Planta 5",
+  "poblacion": "Barcelona",
+  "provincia": "Barcelona",
+  "pais": "España",
+  "email": "ops@globaltech.com",
+  "codigoPostal": "08001",
+  "nombreContacto": "Marta Sánchez",
+  "telefonoContacto": "+34600111222",
+  "telefonoEmpresa": "+34934123457",
+  
+  "admin": {
+    "telefono": "+34600000001",
+    "email": "marta.admin@globaltech.com",
+    "password": "SecurePassword2026!"
+  }
+}
+
+
+```
+
+4.  Crea una nueva empresa (SuperAdmin).
+
+```
+Post - http://localhost:3000/api/empresas/crear-empresa
+
+
+FALTA EL JSON
+
+
+```
+
+5.  Obtiene listado de todas las empresas.
+
+```
+GET - http://localhost:3000/api/empresas/get-empresas
+
+Token - SUPER, Admin
+
+
+
+
+FALTA EL JSON
+
+
+```
+
+GET         /api/empresas/:id                      Obtiene detalles de una empresa específica.
+PATCH       /api/empresas/:id                      Actualiza datos de una empresa.
+DELETE      /api/empresas/:id                      Elimina una empresa del sistema.
+
+
+
 
 3. Check-in
 
@@ -248,32 +313,6 @@ Body - Json
   "categoria": "Oficial de Primera",
   "actividad": "Construcción",
   "diaPertenece": 1
-}
-
-```
-
-
-7. Verificar código otp (Actualmente no implementado)
-
-```
-localhost:3000/api/auth/verify-otp
-
-Post
-
-{ "telefono": "+Telefono necesario", "codigo": "Codigo generado" }
-
-
-```
-
-8. Enviar código otp (Actualmente no implementado)
-```
-localhost:3000/api/auth/send-otp
-
-Post
-
-{
-
-    "telefono": "Telefono Necesario"
 }
 
 ```
@@ -451,6 +490,8 @@ Patch - Json
 
 
  ```
+
+
 
 
 # Endpoints - Completos

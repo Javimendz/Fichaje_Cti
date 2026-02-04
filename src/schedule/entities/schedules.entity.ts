@@ -9,7 +9,7 @@ import {
   JoinColumn,
   DeleteDateColumn
 } from 'typeorm';
-import { AllowedUser } from '../../allowed-user/entities/allowed-user.entity';
+import { AllowedUser } from '../../worker/entities/allowed-user.entity';
 import { DistribucionDia } from './distribucion-dia.entity';
 import { Empresa } from 'empresa/entities/empresa.entity';
 

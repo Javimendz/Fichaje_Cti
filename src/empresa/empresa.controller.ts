@@ -1,6 +1,6 @@
 // src/empresas/empresas.controller.ts
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
-import { EmpresasService } from './empresas.service';
+import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 // IMPORTANTE: Asegúrate de importar este DTO
@@ -16,8 +16,8 @@ import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 
 @Controller('empresas')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class EmpresasController {
-  constructor(private readonly empresasService: EmpresasService) {}
+export class EmpresaController {
+  constructor(private readonly empresasService: EmpresaService) {}
 
   // --- NUEVO MÉTODO SETUP ---
   @Post('setup')

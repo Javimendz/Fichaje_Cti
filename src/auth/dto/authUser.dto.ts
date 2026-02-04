@@ -2,7 +2,7 @@ import { UserRole } from 'auth/roles.enum';
 import { Expose, Transform } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
-export class UserDto {
+export class AuthUserDto {
   @Expose()
   id: number;
 

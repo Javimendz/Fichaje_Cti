@@ -9,7 +9,7 @@ import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 import { VerifyCodeDto } from "./dto/verify-code.dto";
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
-import { AllowedUser } from "allowed-user/entities/allowed-user.entity";
+import { AllowedUser } from "worker/entities/allowed-user.entity";
 import { User } from "users/entities/user.entity";
 
 @Injectable()

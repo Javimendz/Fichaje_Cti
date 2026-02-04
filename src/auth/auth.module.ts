@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AllowedPhonesModule } from 'allowed-phones/allowed-phones.module';
-import { AllowedUser } from 'allowed-user/entities/allowed-user.entity';
+import { AllowedUser } from 'worker/entities/allowed-user.entity';
 
 @Module({
   imports: [

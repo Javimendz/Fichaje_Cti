@@ -22,7 +22,7 @@ import { DistribucionDia } from './entities/distribucion-dia.entity';
  * @see https://docs.nestjs.com/providers
  */
 @Injectable() // Marca la clase como un proveedor inyectable
-export class SchedulesService { // Definición del servicio SchedulesService
+export class ScheduleService { // Definición del servicio SchedulesService
   constructor( 
     @InjectRepository(Horario) // Inyección del repositorio de Horario
     private readonly horarioRepository: Repository<Horario>, // Repositorio para operaciones CRUD en Horario

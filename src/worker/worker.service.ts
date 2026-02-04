@@ -3,14 +3,14 @@ import { Injectable, BadRequestException, NotFoundException, InternalServerError
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AllowedUser } from './entities/allowed-user.entity';
-import { CreateAllowedUserDto } from './dto/create-allowed-user.dto';
+import { CreateWorkerDto } from './dto/worker.dto';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
 import * as bcrypt from 'bcrypt';
-import { Horario } from 'schedules/entities/schedules.entity';
+import { Horario } from 'schedule/entities/schedules.entity';
 
 @Injectable()
-export class AllowedUserService {
+export class WorkerService {
   constructor(
     @InjectRepository(AllowedUser)
     private readonly allowedUserRepository: Repository<AllowedUser>,
@@ -18,7 +18,7 @@ export class AllowedUserService {
   private readonly dataSource: DataSource,
   ) {}
 
-async create(dto: CreateAllowedUserDto, admin: User) {
+async create(dto: CreateWorkerDto, admin: User) {
   // 1. Validación: El administrador debe tener empresa
   if (!admin.empresaId) {
     throw new BadRequestException('El administrador debe tener una empresa asignada');

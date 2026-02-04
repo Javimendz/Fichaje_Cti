@@ -12,16 +12,16 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { SchedulesService } from './schedules.service';
+import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { User } from 'users/entities/user.entity';
 
 @Controller('schedules')
 @UseGuards(AuthGuard())
-export class SchedulesController {
+export class ScheduleController {
   constructor(
-    private readonly schedulesService: SchedulesService,
+    private readonly schedulesService: ScheduleService,
   ) {}
 
   @Post()

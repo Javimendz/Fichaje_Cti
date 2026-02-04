@@ -2,10 +2,10 @@
 import { Module } from '@nestjs/common';
 import { SeedsService } from './seed.service';
 import { SeedsController } from './seed.controller';
-import { UsersModule } from '../users/users.module';
+import { UserModule } from '../users/user.module';
 import { AllowedPhonesModule } from '../allowed-phones/allowed-phones.module';
-import { EmpresasService } from 'empresa/empresas.service';
-import { EmpresasModule } from 'empresa/empresas.module';
+import { EmpresaService } from 'empresa/empresa.service';
+import { EmpresaModule } from 'empresa/empresa.module';
 import { AuthModule } from 'auth/auth.module';
 /**
  * SeedModule
@@ -20,9 +20,9 @@ import { AuthModule } from 'auth/auth.module';
  * 
  */
 @Module({
-  imports: [UsersModule, AllowedPhonesModule, EmpresasModule, AuthModule], 
+  imports: [UserModule, AllowedPhonesModule, EmpresaModule, AuthModule], 
   controllers: [SeedsController], // <- Controller incluido
-  providers: [SeedsService, EmpresasService],
+  providers: [SeedsService, EmpresaService],
   exports: [SeedsService],
 })
 export class SeedModule {}

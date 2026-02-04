@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, IsNotEmpty, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsNotEmpty, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength, Max, Min, IsInt, ArrayUnique } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 
 export class UserBaseDto {
@@ -135,16 +135,40 @@ export class UserBaseDto {
   @Expose()
   categoria?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString({ message: 'La actividad debe ser una cadena de texto' })
+  @MinLength(3, { message: 'La descripción de la actividad es muy breve' })
+  @MaxLength(255, { message: 'La actividad no puede superar los 255 caracteres' })
+  // Saneamiento: Limpia espacios y normaliza el formato de frase
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const cleaned = value.trim().replace(/\s+/g, ' ');
+    // Opcional: Asegura que empiece con mayúscula para reportes visuales
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  })
+  @Expose()
   actividad?: string;
 
-  @IsNumber()
   @IsOptional()
+  @IsInt({ message: 'El día debe ser un número entero' })
+  @IsNumber({}, { message: 'El valor de diaPertenece debe ser numérico' })
+  @Min(1, { message: 'El día no puede ser menor a 1' })
+  @Max(31, { message: 'El día no puede ser mayor a 31' })
+  @Expose()
   diaPertenece?: number;
 
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
+  @IsArray({ message: 'El campo rol debe ser una lista (array)' })
+  @IsString({ 
+    each: true, 
+    message: 'Cada rol debe ser una cadena de texto' 
+  })
+  @ArrayUnique({ message: 'No se permiten roles duplicados en la lista' })
+  // Saneamiento: Limpia espacios y asegura mayúsculas en cada elemento
+  @Transform(({ value }) => {
+    if (!Array.isArray(value)) return value;
+    return value.map(v => typeof v === 'string' ? v.trim().toUpperCase() : v);
+  })
+  @Expose()
   rol?: string[];
 }

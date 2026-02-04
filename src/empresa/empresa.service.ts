@@ -13,7 +13,7 @@ import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 
 @Injectable()
-export class EmpresasService {
+export class EmpresaService {
   constructor(
     @InjectRepository(Empresa)
     private readonly empresaRepository: Repository<Empresa>,

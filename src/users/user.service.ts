@@ -18,7 +18,7 @@ import * as bcrypt from 'bcrypt';
 type CreateUserDto = CreateAdminDto | CreateWorkerDto;
 
 @Injectable()
-export class UsersService {
+export class UserService {
   
   constructor(
     @InjectRepository(User)

@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import {  Repository } from "typeorm";
+import {  DeepPartial, Repository } from "typeorm";
 import * as bcrypt from 'bcrypt';
 
 import { User } from "auth/entities/user.entity";
@@ -134,19 +134,20 @@ async runSeed() {
     let superAdmin = await this.userRepository.findOneBy({ email: superAdminEmail }); // Buscar por email
 
     if (!superAdmin) { // Si no existe, lo creamos
-      const superAdminData = { // Datos del SuperAdmin
-        email: superAdminEmail, // Identificador para login
-        dni: '00000000S', // DNI ficticio
-        telefono: '+34600999999', // Teléfono ficticio
-        nombre: 'Super Usuario Global', // Nombre del SuperAdmin
-        password: await bcrypt.hash('superpassword123M', 10), // Contraseña hasheada
-        rol: UserRole.SUPERADMIN, // Rol de SuperAdmin
-        empresa: null, // El SuperAdmin no pertenece a ninguna empresa específica
-        isVerified: true, // Cuenta verificada
-        isActive: true, // Cuenta activa
-      };
-      await this.userRepository.save(this.userRepository.create(superAdminData)); // Guardar en la base de datos
-      this.logger.log('Superadmin creado con éxito.'); // Log de creación
+     const superAdminData: DeepPartial<User> = { 
+    email: superAdminEmail,
+    dni: '00000000S',
+    telefono: '+34600999999',
+    nombre: 'Super Usuario Global',
+    password: await bcrypt.hash('superpassword123M', 10),
+    rol: UserRole.SUPERADMIN,
+    empresa: null, // Asegúrate de que en UserEntity sea nullable
+    isVerified: true,
+    isActive: true,
+  };
+  const nuevoUser = this.userRepository.create(superAdminData);
+  await this.userRepository.save(nuevoUser);
+        this.logger.log('Superadmin creado con éxito.'); // Log de creación
     }
 
     return { message: 'Sistema inicializado. Use el SuperAdmin para crear empresas.' }; // Mensaje de éxito

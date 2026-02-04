@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 
@@ -31,9 +31,9 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 @UseInterceptors(ClassSerializerInterceptor) 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
-export class UsersController {
+export class UserController {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly usersService: UserService,
   ) {}
 
   // ==========================================

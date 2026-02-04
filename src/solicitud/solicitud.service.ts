@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 
-import { Solicitud, SolicitudStatus } from "./entities/solicitud.entity";
+import { Solicitud } from "./entities/solicitud.entity";
 import { RevisionSolicitud } from "./entities/revision-solicitud.entity";
 import { Ausencia, AusenciaEstado } from "../ausencia/entities/ausencia.entity"; // Verifica esta ruta
 import { User } from "../auth/entities/user.entity";
 import { CreateSolicitudDto } from "./dto/create-solicitud.dto";
-import { RevisarSolicitudDto } from "./dto/revisar-solicitud.dto";
+import { RevisarSolicitudDto, SolicitudStatus } from "./dto/revisar-solicitud.dto";
 
 
 /**

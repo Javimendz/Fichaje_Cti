@@ -1,5 +1,6 @@
-import { IsEnum, IsString, IsOptional } from 'class-validator';
-import { SolicitudStatus } from '../entities/solicitud.entity';
+import { IsEnum, IsString, IsOptional, MinLength, MaxLength, IsNotEmpty } from 'class-validator';
+
+import { Expose, Transform } from 'class-transformer';
 
 /**
  * RevisarSolicitudDto
@@ -11,12 +12,34 @@ import { SolicitudStatus } from '../entities/solicitud.entity';
  * @uses class-validator para validación de datos.
  *  
  */
+export enum SolicitudStatus {
+  PENDIENTE = 'PENDIENTE',
+  APROBADA = 'APROBADA',
+  RECHAZADA = 'RECHAZADA',
+}
+
 
 export class RevisarSolicitudDto {
-  @IsEnum([SolicitudStatus.APROBADA, SolicitudStatus.RECHAZADA]) // Solo se permiten estos dos estados
-  estado: SolicitudStatus; // Estado de la solicitud después de la revisión
+  @IsNotEmpty({ message: 'El estado de la revisión es obligatorio' })
+  // Limitamos explícitamente las opciones permitidas para la acción de revisar
+  @IsEnum([SolicitudStatus.APROBADA, SolicitudStatus.RECHAZADA], { 
+    message: 'El estado tras la revisión debe ser APROBADA o RECHAZADA' 
+  })
+  @Expose()
+  estado: SolicitudStatus;
 
-  @IsOptional() // Comentario es opcional
-  @IsString() // Debe ser una cadena de texto
-  comentarioAdmin?: string; // Comentario del admin sobre la revisión
+
+  
+ @IsOptional()
+  @IsString({ message: 'El comentario debe ser una cadena de texto' })
+  // Filtro de calidad: Si el admin decide escribir, que al menos sea descriptivo
+  @MinLength(3, { message: 'El comentario es demasiado corto' })
+  @MaxLength(1000, { message: 'El comentario no puede exceder los 1000 caracteres' })
+  // Saneamiento: Limpieza de espacios y normalización de texto
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    return value.trim().replace(/\s+/g, ' ');
+  })
+  @Expose()
+  comentarioAdmin?: string;
 }

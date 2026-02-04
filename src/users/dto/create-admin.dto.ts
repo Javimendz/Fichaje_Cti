@@ -9,6 +9,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { UserBaseDto } from './user-base.dto';
+import { Expose, Transform } from 'class-transformer';
 /**
  * 
  * CreateAdminDto
@@ -37,10 +38,12 @@ export class CreateAdminDto extends UserBaseDto {
 
 
 
-  @IsEmail({}, { message: 'El email es obligatorio para el Admin' })
-  @IsNotEmpty()
-  declare email: string; // 'declare' soluciona el error de TypeScript
-
+ @IsNotEmpty({ message: 'El email es un campo obligatorio' })
+  @IsEmail({}, { message: 'El formato del email no es válido' })
+  // Saneamiento: Convierte a minúsculas y quita espacios para evitar duplicados "falsos"
+  @Transform(({ value }) => typeof value === 'string' ? value.trim().toLowerCase() : value)
+  @Expose()
+  declare email: string;
   @IsString()
   @IsNotEmpty()
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })

@@ -2,6 +2,7 @@ import { User } from 'auth/entities/user.entity';
 import { Empresa } from 'empresa/entities/empresa.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { RevisionSolicitud } from './revision-solicitud.entity';
+import { SolicitudStatus } from 'solicitud/dto/revisar-solicitud.dto';
 
 
 
@@ -14,11 +15,6 @@ import { RevisionSolicitud } from './revision-solicitud.entity';
  * @see Solicitud para la entidad de solicitudes.
  */
 
-export enum SolicitudStatus {
-  PENDIENTE = 'PENDIENTE',
-  APROBADA = 'APROBADA',
-  RECHAZADA = 'RECHAZADA',
-}
 
 /**
  * Tipos posibles de solicitudes.

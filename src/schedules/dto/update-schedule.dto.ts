@@ -1,11 +1,11 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateHorarioDto } from './create-schedule.dto';
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsUUID } from 'class-validator';
 
 export class UpdateScheduleDto extends PartialType(CreateHorarioDto) {
 
-@IsUUID()
+  @IsNumber()
   @IsNotEmpty()
-  horarioId: string;
+  horarioId: number;
 
 }

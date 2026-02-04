@@ -1,5 +1,6 @@
-import { IsEnum, IsDateString, IsString, IsOptional, MinLength, IsNotEmpty, IsDate } from 'class-validator';
+import { IsEnum, IsDateString, IsString, IsOptional, MinLength, IsNotEmpty, IsDate, MaxLength } from 'class-validator';
 import { TipoSolicitud } from '../entities/solicitud.entity';
+import { Expose, Transform } from 'class-transformer';
 
 /**
  * CreateSolicitudDto
@@ -15,20 +16,41 @@ import { TipoSolicitud } from '../entities/solicitud.entity';
  */
 
 export class CreateSolicitudDto {
+  @IsNotEmpty({ message: 'El tipo de solicitud es obligatorio' })
   @IsEnum(TipoSolicitud, { 
     message: 'El tipo debe ser: VACACIONES, ENFERMEDAD, PERMISO o ASUNTOS_PROPIOS' 
   })
+  @Expose()
   tipo: TipoSolicitud;
 
-  @IsDateString({}, { message: 'La fecha de inicio debe tener un formato ISO válido' })
-fechaInicio: string;
+  @IsNotEmpty({ message: 'La fecha de inicio es obligatoria' })
+  @IsDateString({}, { 
+    message: 'La fecha de inicio debe tener un formato ISO válido (AAAA-MM-DD)' 
+  })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @Expose()
+  fechaInicio: string;
 
-@IsDateString({}, { message: 'La fecha de fin debe tener un formato ISO válido' })
-fechaFin: string;
+@IsNotEmpty({ message: 'La fecha de fin es obligatoria' })
+  @IsDateString({}, { 
+    message: 'La fecha de fin debe tener un formato ISO válido (AAAA-MM-DD)' 
+  })
+  // Saneamiento: Elimina espacios accidentales
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @Expose()
+  fechaFin: string;
 
 
   @IsOptional()
-  @IsString()
-  @MinLength(5, { message: 'El motivo debe tener al menos 5 caracteres' })
+  @IsString({ message: 'El motivo debe ser una cadena de texto' })
+  @MinLength(5, { message: 'Si proporciona un motivo, debe tener al menos 5 caracteres' })
+  @MaxLength(500, { message: 'El motivo es demasiado extenso (máximo 500 caracteres)' })
+  // Saneamiento: Elimina espacios innecesarios y limpia el texto
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    // Limpia espacios al inicio/final y reduce múltiples espacios internos a uno solo
+    return value.trim().replace(/\s+/g, ' ');
+  })
+  @Expose()
   motivo?: string;
 }

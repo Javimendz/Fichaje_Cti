@@ -45,9 +45,12 @@ email: string | null;
   @Column( { name: 'empresa_id', nullable: true })
   empresaId: number | null;
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' })
+  
+  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
+    onDelete: 'CASCADE' // Crucial para que la DB elimine al usuario al borrar la empresa
+  })
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresa | null;
+  empresa?: Empresa | null; // <-- Añade "| null" aquí para TypeScript
 
   @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })

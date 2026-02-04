@@ -189,8 +189,34 @@ Body - Json
   "poblacion": "Madrid",
   "provincia": "Madrid",
   "pais": "España",
+  "codigoPostal": "08001",
+  "nombreContacto": "Marta Sánchez",
+  "telefonoContacto": "+34600111222",
+  "telefonoEmpresa": "+34934123457",
   "email": "contacto@beta.com",
   "admin": {
+    "telefono": "+34655999888",
+    "email": "admin@beta.com",
+    "password": "BetaPassword2026!"
+  }
+}
+
+//Otro ejemplo
+
+{
+  "nombreEmpresa": "Global Tech Logistics S.A.",
+  "cif": "A87654321",
+  "direccion": "Avenida Central 100, Planta 5",
+  "poblacion": "Barcelona",
+  "provincia": "Barcelona",
+  "pais": "España",
+  "email": "ops@globaltech.com",
+  "codigoPostal": "08001",
+  "nombreContacto": "Marta Sánchez",
+  "telefonoContacto": "+34600111222",
+  "telefonoEmpresa": "+34934123457",
+  
+ "admin": {
     "telefono": "+34655999888",
     "email": "admin@beta.com",
     "password": "BetaPassword2026!"

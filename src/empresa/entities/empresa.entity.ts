@@ -46,10 +46,16 @@ export class Empresa {
   createdAt: Date;
 
   // Una empresa tiene muchos Usuarios (SuperAdmins, Admins, etc.)
-  @OneToMany(() => User, (user) => user.empresa)
+  @OneToMany(() => User, (user) => user.empresa, { 
+    cascade: true, 
+    onDelete: 'CASCADE' // Esto le dice a la DB que cree la relación con ON DELETE CASCADE
+  })
   usuarios: User[];
 
   // Una empresa tiene muchos Horarios (Turnos configurados)
-  @OneToMany(() => Horario, (horario) => horario.empresa)
+  @OneToMany(() => Horario, (horario) => horario.empresa, { 
+    cascade: true, 
+    onDelete: 'CASCADE' 
+  })
   horarios: Horario[];
 }

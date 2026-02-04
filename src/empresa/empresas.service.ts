@@ -127,12 +127,12 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
 
   // 6. Eliminar / Soft Delete (El que te faltaba)
   async remove(id: number) {
-    const empresa = await this.empresaRepository.findOneBy({ id });
-    if (!empresa) throw new NotFoundException('Empresa no encontrada');
-    empresa.isActive = false; // Marcamos como inactiva
-    return await this.empresaRepository.save(empresa);
-  }
-
+  const empresa = await this.empresaRepository.findOneBy({ id });
+  if (!empresa) throw new NotFoundException('Empresa no encontrada');
+  
+  // Esto elimina la empresa y, por la cascada, a todos sus usuarios y horarios
+  return await this.empresaRepository.remove(empresa);
+}
   // Auxiliar para el Seed
   async findByName(nombre: string) {
     return await this.empresaRepository.findOneBy({ nombre });

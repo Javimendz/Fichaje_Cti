@@ -14,8 +14,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { SchedulesService } from './schedules.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User } from '../auth/entities/user.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
+import { User } from 'users/entities/user.entity';
 
 @Controller('schedules')
 @UseGuards(AuthGuard())

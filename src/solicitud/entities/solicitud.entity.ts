@@ -77,8 +77,9 @@ export class Solicitud { // Definición de la entidad Solicitud
   fechaSolicitud: Date; // Fecha en que se realizó la solicitud
 
   // Relaciones
-  @ManyToOne(() => User, (user) => user.solicitudes) // Relación con User
-  usuario: User; // Usuario que realiza la solicitud
+@ManyToOne(() => User, (user) => user.solicitudes, { 
+  onDelete: 'CASCADE' 
+})  usuario: User; // Usuario que realiza la solicitud
 
   @Column() // Columna para la clave foránea del usuario
   usuarioId: number; // ID del usuario que realiza la solicitud

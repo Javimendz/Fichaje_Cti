@@ -48,45 +48,53 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
    * @see CreateSolicitudDto
    * @see Solicitud 
    */
- async create(dto: CreateSolicitudDto, user: User) {
-  // 1. Validación de seguridad (Empresa)
+async create(dto: CreateSolicitudDto, user: User) {
+  // 1. Validación de seguridad
   if (!user.empresaId) {
     throw new BadRequestException('El usuario no tiene una empresa asignada.');
   }
 
-  // 2. Validación de Cronología (Inicio vs Fin)
-  const inicio = new Date(dto.fechaInicio);
-  const fin = new Date(dto.fechaFin);
+  // 2. Normalización de fechas (Importante para evitar errores de horas/milisegundos)
+  const inicioNuevo = new Date(dto.fechaInicio);
+  const finNuevo = new Date(dto.fechaFin);
 
-  if (inicio > fin) {
-    throw new BadRequestException('La fecha de fin no puede ser anterior a la fecha de inicio.');
+  inicioNuevo.setHours(0, 0, 0, 0);
+  finNuevo.setHours(23, 59, 59, 999);
+
+  if (inicioNuevo > finNuevo) {
+    throw new BadRequestException('La fecha de fin no puede ser anterior a la de inicio.');
   }
 
   // 3. Validación de Solapamiento (Overlap)
-  // Evita que el usuario pida dos solicitudes que choquen en el calendario
+  // Usamos las variables normalizadas para asegurar una comparación de días exactos
   const solicitudExistente = await this.solicitudRepo.findOne({
-  where: {
-    usuarioId: user.id,
-    // 2. Usa el valor del Enum en lugar del string "RECHAZADA"
-    estado: SolicitudStatus.APROBADA, 
-    fechaInicio: LessThanOrEqual(new Date(dto.fechaFin)),
-    fechaFin: MoreThanOrEqual(new Date(dto.fechaInicio)),
-  },
+    where: {
+      usuarioId: user.id,
+      estado: SolicitudStatus.APROBADA, 
+      // Comparamos el inicio de la guardada contra el fin de la nueva
+      // y el fin de la guardada contra el inicio de la nueva
+      fechaInicio: LessThanOrEqual(finNuevo),
+      fechaFin: MoreThanOrEqual(inicioNuevo),
+    },
   });
 
   if (solicitudExistente) {
+    const fI = new Date(solicitudExistente.fechaInicio).toLocaleDateString();
+    const fF = new Date(solicitudExistente.fechaFin).toLocaleDateString();
     throw new BadRequestException(
-      `Ya tienes una solicitud para este periodo (${solicitudExistente.fechaInicio} al ${solicitudExistente.fechaFin})`
+      `Ya tienes una solicitud APROBADA en este periodo (${fI} al ${fF}).`
     );
   }
 
   // 4. Creación y Persistencia
   const solicitud = this.solicitudRepo.create({
-  ...dto,
-  usuario: user, 
-  empresa: { id: user.empresaId }, 
-  estado: SolicitudStatus.PENDIENTE, 
-});
+    ...dto,
+    fechaInicio: inicioNuevo, // Guardamos la fecha normalizada
+    fechaFin: finNuevo,       // Guardamos la fecha normalizada
+    usuario: user, 
+    empresa: { id: user.empresaId }, 
+    estado: SolicitudStatus.PENDIENTE, 
+  });
 
   return await this.solicitudRepo.save(solicitud);
 }

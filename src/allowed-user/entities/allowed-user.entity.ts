@@ -82,8 +82,7 @@ export class AllowedUser {
   // ============================================
   
 
-  @Column({ type: 'timestamp', nullable: true })
-  codigoExpiraEn?: Date;
+  
 
   @Column({ type: 'bool', default: false })
   isVerified: boolean;
@@ -114,14 +113,14 @@ export class AllowedUser {
 
 @ManyToOne(() => Horario, (horario) => horario.usuarios, { 
   nullable: true, 
-  onDelete: 'SET NULL' 
+  onDelete: 'CASCADE' 
 })  @JoinColumn({ name: 'horario_id' })
   horario?: Horario;
 
-  @OneToMany(() => Jornada, (jornada) => jornada.usuario)
+  @OneToMany(() => Jornada, (jornada) => jornada.usuario,{onDelete: 'CASCADE'} )
   jornadas: Jornada[];
 
-  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario)
+  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario,{onDelete: 'CASCADE'})
   ausencias: Ausencia[];
 
   @Column()

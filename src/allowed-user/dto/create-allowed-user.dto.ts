@@ -86,6 +86,8 @@ export class CreateAllowedUserDto {
   @IsString()
   @IsOptional()
   horarioId?: string; // UUID del horario pre-asignado
+
+  
 }
 
 

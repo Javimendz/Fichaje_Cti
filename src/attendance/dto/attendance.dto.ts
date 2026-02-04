@@ -11,7 +11,7 @@ export class AttendanceDto {
   @IsDateString({}, { message: 'La fecha debe ser un formato ISO válido' })
   @IsNotEmpty()
   @Expose()
-  fecha: Date;
+  fecha: string;
 
   @IsBoolean()
   @IsNotEmpty()
@@ -23,10 +23,10 @@ export class AttendanceDto {
   @Expose()
   motivo: string;
 
+  @IsOptional() 
   @IsString()
-  @IsNotEmpty()
   @Expose()
-  usuarioId: string;
+  usuarioId?: string;
 
   @IsOptional()
   @ValidateNested() // Crucial para validar el objeto usuario si viene anidado

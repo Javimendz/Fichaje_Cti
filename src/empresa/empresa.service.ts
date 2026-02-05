@@ -146,10 +146,19 @@ async findOne(id: number, user: UserPayload) {
 
     // 2. Si viene el objeto 'admin', actualizamos al usuario correspondiente
     if (admin) {
+
+      const adminUpdateData = { ...admin };
+
+    // SI VIENE PASSWORD, LA ENCRIPTAMOS
+    if (adminUpdateData.password) {
+      adminUpdateData.password = await bcrypt.hash(adminUpdateData.password, 10);
+    }
+
+
       await this.dataSource
         .createQueryBuilder()
         .update(User)
-        .set(admin)
+        .set(adminUpdateData)
         .where('empresaId = :id', { id })
         .andWhere('rol = :rol', { rol: UserRole.ADMIN })
         .execute();

@@ -1,6 +1,6 @@
 import { IsDateString, IsBoolean, IsString, IsNotEmpty, IsNumber, IsOptional, ValidateNested, IsInt, Min, Matches, MinLength, MaxLength } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { AuthUserDto } from 'auth/dto/Authuser.dto';
+import { AuthUserDto } from 'auth/dto/authUser.dto';
 
 export class AttendanceDto {
   @IsNumber({}, { message: 'El ID debe ser un valor numérico' })

@@ -1,5 +1,5 @@
 // src/empresas/empresas.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, ParseIntPipe, Put } from '@nestjs/common';
 import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -19,20 +19,20 @@ import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 export class EmpresaController {
   constructor(private readonly empresasService: EmpresaService) {}
 
-  // --- NUEVO MÉTODO SETUP ---
-  @Post('setup')
+  // --- NUEVO MÉTODO CREAR EMPRESA ---
+  @Post('crear-empresa')
   @Roles(UserRole.SUPERADMIN) // Solo el SuperAdmin puede crear Empresa + Admin
   async setupEmpresa(@Body() setupEmpresaDto: SetupEmpresaDto) {
     return this.empresasService.createWithAdmin(setupEmpresaDto);
   }
 
-  @Post('crear-empresa')
+  /*@Post('crear-empresa')
   @Roles(UserRole.SUPERADMIN)
   create(@Body() createEmpresaDto: CreateEmpresaDto) {
     return this.empresasService.create(createEmpresaDto);
   }
-
-  @Get('get-empresas')
+*/
+  @Get('list-empresas')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   findAll(@GetUser() user: UserPayload) {
     return this.empresasService.findAll(user);
@@ -47,7 +47,7 @@ export class EmpresaController {
     return this.empresasService.findOne(id, user);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @Roles(UserRole.SUPERADMIN)
   update(
     @Param('id', ParseIntPipe) id: number, 

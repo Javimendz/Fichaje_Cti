@@ -21,6 +21,10 @@ export class EmpresaService {
   ) {}
 
 async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos los campos
+  // 1. Validación previa (Fuera de la transacción para ahorrar recursos)
+  const cifExiste = await this.empresaRepository.findOneBy({ cif: dto.cif });
+  if (cifExiste) throw new BadRequestException('El CIF de la empresa ya está registrado');
+
   const queryRunner = this.dataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
@@ -66,11 +70,18 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
     // 4. Confirmar cambios
     await queryRunner.commitTransaction();
 
-    return {
-      message: 'Setup de empresa completado con éxito',
-      empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
-      admin: { id: nuevoAdmin.id, email: nuevoAdmin.email }
-    };
+   return {
+  message: 'Setup de empresa completado con éxito',
+  empresa: { 
+    id: empresaGuardada.id, 
+    nombre: empresaGuardada.nombre 
+  },
+  admin: { 
+    id: nuevoAdmin.id, 
+    email: nuevoAdmin.email,
+    rol: nuevoAdmin.rol 
+  }
+};
 
   } catch (error) {
     await queryRunner.rollbackTransaction();
@@ -83,7 +94,7 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
     await queryRunner.release();
   }
 }
-
+/*
   // 2. Crear empresa simple (El que te faltaba)
   async create(dto: CreateEmpresaDto) {
     if (dto.cif) {
@@ -94,37 +105,69 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
   const nuevaEmpresa = this.empresaRepository.create(dto);
   return await this.empresaRepository.save(nuevaEmpresa);
   }
-
+*/
   // 3. Listar empresas con filtro de seguridad
-  async findAll(user: UserPayload) {
-    if (user.rol === UserRole.SUPERADMIN) {
-      return await this.empresaRepository.find({ where: { isActive: true }, relations: ['usuarios'] });
+ 
+
+async findAll(user: UserPayload) {
+    const query = this.empresaRepository.createQueryBuilder('empresa')
+      .leftJoinAndSelect('empresa.usuarios', 'usuario', 'usuario.rol = :rol', { rol: UserRole.ADMIN });
+
+    if (user.rol !== UserRole.SUPERADMIN) {
+      if (!user.empresaId) return [];
+      query.where('empresa.id = :id', { id: user.empresaId }).andWhere('empresa.isActive = :active', { active: true });
     }
-    if (!user.empresaId) return [];
-    const empresa = await this.empresaRepository.findOne({ 
-        where: { id: user.empresaId, isActive: true }, 
-        relations: ['usuarios'] 
-    });
-    return empresa ? [empresa] : [];
+
+    const empresas = await query.getMany();
+    return empresas.map(emp => this.formatResponse(emp));
   }
 
-  // 4. Buscar una (El que te faltaba)
-  async findOne(id: number, user: UserPayload) {
+async findOne(id: number, user: UserPayload) {
     if (user.rol !== UserRole.SUPERADMIN && user.empresaId !== id) {
       throw new ForbiddenException('No tienes permiso');
     }
-    const empresa = await this.empresaRepository.findOne({ where: { id, isActive: true } });
+
+    const empresa = await this.empresaRepository.createQueryBuilder('empresa')
+      .leftJoinAndSelect('empresa.usuarios', 'usuario', 'usuario.rol = :rol', { rol: UserRole.ADMIN })
+      .where('empresa.id = :id', { id })
+      .getOne();
+
     if (!empresa) throw new NotFoundException('Empresa no encontrada');
-    return empresa;
+    return this.formatResponse(empresa);
   }
 
   // 5. Actualizar (El que te faltaba)
-  async update(id: number, dto: UpdateEmpresaDto) {
-    const empresa = await this.empresaRepository.preload({ id, ...dto });
-    if (!empresa) throw new NotFoundException('Empresa no existe');
-    return await this.empresaRepository.save(empresa);
+ async update(id: number, dto: UpdateEmpresaDto) {
+    const { admin, ...empresaDatos } = dto as any;
+
+    // 1. Preload para la empresa
+    const empresa = await this.empresaRepository.preload({ id, ...empresaDatos });
+    if (!empresa) throw new NotFoundException(`Empresa con ID ${id} no existe`);
+
+    // 2. Si viene el objeto 'admin', actualizamos al usuario correspondiente
+    if (admin) {
+      await this.dataSource
+        .createQueryBuilder()
+        .update(User)
+        .set(admin)
+        .where('empresaId = :id', { id })
+        .andWhere('rol = :rol', { rol: UserRole.ADMIN })
+        .execute();
+    }
+
+    await this.empresaRepository.save(empresa);
+    
+    // Devolvemos la empresa actualizada con su admin
+    return this.findOne(id, { rol: UserRole.SUPERADMIN } as any); 
   }
 
+  private formatResponse(empresa: Empresa) {
+    const { usuarios, ...resto } = empresa;
+    return {
+      ...resto,
+      admin: (usuarios && usuarios.length > 0) ? usuarios[0] : null
+    };
+  }
   // 6. Eliminar / Soft Delete (El que te faltaba)
   async remove(id: number) {
   const empresa = await this.empresaRepository.findOneBy({ id });

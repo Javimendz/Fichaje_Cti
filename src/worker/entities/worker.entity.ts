@@ -118,10 +118,10 @@ export class Worker {
 })  @JoinColumn({ name: 'horario_id' })
   horario?: Horario;
 
-  @OneToMany(() => Jornada, (jornada) => jornada.usuario,{onDelete: 'CASCADE'} )
+  @OneToMany(() => Jornada, (jornada) => jornada.usuario,{cascade:true} )
   jornadas: Jornada[];
 
-  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario,{onDelete: 'CASCADE'})
+  @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario,{cascade: true})
   ausencias: Ausencia[];
 
   @Exclude()

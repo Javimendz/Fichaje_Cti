@@ -1,23 +1,19 @@
-import {
-  registerDecorator,
-  ValidationOptions,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
-} from 'class-validator';
+import { ValidatorConstraint, ValidatorConstraintInterface } from "class-validator";
 
 @ValidatorConstraint({ name: 'isDni', async: false })
-export class IsDniConstraint implements ValidatorConstraintInterface {
+export class IsDni implements ValidatorConstraintInterface {
   validate(value: any) {
     if (typeof value !== 'string') return false;
 
-    // Limpiar formato (quitar guiones, espacios y pasar a mayúsculas)
+    // 1. Limpiar formato
     const cleanDni = value.trim().toUpperCase().replace(/[-\s]/g, '');
     
-    // Verificar formato básico (8 números + 1 letra)
-    if (!/^[0-9]{8}[TRWAGMYFPDXBNJZSTQVHLCKE]$/.test(cleanDni)) return false;
+    // 2. Formato: 8 números y 1 letra de las permitidas (S y T están, pero en su sitio)
+    // La cadena oficial NO tiene la 'U', 'I', 'O', 'Ñ'
+    if (!/^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/.test(cleanDni)) return false;
 
-    // Algoritmo de validación de la letra (Módulo 23)
-    const letras = 'TRWAGMYFPDXBNJZSTQVHLCKE';
+    // 3. LA CADENA CORRECTA (23 caracteres)
+    const letras = 'TRWAGMYFPDXBNJZSQVHLCKE'; 
     const numero = parseInt(cleanDni.substring(0, 8), 10);
     const letraEsperada = letras[numero % 23];
     const letraProporcionada = cleanDni.charAt(8);
@@ -26,19 +22,6 @@ export class IsDniConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage() {
-    return 'El DNI no es válido (formato incorrecto o letra no corresponde)';
+    return 'El DNI introducido es inválido (la letra no corresponde al número)';
   }
-}
-
-// Función del decorador
-export function IsDni(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
-    registerDecorator({
-      target: object.constructor,
-      propertyName: propertyName,
-      options: validationOptions,
-      constraints: [],
-      validator: IsDniConstraint,
-    });
-  };
 }

@@ -13,7 +13,8 @@ import {
   MaxLength,
   Min,
   Max,
-  IsInt
+  IsInt,
+  Validate
 } from 'class-validator';
 import { IsDni } from '../../auth/decorators/isDniConstraint';
 
@@ -29,11 +30,11 @@ export class CreateWorkerDto {
 
   @IsOptional()
   @IsString({ message: 'El DNI debe ser una cadena de texto' })
-  // Estandarización: Quita espacios, guiones y convierte la letra a MAYÚSCULA
   @Transform(({ value }) => typeof value === 'string' ? value.trim().replace(/[-\s]/g, '').toUpperCase() : value)
-  @IsDni({message: 'El DNI introducido es inválido (la letra no corresponde al número)'})
+  @Validate(IsDni) // <--- Cambia @IsDni() por @Validate(IsDni)
   @Expose()
   dni?: string;
+
 
   @IsOptional()
   @IsString({ message: 'El email debe ser una cadena de texto' })

@@ -135,11 +135,18 @@
           {
             "key": "Authorization",
             "value": "Bearer <TU_JWT_AQUI>",
-            "type": "text"
+            "type": "text",
+            "disabled": true
           },
           {
             "key": "Content-Type",
             "value": "application/json",
+            "type": "text",
+            "disabled": true
+          },
+          {
+            "key": "x-seed-key",
+            "value": "123",
             "type": "text"
           }
         ],
@@ -218,7 +225,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YjhhMTU0Mi1iYzM1LTRkMWEtODc2OC01ZjFmMTQwYmQ5OGQiLCJyb2wiOiJTVVBFUkFETUlOIiwiaWF0IjoxNzY4OTk0NTEzLCJleHAiOjE3NjkwMzc3MTN9.MIsqsZDG_ZbkExVRReUNeFpIAZpVPnjzmLkyidp7grg",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyMDM1NTksImV4cCI6MTc3MDI0Njc1OX0.pmKKBg7sIXB4vpkWyWWt5_c4Nl1-2ZK5OYOxP8nNTNs",
               "type": "string"
             }
           ]
@@ -238,7 +245,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"nombreEmpresa\": \"Servicios Logísticos Beta S.L.\",\r\n  \"admin\": {\r\n    \"nombre\": \"Elena\",\r\n    \r\n    \"email\": \"admin@beta.com\",\r\n    \"password\": \"BetaPassword2026!\",\r\n    \"dni\": \"87654321B\",\r\n    \"telefono\": \"+34655999888\"\r\n  }\r\n}"
+          "raw": "\r\n\r\n{\r\n  \"nombreEmpresa\": \"Global Tech Logistics S.A.\",\r\n  \"cif\": \"A87654321\",\r\n  \"direccion\": \"Avenida Central 100, Planta 5\",\r\n  \"poblacion\": \"Barcelona\",\r\n  \"provincia\": \"Barcelona\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"ops@globaltech.com\",\r\n  \"codigoPostal\": \"08001\",\r\n  \"nombreContacto\": \"Marta Sánchez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"+34934123457\",\r\n  \r\n  \"admin\": {\r\n    \"telefono\": \"+34600000001\",\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n  }\r\n}"
         },
         "url": {
           "raw": "http://localhost:3000/api/empresas/setup",
@@ -335,7 +342,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n      \"email\": \"superadmin@cti.com\",\r\n  \"password\": \"superpassword\"\r\n}",
+          "raw": "{\r\n    \"dni\": \"12345678Z\", \r\n    \"password\": \"contraseña123\"\r\n\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -417,13 +424,22 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmODBmYTE4Yy0zMDFjLTQ2OGItODc5OC1iMGRjMzRmY2FhYWEiLCJ0ZWxlZm9ubyI6IiszNDYwMDExMTIzOCIsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6bnVsbCwiaWF0IjoxNzY4Mjk1MjYwLCJleHAiOjE3NjgyOTg4NjB9.vQwImjfRHaceJIKc5bI3cMtAQ3nMyVFeX3uStOgYHfg",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcwMjAzNjc5LCJleHAiOjE3NzAyMDcyNzl9.WFpfoYhkCf_evPSs7OSDz3qdGxk4_ra40Rakqyj9oVg",
               "type": "string"
             }
           ]
         },
         "method": "PATCH",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"latitud\": 40.4167,\r\n  \"longitud\": -3.7037\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
           "raw": "http://localhost:3000/api/jornadas/check-out",
           "protocol": "http",
@@ -441,14 +457,14 @@
       "response": []
     },
     {
-      "name": "allowed-user",
+      "name": "worker",
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMTMwYzJmZS05MjY2LTRkMDItYTM0MS0zNjQ4NjBhZWRmYzAiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6IjQ0MGU0YzYxLWU2OTctNDg3OC1hNmYwLWE1MDY0ZTQyYjUxYyIsImlhdCI6MTc2ODk5MzAxMywiZXhwIjoxNzY5MDM2MjEzfQ.x67-BtRN1eYWQ8dnBGSzwzblHiPkKIBaIhfU0wiU6-w",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAxMTk3OTQsImV4cCI6MTc3MDE2Mjk5NH0.7RtHk3o-a0TCEexbAIutlljfBgm8Uz8yL7skzjSikwI",
               "type": "string"
             }
           ]
@@ -457,7 +473,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123456\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123\",\r\n  \"dni\": \"12345678Z\",\r\n  \"email\": \"juan.perez@empresa.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1\r\n}",
+          "raw": "{\r\n  \"telefono\": \"600123456\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123\",\r\n  \"dni\": \"12345678Z\",\r\n  \"email\": \"juan.perez@empresa.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -480,22 +496,31 @@
       "response": []
     },
     {
-      "name": "solicitud",
+      "name": "request",
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YTU0OTA2OS0yNmYyLTRlMGYtYWMwMC1jMTNhM2NjMjFlNTgiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6IjM1YTFmNjM5LWRmMDQtNDFmYS1hYzJjLWVmODY2OTE5ZmJlMSIsImlhdCI6MTc2ODk4NDE4NywiZXhwIjoxNzY5MDI3Mzg3fQ.UIcvLvS-CEvTmM5oJLoI7PVQ88hVEfH8WW5NW3re7kY",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcwMjAzNjc5LCJleHAiOjE3NzAyMDcyNzl9.WFpfoYhkCf_evPSs7OSDz3qdGxk4_ra40Rakqyj9oVg",
               "type": "string"
             }
           ]
         },
         "method": "POST",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"ENFERMEDAD\",\r\n  \"fechaInicio\": \"2026-10-03\",\r\n  \"fechaFin\": \"2026-11-15\",\r\n  \"motivo\": \"Vacaciones de verano\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "http://localhost:3000/api/solicitudes",
+          "raw": "http://localhost:3000/api/request",
           "protocol": "http",
           "host": [
             "localhost"
@@ -503,7 +528,7 @@
           "port": "3000",
           "path": [
             "api",
-            "solicitudes"
+            "request"
           ]
         }
       },
@@ -520,6 +545,16 @@
     {
       "name": "aprobar-solicitud",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyMDM1ODcsImV4cCI6MTc3MDI0Njc4N30.XFuwWsKIU7y-_fSz9-G2vVYrKrnvz7hf84kDND-5fkU",
+              "type": "string"
+            }
+          ]
+        },
         "method": "PATCH",
         "header": [],
         "url": {
@@ -581,24 +616,103 @@
     {
       "name": "Obtener Trabajador por id",
       "request": {
-        "method": "GET",
-        "header": []
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NzE0MjBiZC0zOTAyLTRmZGItYWE5Ni0wNDRjMzhiODYxYTAiLCJyb2wiOiJTVVBFUkFETUlOIiwiaWF0IjoxNzY5NTk0MTQxLCJleHAiOjE3Njk2MzczNDF9.QsicJD2a9QTb4n_wme_KKufujDkKMUes6s_Xhfg99eM",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/571420bd-3902-4fdb-aa96-044c38b861a0",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "571420bd-3902-4fdb-aa96-044c38b861a0"
+          ]
+        }
       },
       "response": []
     },
     {
       "name": "Obtener Horario por id",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Y2I2NGY4OS01YTZhLTRiMWYtODY0Yi1iZWE4NWE4M2ZhNWEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImYzNWE2MGJhLWVmNGQtNDk4OC04YzAxLWNiMDZkZTUyYjA2ZSIsImlhdCI6MTc2OTU5NDQzMCwiZXhwIjoxNzY5NjM3NjMwfQ.m56EAAxg9rHrG1Bo9E042RxR7bcEp45hjREvhhHdd4A",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
-        "header": []
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/schedules/d4adc430-67dc-4b4b-bdbb-4e21d46405cf",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedules",
+            "d4adc430-67dc-4b4b-bdbb-4e21d46405cf"
+          ]
+        }
       },
       "response": []
     },
     {
       "name": "Asignar horario",
       "request": {
-        "method": "GET",
-        "header": []
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Y2I2NGY4OS01YTZhLTRiMWYtODY0Yi1iZWE4NWE4M2ZhNWEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImYzNWE2MGJhLWVmNGQtNDk4OC04YzAxLWNiMDZkZTUyYjA2ZSIsImlhdCI6MTc2OTU5NDQzMCwiZXhwIjoxNzY5NjM3NjMwfQ.m56EAAxg9rHrG1Bo9E042RxR7bcEp45hjREvhhHdd4A",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"horarioId\": \"d4adc430-67dc-4b4b-bdbb-4e21d46405cf\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/allowed-user/a44ba9ee-7f38-4194-8539-615c1517e37d/assign-schedule",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "allowed-user",
+            "a44ba9ee-7f38-4194-8539-615c1517e37d",
+            "assign-schedule"
+          ]
+        }
       },
       "response": []
     },
@@ -607,6 +721,101 @@
       "request": {
         "method": "GET",
         "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Attendance",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NzE0MjBiZC0zOTAyLTRmZGItYWE5Ni0wNDRjMzhiODYxYTAiLCJyb2wiOiJTVVBFUkFETUlOIiwiaWF0IjoxNzY5NTk0MTQxLCJleHAiOjE3Njk2MzczNDF9.QsicJD2a9QTb4n_wme_KKufujDkKMUes6s_Xhfg99eM",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/attendance",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "attendance"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener Users",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Empresas",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar Empresa",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyODA4NDksImV4cCI6MTc3MDMyNDA0OX0.nX7UhAbUu5cL4M6sglogP8pJXg-byz3GiBzdX8ZBsxo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Tech Solutionsss\",\r\n  \"cif\": \"B12345678\",\r\n  \"direccion\": \"Calle Falsa 123\",\r\n  \"provincia\": \"Murcia\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"contactoNombre\": \"Juan Pérez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"910000000\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"info@techsolutions.es\",\r\n  \"isActive\": true,\r\n  \"admin\": {\r\n    \"email\": \"admin@beta.com\",\r\n    \"telefono\": \"+34655999888\",\r\n    \"nombre\": \"Nombre Real\",\r\n    \"apellidos\": \"Apellidos Reales\"\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/empresas/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresas",
+            "1"
+          ]
+        }
       },
       "response": []
     }

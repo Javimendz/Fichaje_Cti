@@ -22,7 +22,7 @@ export class WorkerController {
     return this.allowedUserService.create(createAllowedUserDto, admin);
   }
 
-  @Get('list-worker')
+  @Get('list-workers')
   findAll(@GetUser() admin: User) {
     // 1. Si es SUPERADMIN, puede ver todos los usuarios (sin filtrar por empresa)
     if (admin.rol === UserRole.SUPERADMIN) {
@@ -37,22 +37,22 @@ export class WorkerController {
     return this.allowedUserService.findAllByEmpresa(admin.empresaId);
   }
 
-  @Get(':id')
+  @Get('find/:id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.allowedUserService.findOne(id);
   }
 
-  @Put(':id')
+  @Put('update/:id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateWorkerDto) {
     return this.allowedUserService.update(id, updateAllowedUserDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.allowedUserService.remove(id);
   }
 
-  @Put(':workerId/assign-schedule')
+  @Put('assign-schedule/:workerId')
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async assignSchedule(

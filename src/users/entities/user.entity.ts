@@ -82,7 +82,7 @@ export class User { // Definición de la entidad User
   @JoinColumn({ name: 'horario_id' }) // Llave foránea personalizada
   horario: Horario | null; // Horario asignado al usuario
 
-  @OneToMany(() => Jornada, (j) => j.usuario) // Relación con Jornadas
+  @OneToMany(() => Jornada, (j) => j.usuario, {cascade:true}) // Relación con Jornadas
   jornadas: Jornada[]; // Jornadas laborales del usuario
 
   @OneToMany(() => Ausencia, (a) => a.usuario) // Relación con Ausencias

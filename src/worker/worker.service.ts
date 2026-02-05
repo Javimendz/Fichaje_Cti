@@ -2,7 +2,7 @@
 import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { AllowedUser } from './entities/allowed-user.entity';
+import { Worker } from './entities/worker.entity';
 import { CreateWorkerDto } from './dto/worker.dto';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
@@ -12,8 +12,8 @@ import { Horario } from 'schedule/entities/schedules.entity';
 @Injectable()
 export class WorkerService {
   constructor(
-    @InjectRepository(AllowedUser)
-    private readonly allowedUserRepository: Repository<AllowedUser>,
+    @InjectRepository(Worker)
+    private readonly allowedUserRepository: Repository<Worker>,
     
   private readonly dataSource: DataSource,
   ) {}
@@ -35,7 +35,7 @@ async create(dto: CreateWorkerDto, admin: User) {
     const hashedPassword = bcrypt.hashSync(dto.password, 10);
 
     // 3. Crear el registro en AllowedUser (Pre-autorización)
-    const newAllowedUser = queryRunner.manager.create(AllowedUser, {
+    const newAllowedUser = queryRunner.manager.create(Worker, {
       
       nombre: dto.nombre,
       email: dto.email?.toLowerCase().trim() || '',
@@ -109,7 +109,7 @@ async create(dto: CreateWorkerDto, admin: User) {
     });
   }
   
-  async findOne(id: number): Promise<AllowedUser> {
+  async findOne(id: number): Promise<Worker> {
     const user = await this.allowedUserRepository.findOneBy({ id });
     
     if (!user) {

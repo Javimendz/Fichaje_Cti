@@ -9,7 +9,7 @@ import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 import { VerifyCodeDto } from "./dto/verify-code.dto";
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
-import { AllowedUser } from "worker/entities/allowed-user.entity";
+import { Worker } from "worker/entities/worker.entity";
 import { User } from "users/entities/user.entity";
 
 @Injectable()
@@ -20,8 +20,8 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly allowedPhonesService: AllowedPhonesService,
-    @InjectRepository(AllowedUser)
-    private readonly allowedUserRepository: Repository<AllowedUser>,
+    @InjectRepository(Worker)
+    private readonly allowedUserRepository: Repository<Worker>,
   ) {}
 
   // =====================================

@@ -47,7 +47,7 @@ export class EmpresaController {
     return this.empresasService.findOne(id, user);
   }
 
-  @Put(':id')
+  @Put('update/:id')
   @Roles(UserRole.SUPERADMIN)
   update(
     @Param('id', ParseIntPipe) id: number, 
@@ -56,7 +56,7 @@ export class EmpresaController {
     return this.empresasService.update(id, updateEmpresaDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   @Roles(UserRole.SUPERADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.empresasService.remove(id);

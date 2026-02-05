@@ -1,6 +1,7 @@
 // src/allowed-user/entities/allowed-user.entity.ts
 import { Ausencia } from "ausencia/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
+import { Exclude } from "class-transformer";
 import { Empresa } from "empresa/entities/empresa.entity";
 import { Jornada } from "jornada/entities/jornada.entity";
 import { Horario } from "schedule/entities/schedules.entity";
@@ -15,8 +16,8 @@ import {
   UpdateDateColumn 
 } from "typeorm";
 
-@Entity('allowed_users')
-export class AllowedUser {
+@Entity('workers')
+export class Worker {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -123,6 +124,7 @@ export class AllowedUser {
   @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario,{onDelete: 'CASCADE'})
   ausencias: Ausencia[];
 
+  @Exclude()
   @Column()
 password: string;
 }

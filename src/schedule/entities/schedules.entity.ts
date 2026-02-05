@@ -9,7 +9,7 @@ import {
   JoinColumn,
   DeleteDateColumn
 } from 'typeorm';
-import { AllowedUser } from '../../worker/entities/allowed-user.entity';
+import { Worker } from '../../worker/entities/worker.entity';
 import { DistribucionDia } from './distribucion-dia.entity';
 import { Empresa } from 'empresa/entities/empresa.entity';
 
@@ -69,8 +69,8 @@ export class Horario {
   distribuciones: DistribucionDia[]; // Días de distribución del horario
 
   // Relación con los usuarios asignados a este horario
-  @OneToMany(() => AllowedUser, (user) => user.horario)
-  usuarios: AllowedUser[]; // Usuarios asignados a este horario
+  @OneToMany(() => Worker, (user) => user.horario)
+  usuarios: Worker[]; // Usuarios asignados a este horario
 
   // --- AUDITORÍA ---
   // ============================================

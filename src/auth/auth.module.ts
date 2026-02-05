@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { User } from './entities/user.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AllowedPhonesModule } from 'allowed-phones/allowed-phones.module';
-import { AllowedUser } from 'worker/entities/allowed-user.entity';
+import { Worker } from 'worker/entities/worker.entity';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { AllowedUser } from 'worker/entities/allowed-user.entity';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     
     // 2. Entidades
-    TypeOrmModule.forFeature([User, AllowedUser]),
+    TypeOrmModule.forFeature([User, Worker]),
     
     // 3. Dependencias circulares o externas
     forwardRef(() => AllowedPhonesModule),

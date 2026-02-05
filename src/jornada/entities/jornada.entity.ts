@@ -25,7 +25,7 @@ export class Jornada {
   @Column()
   tipo: string; // "Entrada" o "Salida"
 
-  @ManyToOne(() => User, (user) => user.jornadas, { eager: true, cascade: false })
+  @ManyToOne(() => User, (user) => user.jornadas, { eager: true,onDelete: 'CASCADE'})
 usuario: User;
 
 @ManyToOne(() => Empresa, { eager: true })

@@ -488,6 +488,7 @@ Patch - Json
 # Endpoints - Completos
 
 ```
+SEED/LOGIN
 🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
 POST       /api/seeds/run           Inicializa el SuperAdmin y datos base.  Header: x-seed-key
 POST       /api/auth/login          Inicio de sesión para todos los roles.  "{ email, password }"
@@ -495,6 +496,7 @@ POST       /api/auth/login          Inicio de sesión para todos los roles.  "{ 
 ```
 
 ```
+EMPRESA
 🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
 POST        /api/empresa/crear-empresa            Setup Inicial: Crea empresa + Admin principal.
 GET         /api/empresa/list-empresas            Obtiene listado de todas las empresas.
@@ -505,17 +507,19 @@ DELETE      /api/empresa/:id                      Elimina una empresa del sistem
 ```
 
 ```
+WORKER
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
 POST        /api/worker/crear-worker              Registra/Pre-autoriza un nuevo trabajador.
-GET         /api/worker/list-worker               Lista todos los trabajadores de la empresa.
-GET         /api/worker/:id                       Obtiene la ficha de un trabajador.
-PUT         /api/worker/:id                       Actualiza información del trabajador.
-DELETE      /api/worker/:id                       Borra un trabajador autorizado.
-PUT         /api/worker/:id/assign-schedule       Asignar Horario: Vincula horario a trabajador.
+GET         /api/worker/list-workers              Lista todos los trabajadores de la empresa.
+GET         /api/worker/find/:id                  Obtiene la ficha de un trabajador.
+PUT         /api/worker/update/:id                Actualiza información del trabajador.
+DELETE      /api/worker/delete/:id                Borra un trabajador autorizado.
+PUT         /api/worker/assign-schedule/:id       Asignar Horario: Vincula horario a trabajador.
 
 ```
 
 ```
+REQUEST
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
 POST        /api/request                       El trabajador crea una nueva solicitud.
 GET         /api/request/my-request            El trabajador ve el estado de sus pedidos.
@@ -525,6 +529,7 @@ PUT         /api/request/:id/check             El Admin aprueba o rechaza una so
 ```
 
 ```
+SCHEDULE
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
 POST        /api/schedule        Crea un nuevo horario Fijo o Rotativo.
 GET         /api/schedule        Lista todos los horarios de la empresa del admin. Token Admin
@@ -535,6 +540,7 @@ DELETE      /api/schedule/:id    Elimina un horario (si no está asignado).Requi
 
 
 ```
+FRANJA-HORARIA
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
 POST        /api/franja-horaria       Crea una franja. "{ inicio, fin, tipo, horarioId }"
 GET         /api/franja-horaria       Obtiene todas franjas registradas. Requiere Bearer Token
@@ -545,7 +551,7 @@ DELETE      /api/franja-horaria/:id   Borra una franja horaria.Requiere rol ADMI
 ```
 
 ```
-
+JORNADA
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
 POST        /api/jornadas/check-in   Registra la entrada del trabajador."{ latitud, longitud }"
 PUT         /api/jornadas/check-out  Registra la salida y cierra la jornada.No requiere body

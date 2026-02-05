@@ -28,10 +28,10 @@ export class Worker {
   telefono: string;
 
   @Column({ type: 'varchar', unique: true, nullable: true })
-  dni?: string; // Sin "| null" para evitar error TS2769
+  dni: string | null; // Sin "| null" para evitar error TS2769
 
   @Column({ type: 'text', nullable: true })
-  email?: string;
+email: string | null;
 
   // ============================================
   // DATOS PERSONALES
@@ -43,7 +43,7 @@ export class Worker {
   apellidos?: string;
 
   @Column({ type: 'date', nullable: true })
-  fechaNacimiento?: Date;
+  fechaNacimiento: Date | null;
 
   // ============================================
   // DIRECCIÓN

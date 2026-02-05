@@ -31,7 +31,7 @@ export class CreateWorkerDto {
   @IsOptional()
   @IsString({ message: 'El DNI debe ser una cadena de texto' })
   @Transform(({ value }) => typeof value === 'string' ? value.trim().replace(/[-\s]/g, '').toUpperCase() : value)
-  @Validate(IsDni) // <--- Cambia @IsDni() por @Validate(IsDni)
+  @Validate(IsDni) 
   @Expose()
   dni?: string;
 
@@ -42,7 +42,7 @@ export class CreateWorkerDto {
   // Normalización: convierte a minúsculas y elimina espacios accidentales
   @Transform(({ value }) => typeof value === 'string' ? value.toLowerCase().trim() : value)
   @Expose()
-  email?: string;
+  email: string;
   // ============================================
   // DATOS PERSONALES
   // ============================================

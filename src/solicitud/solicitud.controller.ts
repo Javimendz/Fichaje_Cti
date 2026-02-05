@@ -21,14 +21,14 @@ import { AuthGuard } from "@nestjs/passport";
  * @controller 'solicitudes' define la ruta base para este controlador.
  * @UseGuards(AuthGuard()) aplica el guard de autenticación a todas las rutas del controlador. 
  */
-@Controller('solicitudes') // prefijo de ruta
+@Controller('request') // prefijo de ruta
   @Roles(UserRole.ADMIN, UserRole.WORKER)
 @
 UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
 export class SolicitudesController { // Inyección de dependencias
   constructor(private readonly solicitudesService: SolicitudesService) {} //
 
-  @Post()
+  @Post('crear-request')
   @Roles(UserRole.ADMIN, UserRole.WORKER) // Endpoint para crear una solicitud
   create(@Body() dto: CreateSolicitudDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
     return this.solicitudesService.create(dto, user); // Llamar al servicio para crear la solicitud
@@ -46,7 +46,7 @@ export class SolicitudesController { // Inyección de dependencias
    * @see SolicitudesService.revisar
    * 
    */
-  @Patch(':id/revisar') // Endpoint para revisar una solicitud
+  @Patch(':id/check') // Endpoint para revisar una solicitud
   @Roles(UserRole.ADMIN) // Solo Admins
   revisar(
     @Param('id', ParseIntPipe) id: number, // Validar UUID del parámetro
@@ -64,7 +64,7 @@ export class SolicitudesController { // Inyección de dependencias
    * @throws BadRequestException si el usuario no tiene una empresa asociada.
    * @see SolicitudesService.findAllByEmpresa 
    */
-  @Get('mis-solicitudes') // Endpoint para listar solicitudes del usuario
+  @Get('my-request') // Endpoint para listar solicitudes del usuario
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   findAllByUser(@GetUser() user: User) { // Obtener usuario actual
 
@@ -74,7 +74,7 @@ export class SolicitudesController { // Inyección de dependencias
 
     return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id); // Llamar al servicio para listar solicitudes del usuario
   }
-  @Get('empresa')
+  @Get('company-request')
   @Roles(UserRole.ADMIN) // Solo el admin ve todas las solicitudes de la empresa
   findAllByEmpresa(@GetUser() admin: User) {
     if (!admin.empresaId) {

@@ -14,7 +14,7 @@ import { GetUser } from 'auth/decorators/get-user.decorator';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { SetupEmpresaDto } from './dto/setup-empresea.dto';
 
-@Controller('empresas')
+@Controller('empresa')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EmpresaController {
   constructor(private readonly empresasService: EmpresaService) {}

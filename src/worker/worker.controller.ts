@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe, ParseIntPipe, Put } from '@nestjs/common';
 import { WorkerService } from './worker.service';
 import { CreateWorkerDto } from './dto/worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
@@ -9,12 +9,12 @@ import { UserRole } from 'auth/roles.enum';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 
-@Controller('allowed-user')
+@Controller('worker')
 @UseGuards(JwtAuthGuard)
 export class WorkerController {
   constructor(private readonly allowedUserService: WorkerService) {}
 
-  @Post()
+  @Post('crear-worker')
   create(
     @Body() createAllowedUserDto: CreateWorkerDto,
     @GetUser() admin: User 
@@ -22,7 +22,7 @@ export class WorkerController {
     return this.allowedUserService.create(createAllowedUserDto, admin);
   }
 
-  @Get()
+  @Get('list-worker')
   findAll(@GetUser() admin: User) {
     // 1. Si es SUPERADMIN, puede ver todos los usuarios (sin filtrar por empresa)
     if (admin.rol === UserRole.SUPERADMIN) {
@@ -42,7 +42,7 @@ export class WorkerController {
     return this.allowedUserService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateWorkerDto) {
     return this.allowedUserService.update(id, updateAllowedUserDto);
   }
@@ -52,11 +52,11 @@ export class WorkerController {
     return this.allowedUserService.remove(id);
   }
 
-  @Patch(':allowedUserId/assign-schedule')
+  @Put(':workerId/assign-schedule')
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async assignSchedule(
-    @Param('allowedUserId', ParseIntPipe) allowedUserId: number,
+    @Param('workerId', ParseIntPipe) allowedUserId: number,
     @Body('horarioId', ParseIntPipe) horarioId: number,
     @GetUser() admin: User,
   ) {

@@ -47,7 +47,8 @@ Aplicados cambios
 
 1. Ejecutar Seed
 ```
-Post
+Post - Body none - Headers - KEY: x-seed-key - VALUE: 123
+
 
 http://localhost:3000/api/seeds/run
 
@@ -59,30 +60,6 @@ http://localhost:3000/api/seeds/run
 ``` 
 http://localhost:3000/api/auth/login
 
-Worker
-
-Post
-
-{
-    "dni": "12345678Z", 
-    "password": "contraseña123"
-
-}
-
-Admin
-
-Post
-
-{
-    "email": "admin@beta.com",
-    "password": "BetaPassword2026!"
-
--------------------------------------
-
-    "email": "contac@beta-transportes.com",
-    "password": "adminpassword123",
-
-}
 
 
 SuperAdmin
@@ -91,8 +68,32 @@ Post
 
 {
   "email": "superadmin@cti.com",
-  "password": "superpassword"
+  "password": "superpassword123M"
 }
+
+
+Admin
+
+Post
+
+{
+    "email": "marta.admin@globaltech.com",
+    "password": "SecurePassword2026!"
+
+}
+
+
+
+Worker
+
+Post
+
+{
+    "dni": "12345678Z", 
+    "password": "contraseña123M"
+
+}
+
 
 
 ```
@@ -102,9 +103,9 @@ Post
 
 
 ```
-Post - http://localhost:3000/api/empresas/setup
+Post - http://localhost:3000/api/empresa/crear-empresa
 
-Token - Super
+Token - SuperAdmin
 
 Body - raw
 
@@ -131,35 +132,76 @@ Body - raw
 
 ```
 
-4.  Crea una nueva empresa (SuperAdmin).
+
+4.  Obtiene listado de todas las empresas.
 
 ```
-Post - http://localhost:3000/api/empresas/crear-empresa
-
-
-FALTA EL JSON
-
-
-```
-
-5.  Obtiene listado de todas las empresas.
-
-```
-GET - http://localhost:3000/api/empresas/get-empresas
+GET - http://localhost:3000/api/empresa/list-empresas
 
 Token - SUPER, Admin
-
-
-
-
-FALTA EL JSON
+BODY- none
 
 
 ```
 
-GET         /api/empresas/:id                      Obtiene detalles de una empresa específica.
-PATCH       /api/empresas/:id                      Actualiza datos de una empresa.
-DELETE      /api/empresas/:id                      Elimina una empresa del sistema.
+5. Actualizar Empresa.
+
+
+```
+Put - http://localhost:3000/api/empresa/update/:id
+
+Token - SuperAdmin
+
+Body - raw
+
+
+{
+  "nombre": "Tech Ss",
+  "cif": "B12345677",
+  "direccion": "Calle Falsa 123",
+  "provincia": "Murcia",
+  "poblacion": "Murcia",
+  "contactoNombre": "Juan Pérez",
+  "telefonoContacto": "+34600111233",
+  "telefonoEmpresa": "910000004",
+  "pais": "España",
+  "email": "info@techsolutions.es",
+  "isActive": true,
+  "admin": {
+    "email": "admin@beta.com",
+    "telefono": "+34655999888",
+    "nombre": "Nombre FALSE",
+    "apellidos": "Apellidos Reales"
+  }
+}
+
+
+```
+
+
+
+6. Borrar empresa.
+
+
+```
+Delete - http://localhost:3000/api/empresa/delete/:id
+
+Token - SuperAdmin
+
+Body - none
+
+```
+
+7.  Obtener una unica empresa.
+
+```
+GET - http://localhost:3000/api/empresa/:id
+
+Token - SUPER, Admin
+BODY- none
+
+
+```
 
 
 
@@ -239,57 +281,6 @@ Ejemplo:
 
 ```
 
-6. Registrar empresa y su administrador.
-
-```
-POST  -  http://localhost:3000/api/empresas/setup
-
-
-Body - Json
-
-{
-  "nombreEmpresa": "Servicios Logísticos Beta S.L.",
-  "cif": "B12345678",
-  "direccion": "Avenida de la Innovación, 42",
-  "poblacion": "Madrid",
-  "provincia": "Madrid",
-  "pais": "España",
-  "codigoPostal": "08001",
-  "nombreContacto": "Marta Sánchez",
-  "telefonoContacto": "+34600111222",
-  "telefonoEmpresa": "+34934123457",
-  "email": "contacto@beta.com",
-  "admin": {
-    "telefono": "+34655999888",
-    "email": "admin@beta.com",
-    "password": "BetaPassword2026!"
-  }
-}
-
-//Otro ejemplo
-
-{
-  "nombreEmpresa": "Global Tech Logistics S.A.",
-  "cif": "A87654321",
-  "direccion": "Avenida Central 100, Planta 5",
-  "poblacion": "Barcelona",
-  "provincia": "Barcelona",
-  "pais": "España",
-  "email": "ops@globaltech.com",
-  "codigoPostal": "08001",
-  "nombreContacto": "Marta Sánchez",
-  "telefonoContacto": "+34600111222",
-  "telefonoEmpresa": "+34934123457",
-  
- "admin": {
-    "telefono": "+34655999888",
-    "email": "admin@beta.com",
-    "password": "BetaPassword2026!"
-  }
-}
-
-
-```
 
 
 6. Dar de alta a Usuario
@@ -498,71 +489,69 @@ Patch - Json
 
 ```
 🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
-POST        /api/seeds/run                         Inicializa el SuperAdmin y datos base.              Header: x-seed-key
-POST        /api/auth/login                        Inicio de sesión para todos los roles.              "{ email, password }"
-POST        /api/auth/send-otp                     Envía código de verificación al teléfono.           { telefono }
-POST        /api/auth/verify-otp                   Valida el código OTP recibido.                      "{ telefono, codigo }"
+POST       /api/seeds/run           Inicializa el SuperAdmin y datos base.  Header: x-seed-key
+POST       /api/auth/login          Inicio de sesión para todos los roles.  "{ email, password }"
 
 ```
 
 ```
 🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
-POST        /api/empresas/setup                    Setup Inicial: Crea empresa + Admin principal.
-POST        /api/empresas/crear-empresa            Crea una nueva empresa (SuperAdmin).
-GET         /api/empresas/get-empresas             Obtiene listado de todas las empresas.
-GET         /api/empresas/:id                      Obtiene detalles de una empresa específica.
-PATCH       /api/empresas/:id                      Actualiza datos de una empresa.
-DELETE      /api/empresas/:id                      Elimina una empresa del sistema.
+POST        /api/empresa/crear-empresa            Setup Inicial: Crea empresa + Admin principal.
+GET         /api/empresa/list-empresas            Obtiene listado de todas las empresas.
+GET         /api/empresa/:id                      Obtiene detalles de una empresa específica.
+PUT         /api/empresa/:id                      Actualiza datos de una empresa.
+DELETE      /api/empresa/:id                      Elimina una empresa del sistema.
 
 ```
 
 ```
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
-POST        /api/allowed-user                      Registra/Pre-autoriza un nuevo trabajador.
-GET         /api/allowed-user                      Lista todos los trabajadores de la empresa.
-GET         /api/allowed-user/:id                  Obtiene la ficha de un trabajador.
-PATCH       /api/allowed-user/:id                  Actualiza información del trabajador.
-DELETE      /api/allowed-user/:id                  Borra un trabajador autorizado.
-PATCH       /api/allowed-user/:id/assign-schedule  Asignar Horario: Vincula horario a trabajador.
+POST        /api/worker/crear-worker              Registra/Pre-autoriza un nuevo trabajador.
+GET         /api/worker/list-worker               Lista todos los trabajadores de la empresa.
+GET         /api/worker/:id                       Obtiene la ficha de un trabajador.
+PUT         /api/worker/:id                       Actualiza información del trabajador.
+DELETE      /api/worker/:id                       Borra un trabajador autorizado.
+PUT         /api/worker/:id/assign-schedule       Asignar Horario: Vincula horario a trabajador.
 
 ```
 
 ```
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
-POST        /api/solicitudes                       El trabajador crea una nueva solicitud.
-GET         /api/solicitudes/mis-solicitudes       El trabajador ve el estado de sus pedidos.
-GET         /api/solicitudes                       El Admin ve todas las solicitudes pendientes.
-PATCH       /api/solicitudes/:id/revisar           El Admin aprueba o rechaza una solicitud.
+POST        /api/request                       El trabajador crea una nueva solicitud.
+GET         /api/request/my-request            El trabajador ve el estado de sus pedidos.
+GET         /api/request/company-request       El Admin ve todas las solicitudes pendientes.
+PUT         /api/request/:id/check             El Admin aprueba o rechaza una solicitud.
 
 ```
 
 ```
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/schedules                        Crea un nuevo horario (Fijo o Rotativo).               "{ nombre, fechaInicio, fechaFin, tipo, distribuciones: [] }"
-GET         /api/schedules                        Lista todos los horarios de la empresa del admin.      Requiere Bearer Token
-GET         /api/schedules/:id                    Obtiene el detalle de un horario específico.           ID en formato UUID
-DELETE      /api/schedules/:id                    Elimina un horario (si no está asignado).              Requiere rol ADMIN
+POST        /api/schedule        Crea un nuevo horario Fijo o Rotativo.
+GET         /api/schedule        Lista todos los horarios de la empresa del admin. Token Admin
+GET         /api/schedule/:id    Obtiene el detalle de un horario específico. ID en formato NUM
+DELETE      /api/schedule/:id    Elimina un horario (si no está asignado).Requiere  rol ADMIN
 
 ```
 
 
 ```
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/franja-horaria                   Crea una franja (ej. Mañana: 08:00 - 14:00).           "{ inicio, fin, tipo, horarioId }"
-GET         /api/franja-horaria                   Obtiene todas las franjas registradas.                 Requiere Bearer Token
-GET         /api/franja-horaria/:id               Obtiene detalle de una franja específica.              ID en formato UUID
-PATCH       /api/franja-horaria/:id               Actualiza horas o tipo de una franja.                  "{ inicio, fin } (opcional)"
-DELETE      /api/franja-horaria/:id               Borra una franja horaria.                              Requiere rol ADMIN
+POST        /api/franja-horaria       Crea una franja. "{ inicio, fin, tipo, horarioId }"
+GET         /api/franja-horaria       Obtiene todas franjas registradas. Requiere Bearer Token
+GET         /api/franja-horaria/:id   Obtiene detalle de una franja específica.  ID  NUM
+PUT         /api/franja-horaria/:id   Actualiza horas o tipo de una franja. "{ inicio, fin }"
+DELETE      /api/franja-horaria/:id   Borra una franja horaria.Requiere rol ADMIN
 
 ```
 
 ```
 
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/jornadas/check-in                Registra la entrada del trabajador.                    "{ latitud, longitud }"
-PATCH       /api/jornadas/check-out               Registra la salida y cierra la jornada.                No requiere body
-GET         /api/jornadas/status                  Indica si el usuario tiene una jornada abierta.        Requiere Bearer Token
-GET         /api/jornadas/historial               Lista todos los fichajes del trabajador.               Requiere Bearer Token
-GET         /api/jornadas/rango                   Filtra fichajes por rango de fechas.                   Query Params: ?inicio=...&fin=...
+POST        /api/jornadas/check-in   Registra la entrada del trabajador."{ latitud, longitud }"
+PUT         /api/jornadas/check-out  Registra la salida y cierra la jornada.No requiere body
+GET         /api/jornadas/status     Indica si el usuario tiene una jornada abierta. Token       
+GET         /api/jornadas/historial  Lista todos los fichajes del trabajador.Token               
+GET         /api/jornadas/rango      Filtra fichajes por rango de fechas.
+                                     Query Params: ?inicio=...&fin=...
 
 ```

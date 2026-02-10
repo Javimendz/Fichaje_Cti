@@ -507,6 +507,18 @@ DELETE      /api/empresa/:id                      Elimina una empresa del sistem
 ```
 
 ```
+USERS
+🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
+POST        /api/users/crear-user               Crea usuario, rol Super y Admin
+GET         /api/users/list-users               Obtiene listado de todos los users.
+GET         /api/users/find/:id                 Obtiene detalles de un user específico.
+PUT         /api/users/update/:id               Actualiza datos de un user.
+DELETE      /api/users/delete/:id               Elimina una empresa del sistema.
+
+```
+
+
+```
 WORKER
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
 POST        /api/worker/crear-worker              Registra/Pre-autoriza un nuevo trabajador.

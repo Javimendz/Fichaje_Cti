@@ -22,6 +22,7 @@ import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
+import { Put } from '@nestjs/common';
 
 /**
  * UsersController
@@ -44,7 +45,7 @@ export class UserController {
    * - Si eres SUPERADMIN: Debes enviar empresaId en el body.
    * - Si eres ADMIN: El sistema ignorará cualquier empresaId enviado y usará la tuya.
    */
-  @Post('create')
+  @Post('crear-user')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async create(
     @Body() dto: CreateAdminDto, 
@@ -59,7 +60,7 @@ export class UserController {
   // ========================
   // LISTAR USUARIOS
   // ========================
-  @Get()
+  @Get('list-users')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async findAll(@GetUser() currentUser: UserPayload) {
     return this.usersService.findAllByUser(currentUser);
@@ -69,7 +70,7 @@ export class UserController {
   // OBTENER USUARIO POR ID
   // ========================
   
-  @Get(':id')
+  @Get('find/:id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -81,7 +82,7 @@ export class UserController {
   // ========================
   // ACTUALIZAR USUARIO
   // ========================
-  @Patch(':id')
+  @Put('update/:id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -94,7 +95,7 @@ export class UserController {
   // ========================
   // ELIMINAR (BORRADO LÓGICO)
   // ========================
-  @Delete(':id')
+  @Delete('delete/:id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async remove(
     @Param('id', ParseIntPipe) id: number,

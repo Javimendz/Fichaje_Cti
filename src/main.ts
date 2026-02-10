@@ -1,45 +1,36 @@
 import 'dotenv/config';
-
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-
-  const cookieParser = require('cookie-parser');
-  /**
-   * Global timezone setting
-   * 
-   * Configura la zona horaria globalmente para la aplicación.
-   * setGlobalPrefix('api') establece un prefijo global para todas las rutas de la API.
-   * enableCors configura las políticas de CORS para permitir solicitudes desde el frontend.
-   * useGlobalPipes aplica tuberías de validación globalmente para validar y transformar las solicitudes entrantes.
-   * Estas configuraciones aseguran que la aplicación maneje correctamente las solicitudes y respuestas
-   * de acuerdo con las necesidades del proyecto.
-   * app.listen inicia el servidor en el puerto especificado en las variables de entorno o en el puerto 3000 por defecto.
-   * @see https://docs.nestjs.com/techniques/security#global-prefix
-   * 
-   */
   process.env.TZ = 'Europe/Madrid';
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix('api')
-  app.use(cookieParser())
-   app.enableCors({
-    origin: 'http://localhost:3000', // frontend
+
+  app.setGlobalPrefix('api');
+
+  // 1. Usa la importación de arriba (sin volver a declarar con require)
+  app.use(cookieParser());
+
+  // 2. CORS: Ajusta el puerto al que realmente usa tu Frontend
+  app.enableCors({
+    origin: 'http://localhost:3562', // 👈 ¡PON AQUÍ EL PUERTO DE TU FRONTEND!
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
-  // Configuración del interceptor global
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  app.useGlobalPipes(  
-     new ValidationPipe({ 
-     whitelist: true, 
-     forbidNonWhitelisted: true, 
-     transform: true,
-  }) 
-);
 
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // 3. El Backend suele correr en el 3000
   await app.listen(process.env.PORT ?? 3000);
+  console.log(`Backend corriendo en: http://localhost:${process.env.PORT ?? 3000}/api`);
 }
 bootstrap();

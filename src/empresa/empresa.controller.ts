@@ -1,10 +1,13 @@
 // src/empresas/empresas.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseUUIDPipe, ParseIntPipe, Put } from '@nestjs/common';
+
+import { 
+  Controller, Get, Post, Body, Patch, Param, Delete, 
+  UseGuards, ParseIntPipe, Put, Req // 👈 Asegúrate de importar Req
+} from '@nestjs/common';
 import { EmpresaService } from './empresa.service';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 // IMPORTANTE: Asegúrate de importar este DTO
-
+import { Request } from 'express';  
 // Auth & Roles
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
@@ -32,9 +35,19 @@ export class EmpresaController {
     return this.empresasService.create(createEmpresaDto);
   }
 */
-  @Get('list-empresas')
+
+
+@Get('list-empresas')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
-  findAll(@GetUser() user: UserPayload) {
+  // Usamos 'any' en req para evitar el error de tipado de cookies
+  findAll(@GetUser() user: UserPayload, @Req() req: any) { 
+    console.log('--- DEBUG EN CONTROLADOR ---');
+    console.log('Usuario extraído del Token:', user);
+    console.log('Cookies que llegan:', req.cookies); 
+    
+    // Si req.cookies es undefined aquí, el problema es el main.ts
+    // Si req.cookies tiene el 'jwt' pero 'user' es undefined, es el Secreto JWT
+    
     return this.empresasService.findAll(user);
   }
 

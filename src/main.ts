@@ -3,9 +3,11 @@ import 'dotenv/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
+
+  const cookieParser = require('cookie-parser');
   /**
    * Global timezone setting
    * 
@@ -24,7 +26,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
   app.use(cookieParser())
    app.enableCors({
-    origin: 'http://localhost:3001', // frontend
+    origin: 'http://localhost:3000', // frontend
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

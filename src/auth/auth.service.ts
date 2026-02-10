@@ -85,4 +85,17 @@ async login(loginDto: LoginDto) {
     }
   };
 }
+
+
+
+async logout(userId: number) {
+    // Aquí podrías añadir lógica adicional si fuera necesario
+    // Por ahora, simplemente confirmamos que el proceso puede proceder
+    return { 
+      message: 'Sesión finalizada en servidor',
+      userId 
+    };
+  }
+
+
 }

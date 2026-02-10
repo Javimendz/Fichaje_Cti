@@ -5,6 +5,8 @@ import { Exclude } from "class-transformer";
 import { Empresa } from "empresa/entities/empresa.entity";
 import { Jornada } from "jornada/entities/jornada.entity";
 import { Horario } from "schedule/entities/schedules.entity";
+import { User } from 'users/entities/user.entity';
+import { OneToOne, PrimaryColumn } from 'typeorm';
 import { 
   Column, 
   Entity, 
@@ -18,7 +20,8 @@ import {
 
 @Entity('workers')
 export class Worker {
-  @PrimaryGeneratedColumn()
+  
+  @PrimaryColumn()
   id: number;
 
   // ============================================
@@ -127,4 +130,9 @@ email: string | null;
   @Exclude()
   @Column()
 password: string;
+
+
+@OneToOne(() => User, (user) => user.worker, { onDelete: 'CASCADE' })
+@JoinColumn({ name: 'id' }) // El ID de Worker es el mismo que el de User
+user: User;
 }

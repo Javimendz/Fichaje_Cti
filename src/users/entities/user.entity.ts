@@ -4,7 +4,8 @@ import { UserRole } from 'auth/roles.enum';
 import { Empresa } from 'empresa/entities/empresa.entity';
 import { Jornada } from 'jornada/entities/jornada.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Worker } from 'worker/entities/worker.entity'
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
 
 
 /**
@@ -94,6 +95,9 @@ export class User { // Definición de la entidad User
 
   @UpdateDateColumn() // Fecha de actualización automática
   updatedAt: Date; // Fecha de la última actualización del registro
+  
+  @OneToOne(() => Worker, (worker) => worker.user)
+  worker: Worker;
 
   
 }

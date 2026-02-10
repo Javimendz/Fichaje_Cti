@@ -38,7 +38,7 @@ export class ScheduleController {
     return this.schedulesService.create(dto, user);
   }
 
-  @Get()
+  @Get('get')
   findAll(@GetUser() user: User) {
     if (!user.empresaId) {
       throw new BadRequestException('Usuario sin empresa asignada');

@@ -46,7 +46,7 @@ export class SolicitudesController { // Inyección de dependencias
    * @see SolicitudesService.revisar
    * 
    */
-  @Patch('check/:id') // Endpoint para revisar una solicitud
+  @Get('check/:id') // Endpoint para revisar una solicitud
   @Roles(UserRole.ADMIN) // Solo Admins
   revisar(
     @Param('id', ParseIntPipe) id: number, // Validar UUID del parámetro

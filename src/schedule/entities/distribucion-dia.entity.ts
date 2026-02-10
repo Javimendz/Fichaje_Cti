@@ -48,6 +48,9 @@ export class DistribucionDia {
   @Column({ name: 'horario_id' })
   horarioId: number;
 
-  @CreateDateColumn({ name: 'created_at', nullable: true }) // Fecha de creación automática
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt: Date;
 }

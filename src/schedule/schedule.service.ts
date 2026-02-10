@@ -87,7 +87,7 @@ async create(dto: CreateHorarioDto, admin: User) {
       createdAt: 'DESC',
       distribuciones: { 
         id: 'ASC', // O por día de la semana si tienes ese campo
-        franjas: { inicio: 'ASC' } // 👈 Muy útil: las horas salen ordenadas
+        franjas: { inicio: 'ASC' } 
       }
     }
   });

@@ -3,9 +3,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'auth/entities/user.entity';
-import { Strategy } from 'passport-jwt'; // Quitamos ExtractJwt si no lo usas más
+import { Strategy } from 'passport-jwt'; 
 import { Repository } from 'typeorm';
-import { Request } from 'express'; // <--- Importante para el tipado
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -14,12 +14,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly userRepository: Repository<User>,
   ) {
     super({
-      // MODIFICACIÓN AQUÍ: Función extractora personalizada
       jwtFromRequest: (req: Request) => {
         let token = null;
+        
+        // --- LOG DE COOKIES ---
+        console.log('--- Nueva Petición Recibida ---');
+        console.log('Cookies presentes en la request:', req.cookies);
+
         if (req && req.cookies) {
-          token = req.cookies['jwt']; // Debe coincidir con el nombre usado en response.cookie()
+          token = req.cookies['jwt'];
         }
+
+        console.log('Token extraído de la cookie:', token ? '✅ TOKEN ENCONTRADO' : '❌ TOKEN NO ENCONTRADO');
         return token;
       },
       ignoreExpiration: false,
@@ -28,15 +34,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const { sub } = payload; 
+    // --- LOG DE PAYLOAD ---
+    console.log('Validando Payload del JWT:', payload);
 
-    // Buscamos al usuario incluyendo los campos necesarios
+    const { sub } = payload; 
     const user = await this.userRepository.findOneBy({ id: sub });
 
-    if (!user) throw new UnauthorizedException('Token no válido');
-    if (!user.isActive) throw new UnauthorizedException('Usuario inactivo');
+    if (!user) {
+      console.log('❌ Validación fallida: Usuario no existe en DB');
+      throw new UnauthorizedException('Token no válido');
+    }
 
-    // Retornamos el objeto para @GetUser()
+    if (!user.isActive) {
+      console.log('❌ Validación fallida: Usuario inactivo');
+      throw new UnauthorizedException('Usuario inactivo');
+    }
+
+    console.log('✅ Usuario validado con éxito:', user.email);
+
     return {
       id: user.id,
       rol: user.rol,

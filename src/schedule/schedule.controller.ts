@@ -16,15 +16,16 @@ import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { User } from 'users/entities/user.entity';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
-@Controller('schedules')
-@UseGuards(AuthGuard())
+@Controller('schedule')
+@UseGuards(JwtAuthGuard) // 👈 Cambiado para usar Cookies
 export class ScheduleController {
   constructor(
     private readonly schedulesService: ScheduleService,
   ) {}
 
-  @Post()
+  @Post('crear-schedule')
   create(
     @Body() dto: CreateHorarioDto,
     @GetUser() user: User,
@@ -38,7 +39,7 @@ export class ScheduleController {
     return this.schedulesService.create(dto, user);
   }
 
-  @Get('get')
+  @Get('list-schedule')
   findAll(@GetUser() user: User) {
     if (!user.empresaId) {
       throw new BadRequestException('Usuario sin empresa asignada');
@@ -47,7 +48,7 @@ export class ScheduleController {
     return this.schedulesService.findAllByEmpresa(user.empresaId);
   }
 
-  @Get(':id')
+  @Get('find/:id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
@@ -59,7 +60,7 @@ export class ScheduleController {
     return this.schedulesService.findOne(id, user.empresaId);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
@@ -70,4 +71,12 @@ export class ScheduleController {
 
     return this.schedulesService.remove(id, user.empresaId);
   }
+
+  // Método privado para limpiar el código de validaciones repetitivas
+  private validateEmpresa(user: User) {
+    if (!user.empresaId) {
+      throw new UnauthorizedException('El usuario no tiene una empresa asociada');
+    }
+  }
+
 }

@@ -501,9 +501,9 @@ EMPRESA
 🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
 POST        /api/empresa/crear-empresa            Setup Inicial: Crea empresa + Admin principal.
 GET         /api/empresa/list-empresas            Obtiene listado de todas las empresas.
-GET         /api/empresa/find/:id                      Obtiene detalles de una empresa específica.
-PUT         /api/empresa/update/:id                      Actualiza datos de una empresa.
-DELETE      /api/empresa/delete/:id                      Elimina una empresa del sistema.
+GET         /api/empresa/find/:id                 Obtiene detalles de una empresa específica.
+PUT         /api/empresa/update/:id               Actualiza datos de una empresa.
+DELETE      /api/empresa/delete/:id               Elimina una empresa del sistema.
 
 ```
 
@@ -544,10 +544,10 @@ PUT         /api/request/:id/check             El Admin aprueba o rechaza una so
 ```
 SCHEDULE
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/schedule        Crea un nuevo horario Fijo o Rotativo.
-GET         /api/schedule        Lista todos los horarios de la empresa del admin. Token Admin
-GET         /api/schedule/:id    Obtiene el detalle de un horario específico. ID en formato NUM
-DELETE      /api/schedule/:id    Elimina un horario (si no está asignado).Requiere  rol ADMIN
+POST    /api/schedule/crear-schedule  Crea un nuevo horario Fijo o Rotativo.
+GET     /api/schedule/list-schedule  Lista todos los horarios de la empresa del admin. Token Admin
+GET     /api/schedule/find/:id       Obtiene el detalle de un horario específico. ID en formato NUM
+DELETE  /api/schedule/delete/:id     Elimina un horario (si no está asignado).Requiere  rol ADMIN
 
 ```
 

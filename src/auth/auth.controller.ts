@@ -1,7 +1,9 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
 import * as Express from 'express'; // Importación como namespace
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { GetUser } from 'auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -44,6 +46,20 @@ async logout(@Res({ passthrough: true }) response: Express.Response) {
 
   return { 
     message: 'Sesión cerrada correctamente' 
+  };
+}
+
+
+@Get('me')
+@UseGuards(JwtAuthGuard)
+async getMe(@GetUser() user: any) {
+  // Retornamos los datos básicos para que el front pinte la UI
+  // sin necesidad de localStorage
+  return {
+    id: user.id,
+    email: user.email,
+    rol: user.rol,
+    empresaId: user.empresaId
   };
 }
 

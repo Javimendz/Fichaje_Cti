@@ -291,7 +291,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"email\": \"admin@beta.com\",\r\n    \"password\": \"BetaPassword2026!\"\r\n}",
+          "raw": "{\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -366,6 +366,228 @@
       "response": []
     },
     {
+      "name": "crear worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyODA3OTcsImV4cCI6MTc3MDMyMzk5N30.fI-FkN0jmaxs1A8e2GkgZU89nzoEhu5yGGwViKSn_Ik",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"telefono\": \"600123453\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"12345678A\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/crear-worker",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "crear-worker"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "listar Workers",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAzODc4NDUsImV4cCI6MTc3MDQzMTA0NX0.HecDdLkqI_DinuLQOWDLNrHmDhxYsVz1pFTpfC-z4EQ",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"telefono\": \"600123456\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"12345678Z\",\r\n  \"email\": \"juan.perez@empresa.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/list-workers",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "list-workers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener un worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/worker/find/51",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "find",
+            "51"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyODA3OTcsImV4cCI6MTc3MDMyMzk5N30.fI-FkN0jmaxs1A8e2GkgZU89nzoEhu5yGGwViKSn_Ik",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"telefono\": \"600123445\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/update/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "update",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar Empresa",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyODA4NDksImV4cCI6MTc3MDMyNDA0OX0.nX7UhAbUu5cL4M6sglogP8pJXg-byz3GiBzdX8ZBsxo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Tech Ss\",\r\n  \"cif\": \"B12345677\",\r\n  \"direccion\": \"Calle Falsa 123\",\r\n  \"provincia\": \"Murcia\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"contactoNombre\": \"Juan Pérez\",\r\n  \"telefonoContacto\": \"+34600111233\",\r\n  \"telefonoEmpresa\": \"910000004\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"info@techsolutions.es\",\r\n  \"isActive\": true,\r\n  \"admin\": {\r\n    \"email\": \"admin@beta.com\",\r\n    \"telefono\": \"+34655999888\",\r\n    \"nombre\": \"Nombre FALSE\",\r\n    \"apellidos\": \"Apellidos Reales\",\r\n    \"password\": \"contraseña123J\"\r\n  \r\n    }\r\n  \r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Empresas",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzA3MTE3MjAsImV4cCI6MTc3MDc1NDkyMH0.ZD9X6ovoG0oggcsapeyyV8-bb7sS6gny2j6T1Gujk50",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/list-empresas",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "list-empresas"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "check-in",
       "request": {
         "auth": {
@@ -373,7 +595,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmODBmYTE4Yy0zMDFjLTQ2OGItODc5OC1iMGRjMzRmY2FhYWEiLCJ0ZWxlZm9ubyI6IiszNDYwMDExMTIzOCIsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6bnVsbCwiaWF0IjoxNzY4Mjk1MjYwLCJleHAiOjE3NjgyOTg4NjB9.vQwImjfRHaceJIKc5bI3cMtAQ3nMyVFeX3uStOgYHfg",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
               "type": "string"
             }
           ]
@@ -401,7 +623,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/jornadas/check-in",
+          "raw": "http://localhost:3000/api/jornada/check-in",
           "protocol": "http",
           "host": [
             "localhost"
@@ -409,7 +631,7 @@
           "port": "3000",
           "path": [
             "api",
-            "jornadas",
+            "jornada",
             "check-in"
           ]
         }
@@ -424,7 +646,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcwMjAzNjc5LCJleHAiOjE3NzAyMDcyNzl9.WFpfoYhkCf_evPSs7OSDz3qdGxk4_ra40Rakqyj9oVg",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
               "type": "string"
             }
           ]
@@ -441,7 +663,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/jornadas/check-out",
+          "raw": "http://localhost:3000/api/jornada/check-out",
           "protocol": "http",
           "host": [
             "localhost"
@@ -449,47 +671,8 @@
           "port": "3000",
           "path": [
             "api",
-            "jornadas",
+            "jornada",
             "check-out"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "worker",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAxMTk3OTQsImV4cCI6MTc3MDE2Mjk5NH0.7RtHk3o-a0TCEexbAIutlljfBgm8Uz8yL7skzjSikwI",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123456\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123\",\r\n  \"dni\": \"12345678Z\",\r\n  \"email\": \"juan.perez@empresa.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:3000/api/allowed-user",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "3000",
-          "path": [
-            "api",
-            "allowed-user"
           ]
         }
       },
@@ -503,7 +686,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcwMjAzNjc5LCJleHAiOjE3NzAyMDcyNzl9.WFpfoYhkCf_evPSs7OSDz3qdGxk4_ra40Rakqyj9oVg",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
               "type": "string"
             }
           ]
@@ -520,7 +703,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/request",
+          "raw": "http://localhost:3000/api/request/crear-request",
           "protocol": "http",
           "host": [
             "localhost"
@@ -528,17 +711,45 @@
           "port": "3000",
           "path": [
             "api",
-            "request"
+            "request",
+            "crear-request"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "solicitudes-obtenerTodas",
+      "name": "solicitudes-obtenerTodas Admin",
       "request": {
-        "method": "GET",
-        "header": []
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"ENFERMEDAD\",\r\n  \"fechaInicio\": \"2026-10-03\",\r\n  \"fechaFin\": \"2026-11-15\",\r\n  \"motivo\": \"Vacaciones de verano\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/crear-request",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "crear-request"
+          ]
+        }
       },
       "response": []
     },
@@ -582,7 +793,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhNTI0OTA1MC1lNDRiLTQxNmItODI2ZC0zZTY0MGE3ZmQ1OGMiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6IjgxNTlhODM5LTY5NzYtNGM1OC1hODQxLTc1YWUxMzljNWY3ZiIsImlhdCI6MTc2ODkwMTQwNiwiZXhwIjoxNzY4OTQ0NjA2fQ.M9w5juaw6hnW6NRGjBbqkg5n3ibaT0dpm2P9eKmdoS4",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
               "type": "string"
             }
           ]
@@ -591,7 +802,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"nombre\": \"Horario Oficina Central 2026\",\r\n  \"fechaInicio\": \"2026-02-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"Fijo\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"Lunes\",\r\n      \"horasDia\": 9, \r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"Martes\",\r\n      \"horasDia\": 8,\r\n      \"franjas\": [\r\n        { \"inicio\": \"09:00\", \"fin\": \"17:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "raw": "{\r\n  \"nombre\": \"Horario Oficina Central 2026\",\r\n  \"fechaInicio\": \"2026-02-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"FIJO\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"Lunes\",\r\n      \"horasDia\": 9, \r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"Martes\",\r\n      \"horasDia\": 8,\r\n      \"franjas\": [\r\n        { \"inicio\": \"09:00\", \"fin\": \"17:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -614,6 +825,47 @@
       "response": []
     },
     {
+      "name": "Asignar horario",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"horarioId\": \"1\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/assign-schedule/51",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "assign-schedule",
+            "51"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Obtener Trabajador por id",
       "request": {
         "auth": {
@@ -621,15 +873,15 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NzE0MjBiZC0zOTAyLTRmZGItYWE5Ni0wNDRjMzhiODYxYTAiLCJyb2wiOiJTVVBFUkFETUlOIiwiaWF0IjoxNzY5NTk0MTQxLCJleHAiOjE3Njk2MzczNDF9.QsicJD2a9QTb4n_wme_KKufujDkKMUes6s_Xhfg99eM",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
               "type": "string"
             }
           ]
         },
-        "method": "PATCH",
+        "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/users/571420bd-3902-4fdb-aa96-044c38b861a0",
+          "raw": "http://localhost:3000/api/users/51",
           "protocol": "http",
           "host": [
             "localhost"
@@ -638,7 +890,7 @@
           "path": [
             "api",
             "users",
-            "571420bd-3902-4fdb-aa96-044c38b861a0"
+            "51"
           ]
         }
       },
@@ -670,47 +922,6 @@
             "api",
             "schedules",
             "d4adc430-67dc-4b4b-bdbb-4e21d46405cf"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Asignar horario",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Y2I2NGY4OS01YTZhLTRiMWYtODY0Yi1iZWE4NWE4M2ZhNWEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImYzNWE2MGJhLWVmNGQtNDk4OC04YzAxLWNiMDZkZTUyYjA2ZSIsImlhdCI6MTc2OTU5NDQzMCwiZXhwIjoxNzY5NjM3NjMwfQ.m56EAAxg9rHrG1Bo9E042RxR7bcEp45hjREvhhHdd4A",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "PATCH",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"horarioId\": \"d4adc430-67dc-4b4b-bdbb-4e21d46405cf\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:3000/api/allowed-user/a44ba9ee-7f38-4194-8539-615c1517e37d/assign-schedule",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "3000",
-          "path": [
-            "api",
-            "allowed-user",
-            "a44ba9ee-7f38-4194-8539-615c1517e37d",
-            "assign-schedule"
           ]
         }
       },
@@ -766,45 +977,20 @@
     {
       "name": "obtener Users",
       "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "Obtener Empresas",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "Actualizar Empresa",
-      "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyODA4NDksImV4cCI6MTc3MDMyNDA0OX0.nX7UhAbUu5cL4M6sglogP8pJXg-byz3GiBzdX8ZBsxo",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyMDM1NTksImV4cCI6MTc3MDI0Njc1OX0.pmKKBg7sIXB4vpkWyWWt5_c4Nl1-2ZK5OYOxP8nNTNs",
               "type": "string"
             }
           ]
         },
-        "method": "PUT",
+        "method": "GET",
         "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"nombre\": \"Tech Solutionsss\",\r\n  \"cif\": \"B12345678\",\r\n  \"direccion\": \"Calle Falsa 123\",\r\n  \"provincia\": \"Murcia\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"contactoNombre\": \"Juan Pérez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"910000000\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"info@techsolutions.es\",\r\n  \"isActive\": true,\r\n  \"admin\": {\r\n    \"email\": \"admin@beta.com\",\r\n    \"telefono\": \"+34655999888\",\r\n    \"nombre\": \"Nombre Real\",\r\n    \"apellidos\": \"Apellidos Reales\"\r\n  }\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
         "url": {
-          "raw": "http://localhost:3000/api/empresas/1",
+          "raw": "http://localhost:3000/api/users/1",
           "protocol": "http",
           "host": [
             "localhost"
@@ -812,10 +998,18 @@
           "port": "3000",
           "path": [
             "api",
-            "empresas",
+            "users",
             "1"
           ]
         }
+      },
+      "response": []
+    },
+    {
+      "name": "borrar worker",
+      "request": {
+        "method": "GET",
+        "header": []
       },
       "response": []
     }

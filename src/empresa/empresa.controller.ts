@@ -38,7 +38,7 @@ export class EmpresaController {
     return this.empresasService.findAll(user);
   }
 
-  @Get(':id')
+  @Get('find/:id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   findOne(
     @Param('id', ParseIntPipe) id: number, 

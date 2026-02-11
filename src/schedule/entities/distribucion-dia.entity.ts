@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Horario } from "./schedules.entity";
-import { FranjaHoraria } from "franja-horaria/entities/franja-horaria.entity";
+import { FranjaHoraria } from "timeSlot/entities/franja-horaria.entity";
 
 /**
  * DistribucionDia Entity

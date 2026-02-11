@@ -1,8 +1,8 @@
 import { User } from 'auth/entities/user.entity';
 import { Company } from 'company/entities/company.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
-import { RevisionSolicitud } from './revision-solicitud.entity';
-import { SolicitudStatus } from 'solicitud/dto/revisar-solicitud.dto';
+import { RevisionRequest } from './revision-request.entity';
+import { RequestStatus } from 'request/dto/revisar-request.dto';
 
 
 
@@ -12,7 +12,7 @@ import { SolicitudStatus } from 'solicitud/dto/revisar-solicitud.dto';
  * - APROBADA: La solicitud ha sido aprobada por un administrador.
  * - RECHAZADA: La solicitud ha sido rechazada por un administrador.
  * @enum SolicitudStatus
- * @see Solicitud para la entidad de solicitudes.
+ * @see Request para la entidad de solicitudes.
  */
 
 
@@ -23,7 +23,7 @@ import { SolicitudStatus } from 'solicitud/dto/revisar-solicitud.dto';
  * - PERMISO: Solicitud de permisos especiales.
  * - ASUNTOS_PROPIOS: Solicitud por asuntos personales.
  * @enum TipoSolicitud
- * @see Solicitud para la entidad de solicitudes.
+ * @see Request para la entidad de solicitudes.
  *  
  */
 export enum TipoSolicitud {
@@ -41,13 +41,13 @@ export enum TipoSolicitud {
  * @entity 'solicitudes' define el nombre de la tabla en la base de datos.
  * @see User para la relación con el usuario que realiza la solicitud.
  * @see Company para la relación con la empresa asociada a la solicitud.
- * @see RevisionSolicitud para la relación con la revisión de la solicitud.
+ * @see RevisionRequest para la relación con la revisión de la solicitud.
  * @metadata createdAt para auditoría de registros.
  * 
  */
 
 @Entity('solicitudes') // Nombre de la tabla en la base de datos
-export class Solicitud { // Definición de la entidad Solicitud
+export class Request { // Definición de la entidad Solicitud
  
   // --- IDENTIFICADOR ---
   @PrimaryGeneratedColumn() // ID único generado automáticamente
@@ -66,8 +66,8 @@ export class Solicitud { // Definición de la entidad Solicitud
   @Column({ type: 'text', nullable: true }) // Motivo opcional
   motivo: string; // Motivo de la solicitud
 
-  @Column({ type: 'enum', enum: SolicitudStatus, default: SolicitudStatus.PENDIENTE })  // Estado con valor por defecto PENDIENTE
-  estado: SolicitudStatus; // Estado de la solicitud
+  @Column({ type: 'enum', enum: RequestStatus, default: RequestStatus.PENDIENTE })  // Estado con valor por defecto PENDIENTE
+  estado: RequestStatus; // Estado de la solicitud
 
   @CreateDateColumn() // Fecha de creación automática
   fechaSolicitud: Date; // Fecha en que se realizó la solicitud
@@ -87,8 +87,8 @@ export class Solicitud { // Definición de la entidad Solicitud
   @Column({ name: 'empresa_id' }) // Columna para la clave foránea de la empresa
   empresaId: number; // ID de la empresa asociada a la solicitud
 
-  @OneToOne(() => RevisionSolicitud, (revision) => revision.solicitud) // Relación uno a uno con RevisionSolicitud
-  revision: RevisionSolicitud; // Revisión asociada a la solicitud
+  @OneToOne(() => RevisionRequest, (revision) => revision.solicitud) // Relación uno a uno con RevisionSolicitud
+  revision: RevisionRequest; // Revisión asociada a la solicitud
   // --- METADATA ---
   @CreateDateColumn() // Fecha de creación automática
   createdAt: Date; // Fecha de creación del registro

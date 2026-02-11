@@ -534,10 +534,10 @@ PUT         /api/worker/assign-schedule/:id       Asignar Horario: Vincula horar
 ```
 REQUEST
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
-POST        /api/request                       El trabajador crea una nueva solicitud.
-GET         /api/request/my-request            El trabajador ve el estado de sus pedidos.
+POST        /api/request/crear-request         El trabajador crea una nueva solicitud.
+GET         /api/request/my-request            El trabajador y Admin ve el estado de sus pedidos.
 GET         /api/request/company-request       El Admin ve todas las solicitudes pendientes.
-PUT         /api/request/:id/check             El Admin aprueba o rechaza una solicitud.
+PUT         /api/request/check/:id             El Admin aprueba o rechaza una solicitud.
 
 ```
 
@@ -545,7 +545,7 @@ PUT         /api/request/:id/check             El Admin aprueba o rechaza una so
 SCHEDULE
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
 POST    /api/schedule/crear-schedule  Crea un nuevo horario Fijo o Rotativo.
-GET     /api/schedule/list-schedule  Lista todos los horarios de la empresa del admin. Token Admin
+GET     /api/schedule/list-schedules  Lista todos los horarios de la empresa del admin. Token Admin
 GET     /api/schedule/find/:id       Obtiene el detalle de un horario específico. ID en formato NUM
 DELETE  /api/schedule/delete/:id     Elimina un horario (si no está asignado).Requiere  rol ADMIN
 
@@ -553,24 +553,24 @@ DELETE  /api/schedule/delete/:id     Elimina un horario (si no está asignado).R
 
 
 ```
-FRANJA-HORARIA
+TIMESLOT
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/franja-horaria       Crea una franja. "{ inicio, fin, tipo, horarioId }"
-GET         /api/franja-horaria       Obtiene todas franjas registradas. Requiere Bearer Token
-GET         /api/franja-horaria/:id   Obtiene detalle de una franja específica.  ID  NUM
-PUT         /api/franja-horaria/:id   Actualiza horas o tipo de una franja. "{ inicio, fin }"
-DELETE      /api/franja-horaria/:id   Borra una franja horaria.Requiere rol ADMIN
+POST   /api/franja-horaria/crear-franja-horaria  Crea una franja. "{ inicio, fin, tipo, horarioId }
+GET    /api/franja-horaria/list-franja-horaria  Obtiene todas franjas registradas. Requiere Token
+GET    /api/franja-horaria/find/:id             Obtiene detalle de una franja específica.  ID  NUM
+PUT    /api/franja-horaria/update/:id      Actualiza horas o tipo de una franja. "{ inicio, fin }"
+DELETE /api/franja-horaria/delete/:id           Borra una franja horaria.Requiere rol ADMIN
 
 ```
 
 ```
 JORNADA
 🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/jornadas/check-in   Registra la entrada del trabajador."{ latitud, longitud }"
-PUT         /api/jornadas/check-out  Registra la salida y cierra la jornada.No requiere body
-GET         /api/jornadas/status     Indica si el usuario tiene una jornada abierta. Token       
-GET         /api/jornadas/historial  Lista todos los fichajes del trabajador.Token               
-GET         /api/jornadas/rango      Filtra fichajes por rango de fechas.
+POST        /api/jornada/check-in   Registra la entrada del trabajador."{ latitud, longitud }"
+PUT         /api/jornada/check-out  Registra la salida y cierra la jornada.No requiere body
+GET         /api/jornada/status     Indica si el usuario tiene una jornada abierta. Token       
+GET         /api/jornada/historial  Lista todos los fichajes del trabajador.Token               
+GET         /api/jornada/rango      Filtra fichajes por rango de fechas.
                                      Query Params: ?inicio=...&fin=...
 
 ```

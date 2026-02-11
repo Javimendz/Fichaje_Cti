@@ -1,10 +1,10 @@
 // src/auth/entities/user.entity.ts
-import { Ausencia } from 'ausencia/entities/ausencia.entity';
+import { Ausencia } from 'absence/entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
 import { Company } from 'company/entities/company.entity';
 import { Workday } from 'workday/entities/workday.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
-import { Solicitud } from 'solicitud/entities/solicitud.entity';
+import { Request } from 'request/entities/request.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 
@@ -66,8 +66,8 @@ email: string | null;
   createdAt: Date;
 
 
-  @OneToMany(() => Solicitud, (solicitud) => solicitud.usuario)
-  solicitudes: Solicitud[];
+  @OneToMany(() => Request, (solicitud) => solicitud.usuario)
+  solicitudes: Request[];
 
   @UpdateDateColumn()
   updatedAt: Date;

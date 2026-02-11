@@ -1,44 +1,45 @@
 import { 
   Controller, Get, Post, Body, Patch, Param, Delete, 
   ParseUUIDPipe, UseGuards, 
-  ParseIntPipe
+  ParseIntPipe,
+  Put
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-import { FranjaHorariaService } from './franja-horaria.service';
-import { CreateFranjaHorariaDto } from './dto/create-franja-horaria.dto';
-import { UpdateFranjaHorariaDto } from './dto/update-franja-horaria.dto';
+import { TimeSlotService } from './timeSlot.service';
+import { CreateTimeSlotDto } from './dto/create-timeSlot.dto';
+import { UpdateTimeSlotDto } from './dto/update-timeSlot.dto';
 
 @Controller('franja-horaria')
 @UseGuards(AuthGuard()) // 
-export class FranjaHorariaController {
-  constructor(private readonly franjaHorariaService: FranjaHorariaService) {}
+export class TimeSlotController {
+  constructor(private readonly franjaHorariaService: TimeSlotService) {}
 
   @Post()
-  create(@Body() createFranjaHorariaDto: CreateFranjaHorariaDto) {
+  create(@Body() createFranjaHorariaDto: CreateTimeSlotDto) {
     // Nota: El servicio ya valida que el distribucionDiaId sea válido
     return this.franjaHorariaService.create(createFranjaHorariaDto);
   }
 
-  @Get()
+  @Get('list-franja-horaria')
   findAll() {
     return this.franjaHorariaService.findAll();
   }
 
-  @Get(':id')
+  @Get('find/:id')
   findOne(@Param('id', ParseIntPipe) id: number) { 
     return this.franjaHorariaService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put('update/:id')
   update(
     @Param('id', ParseIntPipe) id: number, 
-    @Body() updateFranjaHorariaDto: UpdateFranjaHorariaDto
+    @Body() updateFranjaHorariaDto: UpdateTimeSlotDto
   ) {
     return this.franjaHorariaService.update(id, updateFranjaHorariaDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.franjaHorariaService.remove(id);
   }

@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 
-import { Solicitud } from "./entities/solicitud.entity";
-import { RevisionSolicitud } from "./entities/revision-solicitud.entity";
-import { Ausencia, AusenciaEstado } from "../ausencia/entities/ausencia.entity"; // Verifica esta ruta
+import { Request } from "./entities/request.entity";
+import { RevisionRequest } from "./entities/revision-request.entity";
+import { Ausencia, AusenciaEstado } from "../absence/entities/ausencia.entity"; // Verifica esta ruta
 import { User } from "../auth/entities/user.entity";
-import { CreateSolicitudDto } from "./dto/create-solicitud.dto";
-import { RevisarSolicitudDto, SolicitudStatus } from "./dto/revisar-solicitud.dto";
+import { CreateRequestDto } from "./dto/create-request.dto";
+import { RevisarRequestDto, RequestStatus } from "./dto/revisar-request.dto";
 
 
 /**
@@ -19,12 +19,12 @@ import { RevisarSolicitudDto, SolicitudStatus } from "./dto/revisar-solicitud.dt
  * - create: Crea una nueva solicitud para un usuario.
  * - revisar: Permite a un administrador revisar una solicitud, actualizando su estado y creando una ausencia si es aprobada.
  * - findAllByEmpresa: Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.
- * @see Solicitud para la entidad de solicitudes.
- * @see RevisionSolicitud para la entidad de revisiones de solicitudes.
+ * @see Request para la entidad de solicitudes.
+ * @see RevisionRequest para la entidad de revisiones de solicitudes.
  * @see Ausencia para la entidad de ausencias.
  * @see User para la entidad de usuarios.
- * @see CreateSolicitudDto para la estructura de datos al crear una solicitud.
- * @see RevisarSolicitudDto para la estructura de datos al revisar una solicitud.
+ * @see CreateRequestDto para la estructura de datos al crear una solicitud.
+ * @see RevisarRequestDto para la estructura de datos al revisar una solicitud.
  * @see https://docs.nestjs.com/providers
  * 
  */
@@ -32,8 +32,8 @@ import { RevisarSolicitudDto, SolicitudStatus } from "./dto/revisar-solicitud.dt
 @Injectable() // Marca la clase como un proveedor inyectable
 export class SolicitudesService { // Definición del servicio SolicitudesService
   constructor(
-    @InjectRepository(Solicitud)  // Inyección del repositorio de Solicitud
-    private readonly solicitudRepo: Repository<Solicitud>, // Repositorio para operaciones CRUD en Solicitud
+    @InjectRepository(Request)  // Inyección del repositorio de Solicitud
+    private readonly solicitudRepo: Repository<Request>, // Repositorio para operaciones CRUD en Solicitud
     private readonly dataSource: DataSource, // Inyección
   ) {}
 
@@ -45,10 +45,10 @@ export class SolicitudesService { // Definición del servicio SolicitudesService
    * @param user Usuario que realiza la solicitud. 
    * @return La solicitud creada.
    * @throws BadRequestException si el usuario no tiene una empresa asignada.
-   * @see CreateSolicitudDto
-   * @see Solicitud 
+   * @see CreateRequestDto
+   * @see Request 
    */
-async create(dto: CreateSolicitudDto, user: User) {
+async create(dto: CreateRequestDto, user: User) {
   // 1. Validación de seguridad
   if (!user.empresaId) {
     throw new BadRequestException('El usuario no tiene una empresa asignada.');
@@ -70,7 +70,7 @@ async create(dto: CreateSolicitudDto, user: User) {
   const solicitudExistente = await this.solicitudRepo.findOne({
     where: {
       usuarioId: user.id,
-      estado: SolicitudStatus.APROBADA, 
+      estado: RequestStatus.APROBADA, 
       // Comparamos el inicio de la guardada contra el fin de la nueva
       // y el fin de la guardada contra el inicio de la nueva
       fechaInicio: LessThanOrEqual(finNuevo),
@@ -93,7 +93,7 @@ async create(dto: CreateSolicitudDto, user: User) {
     fechaFin: finNuevo,       // Guardamos la fecha normalizada
     usuario: user, 
     empresa: { id: user.empresaId }, 
-    estado: SolicitudStatus.PENDIENTE, 
+    estado: RequestStatus.PENDIENTE, 
   });
 
   return await this.solicitudRepo.save(solicitud);
@@ -110,7 +110,7 @@ async create(dto: CreateSolicitudDto, user: User) {
  * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
  */
 
- async revisar(id: number, dto: RevisarSolicitudDto, admin: User) { // Revisión de una solicitud existente
+ async revisar(id: number, dto: RevisarRequestDto, admin: User) { // Revisión de una solicitud existente
   // 1. Buscar la solicitud con su revisión para validar
   const solicitud = await this.solicitudRepo.findOne({ // Buscar por ID
     where: { id }, // Condición de búsqueda
@@ -123,7 +123,7 @@ async create(dto: CreateSolicitudDto, user: User) {
 
   // 2. VALIDACIÓN: Evitar el error de clave única en la BD
   // Si ya tiene una revisión o el estado no es PENDIENTE, lanzamos error amigable
-  if (solicitud.revision || solicitud.estado !== SolicitudStatus.PENDIENTE) {
+  if (solicitud.revision || solicitud.estado !== RequestStatus.PENDIENTE) {
     throw new BadRequestException(
       `Esta solicitud ya fue procesada anteriormente. Estado actual: ${solicitud.estado}`
     );
@@ -140,7 +140,7 @@ async create(dto: CreateSolicitudDto, user: User) {
     await queryRunner.manager.save(solicitud); // Guardar cambios en la transacción
 
     // 5. Crear el registro de la Revisión (evitando el error de revisado_por_id)
-    const nuevaRevision = queryRunner.manager.create(RevisionSolicitud, { // Crear instancia de RevisionSolicitud
+    const nuevaRevision = queryRunner.manager.create(RevisionRequest, { // Crear instancia de RevisionSolicitud
       solicitudId: solicitud.id, // Asociar a la solicitud
       adminId: admin.id, // Asociar al admin que revisa
       estadoResultante: dto.estado, 
@@ -149,7 +149,7 @@ async create(dto: CreateSolicitudDto, user: User) {
     await queryRunner.manager.save(nuevaRevision); // Guardar la revisión en la transacción
 
     // 6. SI ESTÁ APROBADA: Crear la Ausencia automáticamente
-    if (dto.estado === SolicitudStatus.APROBADA) { // Crear ausencia si es aprobada
+    if (dto.estado === RequestStatus.APROBADA) { // Crear ausencia si es aprobada
       // Cálculo de días para la tabla de ausencias
       const inicio = new Date(solicitud.fechaInicio); // Fecha de inicio
       const fin = new Date(solicitud.fechaFin); // Fecha de fin
@@ -181,7 +181,7 @@ async create(dto: CreateSolicitudDto, user: User) {
       ok: true, // Indicador de éxito
       message: `Solicitud ${dto.estado.toLowerCase()} correctamente`, // Mensaje dinámico
       solicitudId: solicitud.id, // ID de la solicitud revisada
-      ausenciaGenerada: dto.estado === SolicitudStatus.APROBADA // Indicador si se generó ausencia
+      ausenciaGenerada: dto.estado === RequestStatus.APROBADA // Indicador si se generó ausencia
     };
 
   } catch (error) { // Manejo de errores
@@ -207,7 +207,7 @@ async create(dto: CreateSolicitudDto, user: User) {
  * @param empresaId ID de la empresa cuyas solicitudes se desean listar.
  * @param usuarioId (Opcional) ID del usuario para filtrar las solicitudes.
  * @returns Lista de solicitudes que coinciden con los criterios.
- * @see Solicitud
+ * @see Request
  * 
  */
 

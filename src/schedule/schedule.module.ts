@@ -7,7 +7,7 @@ import { ScheduleController } from './schedule.controller';
 // Importar las entidades necesarias
 import { Horario } from './entities/schedules.entity';
 import { DistribucionDia } from './entities/distribucion-dia.entity';
-import { FranjaHoraria } from 'franja-horaria/entities/franja-horaria.entity';
+import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 // Importar el módulo AuthModule para la autenticación
 import { AuthModule } from 'auth/auth.module';
 import { WorkerModule } from 'worker/worker.module';

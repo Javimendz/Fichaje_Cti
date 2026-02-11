@@ -12,10 +12,10 @@ import { RolesModule } from './roles/roles.module';
 import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { WorkdayModule } from './workday/workday.module';
-import { FranjaHorariaModule } from './franja-horaria/franja-horaria.module';
-import { AusenciasModule } from './ausencia/ausencia.module';
+import { TimeSlotModule } from './timeSlot/timeSlot.module';
+import { AbsenceModule } from './absence/absense.module';
 import { WorkerModule } from './worker/worker.module';
-import { SolicitudesModule } from './solicitud/solicitud.module';
+import { RequestModule } from './request/request.module';
 
 /**
  * 
@@ -63,11 +63,11 @@ import { SolicitudesModule } from './solicitud/solicitud.module';
     UserModule, 
     
     AttendanceModule, 
-    FranjaHorariaModule,
+    TimeSlotModule,
     ScheduleModule,
-    AusenciasModule,
+    AbsenceModule,
     AlarmsModule, 
-    SeedModule, CompanyModule, RolesModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, FranjaHorariaModule, AusenciasModule, WorkerModule, SolicitudesModule
+    SeedModule, CompanyModule, RolesModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule
    
    ],
   

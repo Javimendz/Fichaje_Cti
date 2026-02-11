@@ -1,7 +1,7 @@
 import { Expose, Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, Matches, IsOptional, IsInt, Min } from 'class-validator';
 
-export class CreateFranjaHorariaDto {
+export class CreateTimeSlotDto {
   @IsNotEmpty({ message: 'La hora de inicio es obligatoria' })
   @IsString()
   // Regex: Valida desde 00:00 hasta 23:59

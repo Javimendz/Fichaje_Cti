@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import { User } from '../users/entities/user.entity';
-import { FranjaHoraria } from 'franja-horaria/entities/franja-horaria.entity';
+import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 import { DistribucionDia } from './entities/distribucion-dia.entity';
 
 /**

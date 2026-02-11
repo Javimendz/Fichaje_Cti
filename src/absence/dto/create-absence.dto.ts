@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty, IsString, IsDateString, IsOptional } from 'class-validator';
 
-export class CreateAusenciaDto {
+export class CreateAbsenceDto {
   @IsNotEmpty()
   @IsString()
   tipo: string;

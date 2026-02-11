@@ -12,21 +12,21 @@ import { Expose, Transform } from 'class-transformer';
  * @uses class-validator para validación de datos.
  *  
  */
-export enum SolicitudStatus {
+export enum RequestStatus {
   PENDIENTE = 'PENDIENTE',
   APROBADA = 'APROBADA',
   RECHAZADA = 'RECHAZADA',
 }
 
 
-export class RevisarSolicitudDto {
+export class RevisarRequestDto {
   @IsNotEmpty({ message: 'El estado de la revisión es obligatorio' })
   // Limitamos explícitamente las opciones permitidas para la acción de revisar
-  @IsEnum([SolicitudStatus.APROBADA, SolicitudStatus.RECHAZADA], { 
+  @IsEnum([RequestStatus.APROBADA, RequestStatus.RECHAZADA], { 
     message: 'El estado tras la revisión debe ser APROBADA o RECHAZADA' 
   })
   @Expose()
-  estado: SolicitudStatus;
+  estado: RequestStatus;
 
 
   

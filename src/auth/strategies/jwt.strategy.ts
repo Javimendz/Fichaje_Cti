@@ -41,16 +41,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userRepository.findOneBy({ id: sub });
 
     if (!user) {
-      console.log('❌ Validación fallida: Usuario no existe en DB');
+      console.log(' Validación fallida: Usuario no existe en DB');
       throw new UnauthorizedException('Token no válido');
     }
 
     if (!user.isActive) {
-      console.log('❌ Validación fallida: Usuario inactivo');
+      console.log(' Validación fallida: Usuario inactivo');
       throw new UnauthorizedException('Usuario inactivo');
     }
 
-    console.log('✅ Usuario validado con éxito:', user.email);
+    console.log(' Usuario validado con éxito:', user.email);
 
     return {
       id: user.id,

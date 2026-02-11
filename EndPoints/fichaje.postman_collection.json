@@ -788,16 +788,6 @@
     {
       "name": "schedules",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
-              "type": "string"
-            }
-          ]
-        },
         "method": "POST",
         "header": [],
         "body": {
@@ -810,7 +800,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/schedules",
+          "raw": "http://localhost:3000/api/schedule/crear-schedule",
           "protocol": "http",
           "host": [
             "localhost"
@@ -818,7 +808,8 @@
           "port": "3000",
           "path": [
             "api",
-            "schedules"
+            "schedule",
+            "crear-schedule"
           ]
         }
       },
@@ -868,20 +859,10 @@
     {
       "name": "Obtener Trabajador por id",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
-              "type": "string"
-            }
-          ]
-        },
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/users/51",
+          "raw": "http://localhost:3000/api/users/find/55",
           "protocol": "http",
           "host": [
             "localhost"
@@ -890,7 +871,8 @@
           "path": [
             "api",
             "users",
-            "51"
+            "find",
+            "55"
           ]
         }
       },
@@ -899,20 +881,10 @@
     {
       "name": "Obtener Horario por id",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Y2I2NGY4OS01YTZhLTRiMWYtODY0Yi1iZWE4NWE4M2ZhNWEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImYzNWE2MGJhLWVmNGQtNDk4OC04YzAxLWNiMDZkZTUyYjA2ZSIsImlhdCI6MTc2OTU5NDQzMCwiZXhwIjoxNzY5NjM3NjMwfQ.m56EAAxg9rHrG1Bo9E042RxR7bcEp45hjREvhhHdd4A",
-              "type": "string"
-            }
-          ]
-        },
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/schedules/d4adc430-67dc-4b4b-bdbb-4e21d46405cf",
+          "raw": "http://localhost:3000/api/schedule/find/3",
           "protocol": "http",
           "host": [
             "localhost"
@@ -920,8 +892,9 @@
           "port": "3000",
           "path": [
             "api",
-            "schedules",
-            "d4adc430-67dc-4b4b-bdbb-4e21d46405cf"
+            "schedule",
+            "find",
+            "3"
           ]
         }
       },
@@ -930,8 +903,22 @@
     {
       "name": "Borrar horario",
       "request": {
-        "method": "GET",
-        "header": []
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/delete/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "delete",
+            "3"
+          ]
+        }
       },
       "response": []
     },

@@ -1,5 +1,5 @@
 import { IsEnum, IsDateString, IsString, IsOptional, MinLength, IsNotEmpty, IsDate, MaxLength } from 'class-validator';
-import { TipoSolicitud } from '../entities/solicitud.entity';
+import { TipoSolicitud } from '../entities/request.entity';
 import { Expose, Transform } from 'class-transformer';
 
 /**
@@ -15,7 +15,7 @@ import { Expose, Transform } from 'class-transformer';
  * 
  */
 
-export class CreateSolicitudDto {
+export class CreateRequestDto {
   @IsNotEmpty({ message: 'El tipo de solicitud es obligatorio' })
   @IsEnum(TipoSolicitud, { 
     message: 'El tipo debe ser: VACACIONES, ENFERMEDAD, PERMISO o ASUNTOS_PROPIOS' 

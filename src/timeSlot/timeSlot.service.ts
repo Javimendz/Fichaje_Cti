@@ -2,17 +2,17 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FranjaHoraria } from './entities/franja-horaria.entity';
-import { CreateFranjaHorariaDto } from './dto/create-franja-horaria.dto';
+import { CreateTimeSlotDto } from './dto/create-timeSlot.dto';
 
 @Injectable()
-export class FranjaHorariaService {
+export class TimeSlotService {
   constructor(
     @InjectRepository(FranjaHoraria)
     private readonly franjaRepository: Repository<FranjaHoraria>,
     // Quitamos distRepository si usamos la carga por ID directo (más rápido)
   ) {}
 
-  async create(dto: CreateFranjaHorariaDto) {
+  async create(dto: CreateTimeSlotDto) {
     // 1. Validación de lógica horaria simple
     if (dto.inicio >= dto.fin) {
       throw new BadRequestException('La hora de inicio debe ser menor a la hora de fin');
@@ -67,7 +67,7 @@ export class FranjaHorariaService {
     return franja;
   }
 
- async update(id: number, dto: Partial<CreateFranjaHorariaDto>) {
+ async update(id: number, dto: Partial<CreateTimeSlotDto>) {
     const franja = await this.findOne(id);
     
     const inicioFinal = dto.inicio || franja.inicio;

@@ -2,20 +2,20 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Ausencia, AusenciaEstado } from './entities/ausencia.entity';
-import { CreateAusenciaDto } from './dto/create-ausencia.dto';
+import { CreateAbsenceDto } from './dto/create-absence.dto';
 
 import { UserRole } from 'auth/roles.enum';
-import { UpdateAusenciaDto } from './dto/update-ausencia.dto';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
 import { User } from 'auth/entities/user.entity';
 
 @Injectable()
-export class AusenciasService {
+export class AbsenceService {
   constructor(
     @InjectRepository(Ausencia)
     private readonly ausenciaRepository: Repository<Ausencia>,
   ) {}
 
-  async create(dto: CreateAusenciaDto, usuario: User) {
+  async create(dto: CreateAbsenceDto, usuario: User) {
     const inicio = new Date(dto.fecha_inicio);
     const fin = new Date(dto.fecha_fin);
     
@@ -90,7 +90,7 @@ async updateEstado(id: number, estado: AusenciaEstado, admin: User) {
     return ausencia;
   }
 
-  async update(id: number, dto: UpdateAusenciaDto, user: User) {
+  async update(id: number, dto: UpdateAbsenceDto, user: User) {
     const ausencia = await this.findOne(id, user);
     
     // Si la ausencia ya está aprobada, no debería poder editarse

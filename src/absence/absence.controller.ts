@@ -1,8 +1,8 @@
 // src/ausencias/ausencia.controller.ts
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
-import { CreateAusenciaDto } from './dto/create-ausencia.dto';
-import { UpdateAusenciaDto } from './dto/update-ausencia.dto';
-import { AusenciasService } from './ausencia.service';
+import { CreateAbsenceDto } from './dto/create-absence.dto';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
+import { AbsenceService } from './absence.service';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import { User } from 'auth/entities/user.entity';
@@ -12,12 +12,12 @@ import { AusenciaEstado } from './entities/ausencia.entity';
 
 @Controller('ausencia')
 @UseGuards(JwtAuthGuard) // Protegemos el endpoint
-export class AusenciaController {
-  constructor(private readonly ausenciaService: AusenciasService) {}
+export class AbsenceController {
+  constructor(private readonly ausenciaService: AbsenceService) {}
 
   @Post()
   create(
-    @Body() createAusenciaDto: CreateAusenciaDto, 
+    @Body() createAusenciaDto: CreateAbsenceDto, 
     @GetUser() user: User 
   ) {
     return this.ausenciaService.create(createAusenciaDto, user);

@@ -1,6 +1,6 @@
   import { IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber, IsOptional, ArrayMinSize, Min, Max, IsEnum } from 'class-validator'; // 👈 Añade IsNumber
   import { Expose, Transform, Type } from 'class-transformer';
-  import { CreateFranjaHorariaDto } from 'franja-horaria/dto/create-franja-horaria.dto';
+  import { CreateTimeSlotDto } from 'timeSlot/dto/create-timeSlot.dto';
 
     // Definimos los días válidos para evitar errores de escritura
     export enum DiasSemana {
@@ -38,7 +38,7 @@
   @ArrayMinSize(1, { message: 'Si defines franjas, debes incluir al menos una' })
   @ValidateNested({ each: true })
   // Fundamental para que class-transformer instancie cada objeto del array
-  @Type(() => CreateFranjaHorariaDto)
+  @Type(() => CreateTimeSlotDto)
   @Expose()
-  franjas: CreateFranjaHorariaDto[];
+  franjas: CreateTimeSlotDto[];
   }

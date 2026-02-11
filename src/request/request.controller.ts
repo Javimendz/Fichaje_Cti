@@ -1,11 +1,11 @@
 import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, UseGuards } from "@nestjs/common";
-import { RevisarSolicitudDto } from "./dto/revisar-solicitud.dto";
+import { RevisarRequestDto } from "./dto/revisar-request.dto";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import { Roles } from "auth/decorators/roles.decorator";
 import { UserRole } from "auth/roles.enum";
 import { User } from "auth/entities/user.entity";
-import { CreateSolicitudDto } from "./dto/create-solicitud.dto";
-import { SolicitudesService } from "./solicitud.service";
+import { CreateRequestDto } from "./dto/create-request.dto";
+import { SolicitudesService } from "./request.service";
 import { AuthGuard } from "@nestjs/passport";
 
 /**
@@ -25,12 +25,12 @@ import { AuthGuard } from "@nestjs/passport";
   @Roles(UserRole.ADMIN, UserRole.WORKER)
 @
 UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
-export class SolicitudesController { // Inyección de dependencias
+export class RequestController { // Inyección de dependencias
   constructor(private readonly solicitudesService: SolicitudesService) {} //
 
   @Post('crear-request')
   @Roles(UserRole.ADMIN, UserRole.WORKER) // Endpoint para crear una solicitud
-  create(@Body() dto: CreateSolicitudDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
+  create(@Body() dto: CreateRequestDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
     return this.solicitudesService.create(dto, user); // Llamar al servicio para crear la solicitud
   }
 
@@ -42,7 +42,7 @@ export class SolicitudesController { // Inyección de dependencias
    * @param admin Usuario administrador que realiza la revisión.
    * @returns Resultado de la revisión de la solicitud.
    * @throws BadRequestException si la solicitud no existe o ya ha sido revisada.
-   * @see RevisarSolicitudDto
+   * @see RevisarRequestDto
    * @see SolicitudesService.revisar
    * 
    */
@@ -50,7 +50,7 @@ export class SolicitudesController { // Inyección de dependencias
   @Roles(UserRole.ADMIN) // Solo Admins
   revisar(
     @Param('id', ParseIntPipe) id: number, // Validar UUID del parámetro
-    @Body() dto: RevisarSolicitudDto, // Obtener datos del cuerpo
+    @Body() dto: RevisarRequestDto, // Obtener datos del cuerpo
     @GetUser() admin: User, // Obtener usuario actual
   ) {
     return this.solicitudesService.revisar(id, dto, admin); // Llamar al servicio para revisar la solicitud

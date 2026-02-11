@@ -1,5 +1,5 @@
 // src/auth/entities/user.entity.ts
-import { Ausencia } from 'ausencia/entities/ausencia.entity';
+import { Ausencia } from 'absence/entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
 import { Company } from 'company/entities/company.entity';
 import { Workday } from 'workday/entities/workday.entity';

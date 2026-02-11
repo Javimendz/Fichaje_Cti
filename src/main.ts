@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+// 1. CAMBIO CRÍTICO: Importación compatible con TS/Node para cookie-parser
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
@@ -10,17 +11,18 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  // 1. Usa la importación de arriba (sin volver a declarar con require)
+  // 2. Ejecutar el middleware antes que cualquier otra cosa
   app.use(cookieParser());
 
-  // 2. CORS: Ajusta el puerto al que realmente usa tu Frontend
+  // 3. Configurar CORS para el puerto 3567
   app.enableCors({
-    origin: 'http://localhost:3567', // 👈 ¡PON AQUÍ EL PUERTO DE TU FRONTEND!
+    origin: 'http://localhost:3567', // Tu Frontend
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
+    credentials: true, // 👈 Permite que las cookies viajen
   });
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -29,8 +31,11 @@ async function bootstrap() {
     }),
   );
 
-  // 3. El Backend suele correr en el 3000
-  await app.listen(process.env.PORT ?? 3567);
-  console.log(`Backend corriendo en: http://localhost:${process.env.PORT ?? 3567}/api`);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  
+  console.log('--- CONFIGURACIÓN INICIADA ---');
+  console.log(`🚀 Servidor en: http://localhost:${port}/api`);
+  console.log(`🔒 CORS permitido para: http://localhost:3567`);
 }
 bootstrap();

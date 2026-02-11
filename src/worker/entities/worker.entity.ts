@@ -2,8 +2,8 @@
 import { Ausencia } from "ausencia/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
 import { Exclude } from "class-transformer";
-import { Empresa } from "empresa/entities/empresa.entity";
-import { Jornada } from "jornada/entities/jornada.entity";
+import { Company } from "company/entities/company.entity";
+import { Workday } from "workday/entities/workday.entity";
 import { Horario } from "schedule/entities/schedules.entity";
 import { User } from 'users/entities/user.entity';
 import { OneToOne, PrimaryColumn } from 'typeorm';
@@ -108,21 +108,21 @@ email: string | null;
   @Column({ nullable: false })
   empresaId: number;
 
-  @ManyToOne(() => Empresa, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empresaId' })
-  empresa: Empresa;
+  empresa: Company;
 
   @Column({ nullable: true, name: 'horario_id' })
   horarioId?: number;
 
 @ManyToOne(() => Horario, (horario) => horario.usuarios, { 
   nullable: true, 
-  onDelete: 'CASCADE' 
+  onDelete: 'SET NULL' 
 })  @JoinColumn({ name: 'horario_id' })
   horario?: Horario;
 
-  @OneToMany(() => Jornada, (jornada) => jornada.usuario,{cascade:true} )
-  jornadas: Jornada[];
+  @OneToMany(() => Workday, (jornada) => jornada.usuario,{cascade:true} )
+  jornadas: Workday[];
 
   @OneToMany(() => Ausencia, (ausencia) => ausencia.usuario,{cascade: true})
   ausencias: Ausencia[];

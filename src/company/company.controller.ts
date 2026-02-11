@@ -4,8 +4,8 @@ import {
   Controller, Get, Post, Body, Patch, Param, Delete, 
   UseGuards, ParseIntPipe, Put, Req // 👈 Asegúrate de importar Req
 } from '@nestjs/common';
-import { EmpresaService } from './empresa.service';
-import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { CompanyService } from './company.service';
+import { UpdateCompanyDto } from './dto/update-company.dto';
 // IMPORTANTE: Asegúrate de importar este DTO
 import { Request } from 'express';  
 // Auth & Roles
@@ -15,17 +15,17 @@ import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
-import { SetupEmpresaDto } from './dto/setup-empresea.dto';
+import { SetupCompanyDto } from './dto/setup-company.dto';
 
 @Controller('empresa')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class EmpresaController {
-  constructor(private readonly empresasService: EmpresaService) {}
+export class CompanyController {
+  constructor(private readonly empresasService: CompanyService) {}
 
   // --- NUEVO MÉTODO CREAR EMPRESA ---
   @Post('crear-empresa')
   @Roles(UserRole.SUPERADMIN) // Solo el SuperAdmin puede crear Empresa + Admin
-  async setupEmpresa(@Body() setupEmpresaDto: SetupEmpresaDto) {
+  async setupEmpresa(@Body() setupEmpresaDto: SetupCompanyDto) {
     return this.empresasService.createWithAdmin(setupEmpresaDto);
   }
 
@@ -64,7 +64,7 @@ export class EmpresaController {
   @Roles(UserRole.SUPERADMIN)
   update(
     @Param('id', ParseIntPipe) id: number, 
-    @Body() updateEmpresaDto: UpdateEmpresaDto
+    @Body() updateEmpresaDto: UpdateCompanyDto
   ) {
     return this.empresasService.update(id, updateEmpresaDto);
   }

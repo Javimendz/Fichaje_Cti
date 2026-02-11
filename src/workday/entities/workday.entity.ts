@@ -1,9 +1,9 @@
 import { User } from "auth/entities/user.entity";
-import { Empresa } from "empresa/entities/empresa.entity"; // Asegúrate de importar tu entidad Empresa
+import { Company } from "company/entities/company.entity"; // Asegúrate de importar tu entidad Empresa
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('jornadas')
-export class Jornada {
+export class Workday {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -28,6 +28,6 @@ export class Jornada {
   @ManyToOne(() => User, (user) => user.jornadas, { eager: true,onDelete: 'CASCADE'})
 usuario: User;
 
-@ManyToOne(() => Empresa, { eager: true })
-empresa: Empresa;
+@ManyToOne(() => Company, { eager: true })
+empresa: Company;
 }

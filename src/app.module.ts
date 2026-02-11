@@ -7,11 +7,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
 import { SeedModule } from 'seed/seed.module';
-import { EmpresaModule } from './empresa/empresa.module';
+import { CompanyModule } from './company/company.module';
 import { RolesModule } from './roles/roles.module';
 import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
 import { ScheduleModule } from './schedule/schedule.module';
-import { JornadaModule } from './jornada/jornada.module';
+import { WorkdayModule } from './workday/workday.module';
 import { FranjaHorariaModule } from './franja-horaria/franja-horaria.module';
 import { AusenciasModule } from './ausencia/ausencia.module';
 import { WorkerModule } from './worker/worker.module';
@@ -67,7 +67,7 @@ import { SolicitudesModule } from './solicitud/solicitud.module';
     ScheduleModule,
     AusenciasModule,
     AlarmsModule, 
-    SeedModule, EmpresaModule, RolesModule, CodigoAccesoModule, ScheduleModule, JornadaModule, FranjaHorariaModule, AusenciasModule, WorkerModule, SolicitudesModule
+    SeedModule, CompanyModule, RolesModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, FranjaHorariaModule, AusenciasModule, WorkerModule, SolicitudesModule
    
    ],
   

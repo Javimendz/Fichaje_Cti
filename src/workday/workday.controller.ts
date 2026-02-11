@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Patch, UseGuards, Param, Query, ParseUUIDPipe } from '@nestjs/common';
-import { JornadaService } from './jornada.service';
+import { WorkdayService } from './workday.service';
 import { CheckInDto } from './dto/check-in.dto';
 import { User } from 'auth/entities/user.entity';
 import { GetUser } from 'auth/decorators/get-user.decorator';
@@ -7,8 +7,8 @@ import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('jornada')
 @UseGuards(JwtAuthGuard)
-export class JornadaController {
-  constructor(private readonly jornadasService: JornadaService) {}
+export class WorkdayController {
+  constructor(private readonly jornadasService: WorkdayService) {}
 
   // 1. Iniciar Jornada (POST /jornadas/check-in)
 // 1. Iniciar Jornada

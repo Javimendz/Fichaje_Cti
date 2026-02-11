@@ -15,7 +15,7 @@ async function bootstrap() {
 
   // 2. CORS: Ajusta el puerto al que realmente usa tu Frontend
   app.enableCors({
-    origin: 'http://localhost:3562', // 👈 ¡PON AQUÍ EL PUERTO DE TU FRONTEND!
+    origin: 'http://localhost:3001', // 👈 ¡PON AQUÍ EL PUERTO DE TU FRONTEND!
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

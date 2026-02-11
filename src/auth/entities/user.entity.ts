@@ -1,8 +1,8 @@
 // src/auth/entities/user.entity.ts
 import { Ausencia } from 'ausencia/entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
-import { Empresa } from 'empresa/entities/empresa.entity';
-import { Jornada } from 'jornada/entities/jornada.entity';
+import { Company } from 'company/entities/company.entity';
+import { Workday } from 'workday/entities/workday.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
 import { Solicitud } from 'solicitud/entities/solicitud.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
@@ -46,18 +46,18 @@ email: string | null;
   empresaId: number | null;
 
   
-  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { 
+  @ManyToOne(() => Company, (empresa) => empresa.usuarios, { 
     onDelete: 'CASCADE' // Crucial para que la DB elimine al usuario al borrar la empresa
   })
   @JoinColumn({ name: 'empresa_id' })
-  empresa?: Empresa | null; // <-- Añade "| null" aquí para TypeScript
+  empresa?: Company | null; // <-- Añade "| null" aquí para TypeScript
 
   @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
   horario: Horario | null;
 
-  @OneToMany(() => Jornada, (j) => j.usuario)
-  jornadas: Jornada[];
+  @OneToMany(() => Workday, (j) => j.usuario)
+  jornadas: Workday[];
 
   @OneToMany(() => Ausencia, (a) => a.usuario)
   ausencias: Ausencia[];

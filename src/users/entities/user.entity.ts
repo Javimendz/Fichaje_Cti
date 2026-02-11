@@ -1,8 +1,8 @@
 // src/auth/entities/user.entity.ts
 import { Ausencia } from 'ausencia/entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
-import { Empresa } from 'empresa/entities/empresa.entity';
-import { Jornada } from 'jornada/entities/jornada.entity';
+import { Company } from 'company/entities/company.entity';
+import { Workday } from 'workday/entities/workday.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
 import { Worker } from 'worker/entities/worker.entity'
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
@@ -16,9 +16,9 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMan
  * Define las columnas de la tabla 'users' en la base de datos.
  * 
  * @entity 'users' define el nombre de la tabla en la base de datos.
- * @see Empresa para la relación con la empresa a la que pertenece el usuario.
+ * @see Company para la relación con la empresa a la que pertenece el usuario.
  * @see Horario para la relación con el horario asignado al usuario.
- * @see Jornada para la relación con las jornadas laborales del usuario.  
+ * @see Workday para la relación con las jornadas laborales del usuario.  
  * @see Ausencia para la relación con las ausencias del usuario.
  * @role UserRole define los posibles roles que un usuario puede tener en el sistema.
  * @metadata createdAt y updatedAt para auditoría de registros.
@@ -74,17 +74,17 @@ export class User { // Definición de la entidad User
   @Column( { name: 'empresa_id', nullable: true }) // Columna física en la DB
   empresaId: number | null; // ID de la empresa a la que pertenece el usuario
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa
+  @ManyToOne(() => Company, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa
   @JoinColumn({ name: 'empresa_id' }) // Llave foránea personalizada
-  empresa: Empresa | null; // Empresa a la que pertenece el usuario
+  empresa: Company | null; // Empresa a la que pertenece el usuario
 
   // --- RELACIONES: PLANIFICACIÓN Y REGISTROS ---
-  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true }) // Relación con Horario
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Horario
   @JoinColumn({ name: 'horario_id' }) // Llave foránea personalizada
   horario: Horario | null; // Horario asignado al usuario
 
-  @OneToMany(() => Jornada, (j) => j.usuario, {cascade:true}) // Relación con Jornadas
-  jornadas: Jornada[]; // Jornadas laborales del usuario
+  @OneToMany(() => Workday, (j) => j.usuario, {cascade:true}) // Relación con Jornadas
+  jornadas: Workday[]; // Jornadas laborales del usuario
 
   @OneToMany(() => Ausencia, (a) => a.usuario) // Relación con Ausencias
   ausencias: Ausencia[]; // Ausencias del usuario

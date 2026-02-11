@@ -1,5 +1,5 @@
 import { User } from 'auth/entities/user.entity';
-import { Empresa } from 'empresa/entities/empresa.entity';
+import { Company } from 'company/entities/company.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
 import { RevisionSolicitud } from './revision-solicitud.entity';
 import { SolicitudStatus } from 'solicitud/dto/revisar-solicitud.dto';
@@ -40,7 +40,7 @@ export enum TipoSolicitud {
  * Define las columnas de la tabla 'solicitudes' en la base de datos.
  * @entity 'solicitudes' define el nombre de la tabla en la base de datos.
  * @see User para la relación con el usuario que realiza la solicitud.
- * @see Empresa para la relación con la empresa asociada a la solicitud.
+ * @see Company para la relación con la empresa asociada a la solicitud.
  * @see RevisionSolicitud para la relación con la revisión de la solicitud.
  * @metadata createdAt para auditoría de registros.
  * 
@@ -80,9 +80,9 @@ export class Solicitud { // Definición de la entidad Solicitud
   @Column() // Columna para la clave foránea del usuario
   usuarioId: number; // ID del usuario que realiza la solicitud
 
-  @ManyToOne(() => Empresa) // Relación con Empresa
+  @ManyToOne(() => Company) // Relación con Empresa
   @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
-  empresa: Empresa; // Empresa asociada a la solicitud
+  empresa: Company; // Empresa asociada a la solicitud
 
   @Column({ name: 'empresa_id' }) // Columna para la clave foránea de la empresa
   empresaId: number; // ID de la empresa asociada a la solicitud

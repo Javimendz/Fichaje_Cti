@@ -1,15 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Between } from 'typeorm';
-import { Jornada } from './entities/jornada.entity';
+import { Workday } from './entities/workday.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import { User } from 'auth/entities/user.entity';
 
 @Injectable()
-export class JornadaService {
+export class WorkdayService {
   constructor(
-    @InjectRepository(Jornada)
-    private readonly jornadaRepository: Repository<Jornada>,
+    @InjectRepository(Workday)
+    private readonly jornadaRepository: Repository<Workday>,
   @InjectRepository(User) 
   private readonly userRepository: Repository<User>,
   ) {}
@@ -79,7 +79,7 @@ async checkOut(dto: CheckInDto, usuario: User) { // 👈 Añadimos el DTO para c
   return await this.jornadaRepository.save(jornada);
 }
 
-async findActiveJornada(usuarioId: number): Promise<Jornada | null> {
+async findActiveJornada(usuarioId: number): Promise<Workday | null> {
   return await this.jornadaRepository.findOne({
     where: { usuario: { id: usuarioId }, fin: IsNull() }
   });

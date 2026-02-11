@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Worker } from '../../worker/entities/worker.entity';
 import { DistribucionDia } from './distribucion-dia.entity';
-import { Empresa } from 'empresa/entities/empresa.entity';
+import { Company } from 'company/entities/company.entity';
 
 /**
  * Horario Entity
@@ -21,7 +21,7 @@ import { Empresa } from 'empresa/entities/empresa.entity';
  * los días de distribución y los usuarios asignados.
  * Define las columnas de la tabla 'horarios' en la base de datos.
  * @entity 'horarios' define el nombre de la tabla en la base de datos.
- * @see Empresa para la relación con la empresa a la que pertenece el horario.
+ * @see Company para la relación con la empresa a la que pertenece el horario.
  * @see DistribucionDia para la relación con los días de distribución del horario.
  * @see AllowedUser para la relación con los usuarios asignados a este horario.
  * @metadata createdAt y updatedAt para auditoría de registros.
@@ -54,9 +54,9 @@ export class Horario {
   // ============================================
 
   // Relación con Empresa (N:1)
-  @ManyToOne(() => Empresa, (empresa) => empresa.horarios, { onDelete: 'CASCADE' }) // Si se elimina la empresa, se eliminan sus horarios
+  @ManyToOne(() => Company, (empresa) => empresa.horarios, { onDelete: 'CASCADE' }) // Si se elimina la empresa, se eliminan sus horarios
   @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
-  empresa: Empresa; // Empresa a la que pertenece el horario
+  empresa: Company; // Empresa a la que pertenece el horario
 
   @Column({ name: 'empresa_id' }) // Columna física en la DB
   empresaId: number; //

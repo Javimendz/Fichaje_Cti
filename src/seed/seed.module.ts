@@ -4,8 +4,8 @@ import { SeedsService } from './seed.service';
 import { SeedsController } from './seed.controller';
 import { UserModule } from '../users/user.module';
 import { AllowedPhonesModule } from '../allowed-phones/allowed-phones.module';
-import { EmpresaService } from 'empresa/empresa.service';
-import { EmpresaModule } from 'empresa/empresa.module';
+import { CompanyService } from 'company/company.service';
+import { CompanyModule } from 'company/company.module';
 import { AuthModule } from 'auth/auth.module';
 /**
  * SeedModule
@@ -20,9 +20,9 @@ import { AuthModule } from 'auth/auth.module';
  * 
  */
 @Module({
-  imports: [UserModule, AllowedPhonesModule, EmpresaModule, AuthModule], 
+  imports: [UserModule, AllowedPhonesModule, CompanyModule, AuthModule], 
   controllers: [SeedsController], // <- Controller incluido
-  providers: [SeedsService, EmpresaService],
+  providers: [SeedsService, CompanyService],
   exports: [SeedsService],
 })
 export class SeedModule {}

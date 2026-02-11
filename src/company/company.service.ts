@@ -4,23 +4,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
-import { Empresa } from './entities/empresa.entity';
+import { Company } from './entities/company.entity';
 import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
-import { UpdateEmpresaDto } from './dto/update-empresa.dto';
-import { CreateEmpresaDto } from './dto/create-empresa.dto';
-import { SetupEmpresaDto } from './dto/setup-empresea.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
+import { CreateCompanyDto } from './dto/create-company.dto';
+import { SetupCompanyDto } from './dto/setup-company.dto';
 
 @Injectable()
-export class EmpresaService {
+export class CompanyService {
   constructor(
-    @InjectRepository(Empresa)
-    private readonly empresaRepository: Repository<Empresa>,
+    @InjectRepository(Company)
+    private readonly empresaRepository: Repository<Company>,
     private readonly dataSource: DataSource, // Inyectado para transacciones
   ) {}
 
-async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos los campos
+async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos los campos
   // 1. Validación previa (Fuera de la transacción para ahorrar recursos)
   const cifExiste = await this.empresaRepository.findOneBy({ cif: dto.cif });
   if (cifExiste) throw new BadRequestException('El CIF de la empresa ya está registrado');
@@ -31,7 +31,7 @@ async createWithAdmin(dto: SetupEmpresaDto) { // Usamos el DTO que tiene todos l
 
   try {
     // 1. Crear la Empresa con el mapeo completo de campos
-    const nuevaEmpresa = queryRunner.manager.create(Empresa, {
+    const nuevaEmpresa = queryRunner.manager.create(Company, {
   nombre: dto.nombreEmpresa,
   cif: dto.cif,
   direccion: dto.direccion,
@@ -137,7 +137,7 @@ async findOne(id: number, user: UserPayload) {
   }
 
   // 5. Actualizar (El que te faltaba)
- async update(id: number, dto: UpdateEmpresaDto) {
+ async update(id: number, dto: UpdateCompanyDto) {
     const { admin, ...empresaDatos } = dto as any;
 
     // 1. Preload para la empresa
@@ -170,7 +170,7 @@ async findOne(id: number, user: UserPayload) {
     return this.findOne(id, { rol: UserRole.SUPERADMIN } as any); 
   }
 
-  private formatResponse(empresa: Empresa) {
+  private formatResponse(empresa: Company) {
     const { usuarios, ...resto } = empresa;
     return {
       ...resto,

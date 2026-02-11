@@ -4,7 +4,7 @@ import { Horario } from "schedule/entities/schedules.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } from "typeorm";
 
 @Entity('empresas')
-export class Empresa {
+export class Company {
   @PrimaryGeneratedColumn()
   id: number;
 

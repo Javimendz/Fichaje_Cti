@@ -13,7 +13,7 @@ import {
 import { Expose, Transform, Type } from 'class-transformer';
 import { CreateAdminDto } from 'users/dto/create-admin.dto';
 
-export class SetupEmpresaDto {
+export class SetupCompanyDto {
   
   // ============================================
   // IDENTIFICACIÓN DE LA EMPRESA

@@ -2,7 +2,7 @@ import { Expose, Transform } from 'class-transformer';
 import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 
-export class CreateEmpresaDto {
+export class CreateCompanyDto {
  
   @IsString({ message: 'El nombre de la empresa debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El nombre de la empresa es obligatorio' })

@@ -37,7 +37,7 @@ export class WorkerController {
 
   // --- LISTAR: ADMIN Y SUPERADMIN ---
   @Get('list-workers')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN)
   findAll(@GetUser() user: UserPayload) {
     
     // Si es SuperAdmin, ve todo el sistema
@@ -56,7 +56,7 @@ export class WorkerController {
 
   // --- BUSCAR UNO: ADMIN Y SUPERADMIN ---
   @Get('find/:id')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN)
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: UserPayload
@@ -90,27 +90,25 @@ export class WorkerController {
     return this.workerService.remove(id, user);
   }
 
-  // --- ASIGNAR HORARIO ---
+ // --- ASIGNAR HORARIO: SOLO ADMIN ---
   @Put('assign-schedule/:workerId')
-  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Roles(UserRole.ADMIN) // 👈 Eliminamos SUPERADMIN
   async assignSchedule(
     @Param('workerId', ParseIntPipe) workerId: number,
-    @Body('horarioId', ParseIntPipe) horarioId: number, // Extraemos solo el ID
+    @Body('horarioId', ParseIntPipe) horarioId: number,
     @GetUser() user: UserPayload,
   ) {
-    // Validación básica antes de llamar al servicio
-    if (user.rol !== UserRole.SUPERADMIN && !user.empresaId) {
-      throw new UnauthorizedException('No tienes una empresa asignada');
+    // Si es ADMIN, es obligatorio que tenga empresaId
+    if (!user.empresaId) {
+      throw new UnauthorizedException('No tienes una empresa asignada para gestionar horarios');
     }
 
-    // Llamamos al servicio pasando el usuario para que él valide la seguridad
     return await this.workerService.assignSchedule(
       workerId,
       horarioId,
       user
     );
   }
-
   // --- HELPER PRIVADO ---
   private validateEmpresa(user: UserPayload) {
     // Si no es SuperAdmin y no tiene empresa, bloqueamos

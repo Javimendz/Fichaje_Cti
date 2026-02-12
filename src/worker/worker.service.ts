@@ -3,10 +3,11 @@ import {
   BadRequestException, 
   InternalServerErrorException, 
   NotFoundException, 
-  ForbiddenException 
+  ForbiddenException, 
+  UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository, DeepPartial } from 'typeorm';
+import { DataSource, Repository, DeepPartial, Not } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 // Entidades
@@ -18,6 +19,7 @@ import { CreateWorkerDto } from './dto/worker.dto'; // Ajusta la ruta si es nece
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { UserRole } from '../auth/roles.enum';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; // 👈 CLAVE: import type
+import { Horario } from 'schedule/entities/schedules.entity';
 
 @Injectable()
 export class WorkerService {
@@ -115,7 +117,7 @@ export class WorkerService {
   }
 
   /**
-   * Lista todos los workers (Solo para SuperAdmin)
+   * Lista todos los workers (Solo para Admin)
    */
   async findAll() {
     return await this.workerRepository.find({
@@ -160,17 +162,77 @@ export class WorkerService {
   /**
    * Actualiza un worker
    */
-  async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
-    // 1. Reutilizamos findOne para verificar permisos antes de tocar nada
+async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
+    // 1. Verificamos que el trabajador existe y pertenece a la empresa
     const worker = await this.findOne(id, user);
 
-    // 2. Actualizamos
-    Object.assign(worker, dto);
+    // 2. Validaciones preventivas de duplicidad (Excluyendo al propio worker)
     
-    // Nota: Si cambias email/password aquí, deberías actualizar también la tabla User
-    // Idealmente usarías otra transacción similar a create()
+    // Validar DNI
+    if (dto.dni) {
+      const dniLimpio = dto.dni.toUpperCase().trim();
+      const dniDuplicado = await this.workerRepository.findOne({
+        where: { 
+          dni: dniLimpio, 
+          id: Not(id) // 👈 "Busca este DNI pero que el ID NO sea el mío"
+        }
+      });
+      if (dniDuplicado) {
+        throw new BadRequestException(`El DNI '${dniLimpio}' ya está registrado por otro trabajador.`);
+      }
+      dto.dni = dniLimpio;
+    }
 
-    return await this.workerRepository.save(worker);
+    // Validar Email
+    if (dto.email) {
+      const emailLimpio = dto.email.toLowerCase().trim();
+      const emailDuplicado = await this.workerRepository.findOne({
+        where: { 
+          email: emailLimpio, 
+          id: Not(id) // 👈 "Busca este email pero que el ID NO sea el mío"
+        }
+      });
+      if (emailDuplicado) {
+        throw new BadRequestException(`El correo '${emailLimpio}' ya está en uso por otro trabajador.`);
+      }
+      dto.email = emailLimpio;
+    }
+
+    // Validar Teléfono
+    if (dto.telefono) {
+      const telDuplicado = await this.workerRepository.findOne({
+        where: { 
+          telefono: dto.telefono, 
+          id: Not(id) 
+        }
+      });
+      if (telDuplicado) {
+        throw new BadRequestException(`El teléfono '${dto.telefono}' ya pertenece a otro trabajador.`);
+      }
+    }
+
+    // 3. Sincronizar con la tabla User si es necesario (Auth)
+    if (dto.email || dto.nombre || dto.password) {
+      const userUpdateData: any = {};
+      if (dto.email) userUpdateData.email = dto.email.toLowerCase().trim();
+      if (dto.nombre) userUpdateData.nombre = dto.nombre;
+      if (dto.password) userUpdateData.password = await bcrypt.hash(dto.password, 10);
+
+      await this.dataSource.getRepository(User).update(id, userUpdateData);
+    }
+
+    // 4. Aplicar cambios y guardar
+    Object.assign(worker, dto);
+
+    try {
+      return await this.workerRepository.save(worker);
+    } catch (error) {
+      // Manejo de errores de base de datos (por si acaso)
+      if (error.code === '23505') {
+        throw new BadRequestException('Error de duplicidad: uno de los campos únicos ya existe en la base de datos.');
+      }
+      throw new InternalServerErrorException('Error al actualizar el trabajador');
+    }
   }
 
   /**
@@ -193,14 +255,51 @@ export class WorkerService {
   /**
    * Asigna horario
    */
-  async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
-    const worker = await this.findOne(workerId, user);
-    
-    // Asignación simple actualizando la FK
-    // TypeORM permite asignar el ID directamente si la relación está bien definida
-    // o pasando el objeto parcial.
-    worker.horario = { id: horarioId } as any; 
+ async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
+  // 1. Validar trabajador (Filtra por empresa del admin)
+  const worker = await this.findOne(workerId, user);
 
-    return await this.workerRepository.save(worker);
+  // 2. Validar ID de empresa para TypeScript
+  const empresaId = user.empresaId;
+  if (!empresaId) {
+    throw new UnauthorizedException('El administrador debe tener una empresa asignada');
   }
+
+  // 3. Validar que el horario existe y pertenece a la empresa
+  const horario = await this.dataSource.getRepository(Horario).findOne({
+    where: { 
+      id: horarioId, 
+      empresa: { id: empresaId } 
+    }
+  });
+
+  if (!horario) {
+    throw new NotFoundException(`El horario con ID ${horarioId} no existe en tu empresa`);
+  }
+
+  // 4. Actualización Sincronizada (Ambas tablas)
+  try {
+  await this.dataSource.transaction(async (manager) => {
+    // 1. Actualizamos Worker
+    // Usamos 'as any' o el objeto de relación para saltar la restricción del QueryDeepPartial
+    await manager.update(Worker, workerId, { 
+      horario: { id: horarioId } 
+    } as any);
+
+    // 2. Actualizamos User
+    await manager.update(User, workerId, { 
+      horario: { id: horarioId } 
+    } as any);
+  });
+
+  return { 
+    message: 'Horario asignado correctamente en ambas tablas', 
+    worker: worker.nombre,
+    horario: horario.nombre 
+  };
+
+  } catch (error) {
+    throw new InternalServerErrorException('Error al sincronizar el horario en las tablas de usuario y trabajador');
+  }
+}
 }

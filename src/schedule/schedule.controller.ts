@@ -5,78 +5,76 @@ import {
   Body,
   Param,
   Delete,
-  ParseUUIDPipe,
   UseGuards,
-  BadRequestException,
   UnauthorizedException,
   ParseIntPipe,
+  Logger,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
-import { User } from 'users/entities/user.entity';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'auth/guards/roles.guard';
+import { Roles } from 'auth/decorators/roles.decorator';
+import { UserRole } from 'auth/roles.enum';
+import type { UserPayload } from 'auth/interfaces/user-payload.interface'; // 👈 Import type
 
 @Controller('schedule')
-@UseGuards(JwtAuthGuard) // 👈 Cambiado para usar Cookies
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ScheduleController {
-  constructor(
-    private readonly schedulesService: ScheduleService,
-  ) {}
+  private readonly logger = new Logger(ScheduleController.name);
+
+  constructor(private readonly schedulesService: ScheduleService) {}
 
   @Post('crear-schedule')
+  @Roles(UserRole.ADMIN)
   create(
     @Body() dto: CreateHorarioDto,
-    @GetUser() user: User,
+    @GetUser() user: UserPayload,
   ) {
-    if (!user.empresaId) {
-      throw new UnauthorizedException(
-        'No tienes una empresa asociada para crear horarios',
-      );
-    }
-
+    // Obtenemos el ID validado (será number seguro)
+    const empresaId = this.getEmpresaId(user);
+    
+    this.logger.log(`[Audit] Admin ${user.email} creando horario.`);
+    // Ahora pasamos el user normal, el servicio ya sabe extraer el ID o puedes pasar empresaId si refactorizas el servicio
     return this.schedulesService.create(dto, user);
   }
 
   @Get('list-schedules')
-  findAll(@GetUser() user: User) {
-    if (!user.empresaId) {
-      throw new BadRequestException('Usuario sin empresa asignada');
-    }
-
-    return this.schedulesService.findAllByEmpresa(user.empresaId);
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
+  findAll(@GetUser() user: UserPayload) {
+    const empresaId = this.getEmpresaId(user); // 👈 Aquí la magia
+    return this.schedulesService.findAllByEmpresa(empresaId); // ✅ TypeScript ya no se queja
   }
 
   @Get('find/:id')
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
   findOne(
     @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: User,
+    @GetUser() user: UserPayload,
   ) {
-    if (!user.empresaId) {
-      throw new UnauthorizedException('Usuario sin empresa');
-    }
-
-    return this.schedulesService.findOne(id, user.empresaId);
+    const empresaId = this.getEmpresaId(user);
+    return this.schedulesService.findOne(id, empresaId);
   }
 
   @Delete('delete/:id')
+  @Roles(UserRole.ADMIN)
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: User,
+    @GetUser() user: UserPayload,
   ) {
-    if (!user.empresaId) {
-      throw new UnauthorizedException('Usuario sin empresa');
-    }
-
-    return this.schedulesService.remove(id, user.empresaId);
+    const empresaId = this.getEmpresaId(user);
+    this.logger.warn(`[Audit] Admin ${user.email} eliminando horario ${id}`);
+    return this.schedulesService.remove(id, empresaId);
   }
 
-  // Método privado para limpiar el código de validaciones repetitivas
-  private validateEmpresa(user: User) {
+  // --- HELPER PRIVADO MEJORADO ---
+  // Cambiamos el nombre de validateEmpresa a getEmpresaId
+  // Ahora RETORNA un number, asegurando a TypeScript que no es null
+  private getEmpresaId(user: UserPayload): number {
     if (!user.empresaId) {
-      throw new UnauthorizedException('El usuario no tiene una empresa asociada');
+      throw new UnauthorizedException('Usuario sin empresa asignada para realizar esta acción');
     }
+    return user.empresaId;
   }
-
 }

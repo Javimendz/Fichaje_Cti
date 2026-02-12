@@ -48,7 +48,7 @@ findAll(@GetUser() user: UserPayload) {
 }
 
   @Get('find/:id')
-  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPERADMIN)
   findOne(
     @Param('id', ParseIntPipe) id: number, 
     @GetUser() user: UserPayload

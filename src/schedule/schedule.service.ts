@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm'; 
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 //  Usamos UserPayload, no la entidad User completa
@@ -23,35 +23,47 @@ export class ScheduleService {
    * Crea un nuevo horario asociado a la empresa del usuario.
    * Ahora acepta UserPayload para coincidir con el Controlador.
    */
-  async create(dto: CreateHorarioDto, user: UserPayload) { // Corregido: user: UserPayload
-    // 1. Validación de seguridad (Defensiva, aunque el controller ya lo valida)
+ async create(dto: CreateHorarioDto, user: UserPayload) {
+    // 1. Validación de Empresa (Seguridad)
     if (!user.empresaId) {
-      throw new BadRequestException('El usuario debe tener una empresa asignada');
+      throw new BadRequestException('El usuario debe tener una empresa asignada para crear horarios.');
     }
 
-    // 2. Validación de fechas
-    const inicio = new Date(dto.fechaInicio);
-    const fin = new Date(dto.fechaFin);
-    if (inicio >= fin) {
-      throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+    // 2. Conversión y Validación de Fechas
+    // El DTO trae strings (JSON), la Entidad necesita objetos Date
+    const fechaInicio = new Date(dto.fechaInicio);
+    const fechaFin = new Date(dto.fechaFin);
+
+    if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+      throw new BadRequestException('Las fechas proporcionadas no son válidas.');
     }
 
-    // 3. Creación del objeto
-    // TypeORM mapea automáticamente el ID de la empresa
+    if (fechaInicio >= fechaFin) {
+      throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin.');
+    }
+
+    // 3. Creación del Objeto (Aquí solucionamos el error de TypeScript)
+    // Usamos 'as DeepPartial<Horario>' para decirle a TS que ignore que faltan IDs en los hijos
     const nuevoHorario = this.horarioRepository.create({
-      ...dto,
-      empresa: { id: user.empresaId }, // 👈 Vinculación por ID
-    });
+      ...dto,                  // Copia nombre, tipo y el array de distribuciones
+      fechaInicio: fechaInicio, // Sobreescribimos con el objeto Date real
+      fechaFin: fechaFin,       // Sobreescribimos con el objeto Date real
+      isActive: true,           // Por defecto activo
+      empresa: { id: user.empresaId }, // Vinculamos la empresa por ID
+    } as DeepPartial<Horario>); // 👈 EL TRUCO: Casteo explícito
 
+    // 4. Guardado en Base de Datos
     try {
-      // Guarda en cascada (Horario -> Distribuciones -> Franjas) si la entidad está configurada así
+      // Al guardar, TypeORM insertará:
+      // 1. El Horario
+      // 2. Las Distribuciones (si cascade: true en la entidad)
+      // 3. Las Franjas (si cascade: true en DistribucionDia)
       return await this.horarioRepository.save(nuevoHorario);
     } catch (error) {
-      // Manejo de errores (ej. duplicados)
-      throw new BadRequestException('Error al guardar el horario: ' + error.message);
+      // Manejo de errores comunes (ej. Unique Constraint en nombre)
+      throw new BadRequestException(`No se pudo crear el horario: ${error.message}`);
     }
   }
-
   /**
    * Lista horarios por empresa.
    * El controlador envía directamente el ID (number).

@@ -1,56 +1,75 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { 
+  Column, 
+  CreateDateColumn, 
+  DeleteDateColumn, 
+  Entity, 
+  JoinColumn, 
+  ManyToOne, 
+  OneToMany, 
+  PrimaryGeneratedColumn,
+  Index 
+} from "typeorm";
 import { Horario } from "./schedules.entity";
 import { FranjaHoraria } from "timeSlot/entities/franja-horaria.entity";
 
-/**
- * DistribucionDia Entity
- * Representa la distribución de horas para un día específico dentro de un horario.
- * Contiene información sobre el día de la semana,
- * las horas asignadas y las franjas horarias asociadas.
- * Define las columnas de la tabla 'distribucion_dia' en la base de datos.
- * @entity 'distribucion_dia' define el nombre de la tabla en la base de datos.
- * @see Horario para la relación con el horario al que pertenece este día de distribución.
- * @see FranjaHoraria para la relación con las franjas horarias de este día.
- * @metadata para auditoría de registros.
- *  
- * 
- */
-@Entity()   
+// Definimos un Enum para evitar errores de tipeo (Lunes vs lunes vs Monday)
+export enum DiaSemana {
+  LUNES = 'LUNES',
+  MARTES = 'MARTES',
+  MIERCOLES = 'MIERCOLES',
+  JUEVES = 'JUEVES',
+  VIERNES = 'VIERNES',
+  SABADO = 'SABADO',
+  DOMINGO = 'DOMINGO',
+}
+
+@Entity('distribucion_dia') // Buena práctica: definir nombre de tabla explícito snake_case
 export class DistribucionDia {
 
-  // --- IDENTIFICADOR ---
-  @PrimaryGeneratedColumn() // ID único generado automáticamente
-  id: number; // Identificador único del día de distribución
+  @PrimaryGeneratedColumn()
+  id: number;
 
   // --- INFORMACIÓN DEL DÍA ---
-  @Column() // Nombre del día (Ej: 'Lunes', 'Martes', etc.)
-  diaSemana: string; // Día de la semana
+  
+  @Column({
+    type: 'enum',
+    enum: DiaSemana,
+    default: DiaSemana.LUNES
+  })
+  diaSemana: DiaSemana; // Ahora es tipado fuerte
 
-  // Número de horas asignadas para este día
-  @Column('float') // Número de horas asignadas para este día
-  horasDia: number; // Horas asignadas en este día
+  @Column('float', { default: 0 }) // Default 0 evita nulos en cálculos
+  horasDia: number;
 
   // --- RELACIONES ---
-  // ============================================
-  // 1. Quitamos el cascade de aquí. 
-  // El cascade debe ir en el @OneToMany de la entidad Horario.
+
+  // 1. RELACIÓN PADRE (HORARIO)
+  // onDelete: 'CASCADE' -> Si borras el Horario, se borran sus días (DB Level)
   @ManyToOne(() => Horario, (horario) => horario.distribuciones, { 
-  onDelete: 'CASCADE' 
-})
-@JoinColumn({ name: 'horario_id' })
+    onDelete: 'CASCADE',
+    orphanedRowAction: 'delete' // Ayuda a TypeORM a limpiar huérfanos
+  })
+  @JoinColumn({ name: 'horario_id' })
   horario: Horario;
 
- @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
-  cascade: true 
-})
-  franjas: FranjaHoraria[];
-
+  // Columna explícita para evitar Joins innecesarios
+  // Le ponemos @Index porque buscaremos mucho por "dame los días de este horario"
   @Column({ name: 'horario_id' })
+  @Index() 
   horarioId: number;
 
+  // 2. RELACIÓN HIJA (FRANJAS)
+  // cascade: true -> Si guardas este Día, se guardan sus franjas automáticamente
+  @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
+    cascade: true,
+    eager: false // Mantenemos false para no saturar memoria si no se pide
+  })
+  franjas: FranjaHoraria[];
+
+  // --- AUDITORÍA ---
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_at', select: false }) // select: false para no traerlo siempre
   deletedAt: Date;
 }

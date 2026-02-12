@@ -1,112 +1,41 @@
-// src/allowed-user/allowed-user.service.ts
-import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { 
+  Injectable, 
+  BadRequestException, 
+  InternalServerErrorException, 
+  NotFoundException, 
+  ForbiddenException 
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository, DeepPartial } from 'typeorm';
-import { CreateWorkerDto } from './dto/worker.dto';
-import { User } from 'auth/entities/user.entity';
-import { UserRole } from 'auth/roles.enum';
 import * as bcrypt from 'bcrypt';
-import { Horario } from 'schedule/entities/schedules.entity';
+
+// Entidades
 import { Worker } from './entities/worker.entity';
+import { User } from '../auth/entities/user.entity'; // Ajusta la ruta a tu entidad User
+
+// DTOs e Interfaces
+import { CreateWorkerDto } from './dto/worker.dto'; // Ajusta la ruta si es necesario
+import { UpdateWorkerDto } from './dto/update-worker.dto';
+import { UserRole } from '../auth/roles.enum';
+import type { UserPayload } from '../auth/interfaces/user-payload.interface'; // 👈 CLAVE: import type
 
 @Injectable()
 export class WorkerService {
   constructor(
     @InjectRepository(Worker)
-    private readonly allowedUserRepository: Repository<Worker>,
-    
-  private readonly dataSource: DataSource,
+    private readonly workerRepository: Repository<Worker>,
+    private readonly dataSource: DataSource, // Necesario para transacciones
   ) {}
 
-
-/*
-async create(dto: CreateWorkerDto, admin: User) {
-  if (!admin.empresaId) {
-    throw new BadRequestException('El administrador debe tener una empresa asignada');
-  }
-
-  const queryRunner = this.dataSource.createQueryRunner();
-  await queryRunner.connect();
-  await queryRunner.startTransaction();
-
-  try {
-    const empresaIdValido: number = admin.empresaId;
-    const hashedPassword = bcrypt.hashSync(dto.password, 10);
-
-    const cleanEmail = dto.email ? dto.email.toLowerCase().trim() : null;
-    const cleanDni = dto.dni ? dto.dni.toUpperCase().trim() : null;
-
-    // 1. Instanciar User (La entidad para el Login)
-    const newUser = queryRunner.manager.create(User, {
-      email: cleanEmail,
-      password: hashedPassword,
-      nombre: dto.nombre,
-      dni: cleanDni,
-      telefono: dto.telefono,
-      rol: UserRole.WORKER,
-      empresaId: empresaIdValido,
-      isActive: true,
-      isVerified: true,
-    });
-
-    // 2. Instanciar Worker (La entidad con datos de empleado)
-    const workerData: Partial<Worker> = {
-      nombre: dto.nombre,
-      email: cleanEmail,
-      telefono: dto.telefono,
-      password: hashedPassword,
-      dni: cleanDni,
-      empresaId: empresaIdValido,
-      apellidos: dto.apellidos || '',
-      fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
-      calle: dto.calle,
-      poblacion: dto.poblacion,
-      provincia: dto.provincia,
-      pais: dto.pais,
-      categoria: dto.categoria,
-      actividad: dto.actividad,
-      diaPertenece: dto.diaPertenece,
-      rol: UserRole.WORKER,
-      isVerified: true,
-      isActive: true,
-    };
-    const newWorker = queryRunner.manager.create(Worker, workerData);
-
-    // 3. GUARDADO SECUENCIAL (Para evitar confusión de IDs)
-    // Guardamos el usuario primero
-    await queryRunner.manager.save(newUser);
+  /**
+   * Crea un Usuario (Login) y un Worker (Datos) en una sola transacción.
+   * Soluciona el problema de tipado usando 'UserPayload'.
+   */
+  async create(dto: CreateWorkerDto, admin: UserPayload) { // ✅ Corregido: recibe UserPayload
     
-    // Guardamos el worker y capturamos SU instancia guardada específicamente
-    const savedWorker = await queryRunner.manager.save(newWorker);
-
-    await queryRunner.commitTransaction();
-
-    // Ahora savedWorker.id es, sin duda, el de la tabla 'worker'
-    return {
-      message: 'Trabajador creado y habilitado correctamente',
-      worker: {
-        id: savedWorker.id, // ID real de la tabla workers
-        nombre: savedWorker.nombre,
-        email: savedWorker.email,
-      }
-    };
-
-  } catch (error) {
-    await queryRunner.rollbackTransaction();
-    if (error.code === '23505') {
-      throw new BadRequestException('El correo electrónico, teléfono o DNI ya está registrado por otro usuario');
-    }
-    throw error;
-  } finally {
-    await queryRunner.release();
-  }
-}
-*/
-
-async create(dto: CreateWorkerDto, admin: User) {
-    // 1. Validación de seguridad básica
+    // 1. Verificación de seguridad (Multi-tenancy)
     if (!admin.empresaId) {
-      throw new BadRequestException('El administrador debe tener una empresa asignada');
+      throw new BadRequestException('El administrador no tiene empresa asignada');
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -114,38 +43,41 @@ async create(dto: CreateWorkerDto, admin: User) {
     await queryRunner.startTransaction();
 
     try {
-      const empresaIdValido = admin.empresaId;
+      const empresaId = admin.empresaId;
       const hashedPassword = bcrypt.hashSync(dto.password, 10);
+      
+      // Normalización de datos
       const cleanEmail = dto.email ? dto.email.toLowerCase().trim() : null;
       const cleanDni = dto.dni ? dto.dni.toUpperCase().trim() : null;
 
-      // 2. Crear y Guardar el USUARIO (Él genera el ID base)
-      const userData: DeepPartial<User> = {
+      // 2. Crear instancia de USUARIO (Auth)
+      // Esto es necesario para generar el ID y tener credenciales de acceso
+      const newUser = queryRunner.manager.create(User, {
         email: cleanEmail,
         password: hashedPassword,
         nombre: dto.nombre,
         dni: cleanDni,
         telefono: dto.telefono,
         rol: UserRole.WORKER,
-        empresaId: empresaIdValido,
+        empresaId: empresaId,
         isActive: true,
         isVerified: true,
-      };
+      } as DeepPartial<User>);
 
-      const newUser = queryRunner.manager.create(User, userData);
       const savedUser = await queryRunner.manager.save(User, newUser);
 
-      // 3. Crear el WORKER usando el mismo ID del Usuario
-      // Usamos DeepPartial<Worker> para evitar el error de sobrecarga sin usar 'any'
-      const workerData: DeepPartial<Worker> = {
-        id: savedUser.id, // <--- SINCRONIZACIÓN DE IDS
+      // 3. Crear instancia de WORKER (Perfil)
+      // ⚠️ IMPORTANTE: Usamos el ID del usuario guardado (savedUser.id)
+      const newWorker = queryRunner.manager.create(Worker, {
+        id: savedUser.id, // Sincronización de IDs (OneToOne)
         nombre: dto.nombre,
-        apellidos: dto.apellidos || '',
+        apellidos: dto.apellidos,
         email: cleanEmail,
         telefono: dto.telefono,
-        password: hashedPassword,
         dni: cleanDni,
-        empresaId: empresaIdValido,
+        empresa: { id: empresaId }, // Vinculación por relación
+        
+        // Resto de datos del DTO...
         fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
         calle: dto.calle,
         poblacion: dto.poblacion,
@@ -154,131 +86,121 @@ async create(dto: CreateWorkerDto, admin: User) {
         categoria: dto.categoria,
         actividad: dto.actividad,
         diaPertenece: dto.diaPertenece,
+        
         rol: UserRole.WORKER,
-        isVerified: true,
         isActive: true,
-      };
+        isVerified: true,
+        password: hashedPassword, // Si la entidad Worker también guarda password (redundante pero posible)
+      } as DeepPartial<Worker>);
 
-      const newWorker = queryRunner.manager.create(Worker, workerData);
       const savedWorker = await queryRunner.manager.save(Worker, newWorker);
 
-      // 4. Confirmar cambios
       await queryRunner.commitTransaction();
 
       return {
-        message: 'Trabajador y Usuario creados con ID compartido',
-        id: savedWorker.id,
-        email: savedWorker.email,
+        message: 'Trabajador creado exitosamente',
+        worker: savedWorker
       };
 
     } catch (error) {
-      // Si algo falla, se deshace todo (no queda el User sin el Worker)
       await queryRunner.rollbackTransaction();
-
+      // Manejo de errores de duplicidad (Postgres code 23505)
       if (error.code === '23505') {
-        throw new BadRequestException('El DNI, Email o Teléfono ya existe en el sistema');
+        throw new BadRequestException('El correo, DNI o teléfono ya existen.');
       }
-
-      throw new InternalServerErrorException('Error al crear el trabajador: ' + error.message);
+      throw new InternalServerErrorException('Error al crear trabajador: ' + error.message);
     } finally {
-      // Liberar el queryRunner
       await queryRunner.release();
     }
   }
 
-
-  // Listar solo los permitidos de la empresa del Admin logueado
-  async findAllByEmpresa(empresaId: number) {
-    if (!empresaId) return []; // Los SuperAdmin podrían no tener empresaId
-    
-    return await this.allowedUserRepository.find({
-      where: { empresaId },
+  /**
+   * Lista todos los workers (Solo para SuperAdmin)
+   */
+  async findAll() {
+    return await this.workerRepository.find({
+      relations: ['empresa'],
       order: { createdAt: 'DESC' }
     });
   }
-  
-  async findOne(id: number): Promise<Worker> {
-    const user = await this.allowedUserRepository.findOneBy({ id });
+
+  /**
+   * Lista workers filtrando por empresa (Para Admin normal)
+   */
+  async findAllByEmpresa(empresaId: number) {
+    return await this.workerRepository.find({
+      where: { empresa: { id: empresaId } }, // Uso seguro de la relación
+      order: { createdAt: 'DESC' }
+    });
+  }
+
+  /**
+   * Busca un worker asegurando que pertenezca a la empresa del admin
+   */
+  async findOne(id: number, user: UserPayload) { // ✅ Recibe UserPayload
+    const whereCondition: any = { id };
     
-    if (!user) {
-      throw new NotFoundException(`El registro con ID ${id} no existe`);
-    }
-    
-    return user;
-  }
-
-async update(id: number, updateDto: any) {
-    if (updateDto.email) {
-      updateDto.email = updateDto.email.toLowerCase().trim();
-    } else if (updateDto.email === "") {
-      updateDto.email = null;
+    // Si no es SuperAdmin, forzamos el filtro de empresa
+    if (user.rol !== UserRole.SUPERADMIN) {
+      if (!user.empresaId) throw new ForbiddenException('Usuario sin empresa');
+      whereCondition.empresa = { id: user.empresaId };
     }
 
-    if (updateDto.dni) {
-      updateDto.dni = updateDto.dni.toUpperCase().trim();
-    } else if (updateDto.dni === "") {
-      updateDto.dni = null;
-    }
-
-    try {
-      await this.allowedUserRepository.update(id, updateDto);
-      return this.findOne(id);
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new BadRequestException('No se puede actualizar: El DNI o Email ya existe en otro registro');
-      }
-      throw error;
-    }
-  }
-  
-async findAll() {
-  return await this.allowedUserRepository.find({
-    order: { createdAt: 'DESC' }
-  });
-}
-async remove(id: number) {
-  // 1. Buscamos el trabajador primero para asegurar que existe y lanzar 404 si no
-  await this.findOne(id);
-
-  try {
-    // 2. Borramos al PADRE (User). 
-    // Al borrar al usuario, la base de datos ELIMINARÁ el Worker automáticamente.
-    const result = await this.dataSource.getRepository(User).delete(id);
-
-    if (result.affected === 0) {
-      throw new NotFoundException(`No se pudo eliminar el usuario con ID ${id}`);
-    }
-
-    return { 
-      message: `Trabajador y credenciales eliminados correctamente (ID: ${id})` 
-    };
-  } catch (error) {
-    throw new InternalServerErrorException('Error al eliminar el registro: ' + error.message);
-  }
-}
-  async assignSchedule(workerId: number, horarioId: number, empresaId: number | null) {
-    const worker = await this.allowedUserRepository.findOne({
-      where: { id: workerId, ...(empresaId && { empresaId }) }
+    const worker = await this.workerRepository.findOne({
+      where: whereCondition,
+      relations: ['empresa', 'horario'] // Cargar relaciones útiles
     });
 
-    if (!worker) throw new NotFoundException('Trabajador no encontrado');
+    if (!worker) {
+      throw new NotFoundException('Trabajador no encontrado o no tienes permisos');
+    }
+    return worker;
+  }
 
-    const user = worker.email 
-      ? await this.dataSource.getRepository(User).findOneBy({ email: worker.email })
-      : null;
+  /**
+   * Actualiza un worker
+   */
+  async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
+    // 1. Reutilizamos findOne para verificar permisos antes de tocar nada
+    const worker = await this.findOne(id, user);
+
+    // 2. Actualizamos
+    Object.assign(worker, dto);
+    
+    // Nota: Si cambias email/password aquí, deberías actualizar también la tabla User
+    // Idealmente usarías otra transacción similar a create()
+
+    return await this.workerRepository.save(worker);
+  }
+
+  /**
+   * Elimina un worker (y su usuario asociado)
+   */
+  async remove(id: number, user: UserPayload) {
+    // 1. Verificar permisos
+    await this.findOne(id, user);
 
     try {
-      return await this.dataSource.transaction(async (manager) => {
-        const horario = { id: horarioId } as Horario;
-        worker.horario = horario;
-        if (user) user.horario = horario;
-
-        await manager.save([worker, user].filter(Boolean));
-
-        return { message: 'Horario asignado correctamente', horarioId };
-      });
+      // Al borrar el User, el Worker se borra por cascade (si está configurado en la entidad)
+      // Si no, borra el worker y luego el user.
+      await this.dataSource.getRepository(User).delete(id);
+      return { message: 'Trabajador eliminado correctamente' };
     } catch (error) {
-      throw new InternalServerErrorException('Error al sincronizar el horario');
+      throw new InternalServerErrorException('No se pudo eliminar el trabajador');
     }
+  }
+
+  /**
+   * Asigna horario
+   */
+  async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
+    const worker = await this.findOne(workerId, user);
+    
+    // Asignación simple actualizando la FK
+    // TypeORM permite asignar el ID directamente si la relación está bien definida
+    // o pasando el objeto parcial.
+    worker.horario = { id: horarioId } as any; 
+
+    return await this.workerRepository.save(worker);
   }
 }

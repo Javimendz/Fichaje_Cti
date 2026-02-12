@@ -1,80 +1,121 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, ParseUUIDPipe, ParseIntPipe, Put } from '@nestjs/common';
+import { 
+  Controller, Get, Post, Body, Param, Delete, Put, 
+  UseGuards, UnauthorizedException, ParseIntPipe, Logger 
+} from '@nestjs/common';
 import { WorkerService } from './worker.service';
 import { CreateWorkerDto } from './dto/worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
+
+// Auth & Roles Imports
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
-import { User } from 'auth/entities/user.entity';
-import { GetUser } from 'auth/decorators/get-user.decorator';
-import { UserRole } from 'auth/roles.enum';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
+import { UserRole } from 'auth/roles.enum';
+import { GetUser } from 'auth/decorators/get-user.decorator';
+// 👇 Importante: Usamos 'import type' para la interfaz ligera
+import type { UserPayload } from 'auth/interfaces/user-payload.interface'; 
 
 @Controller('worker')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard) //  Aplica seguridad a todo el controlador
 export class WorkerController {
-  constructor(private readonly allowedUserService: WorkerService) {}
+  private readonly logger = new Logger(WorkerController.name);
 
+  constructor(private readonly workerService: WorkerService) {}
+
+  // --- CREAR: SOLO ADMIN ---
   @Post('crear-worker')
+  @Roles(UserRole.ADMIN)
   create(
-    @Body() createAllowedUserDto: CreateWorkerDto,
-    @GetUser() admin: User 
+    @Body() createWorkerDto: CreateWorkerDto,
+    @GetUser() user: UserPayload //  Corregido: Recibe UserPayload
   ) {
-    return this.allowedUserService.create(createAllowedUserDto, admin);
+    this.validateEmpresa(user);
+    this.logger.log(`[Audit] Admin ${user.email} creando trabajador.`);
+    // Pasamos el payload al servicio, que ya sabe manejar UserPayload
+    return this.workerService.create(createWorkerDto, user);
   }
 
+  // --- LISTAR: ADMIN Y SUPERADMIN ---
   @Get('list-workers')
-  findAll(@GetUser() admin: User) {
-    // 1. Si es SUPERADMIN, puede ver todos los usuarios (sin filtrar por empresa)
-    if (admin.rol === UserRole.SUPERADMIN) {
-      return this.allowedUserService.findAll();
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  findAll(@GetUser() user: UserPayload) {
+    
+    // Si es SuperAdmin, ve todo el sistema
+    if (user.rol === UserRole.SUPERADMIN) {
+      return this.workerService.findAll();
     }
 
-    // 2. Si es ADMIN, verificamos que tenga empresa y filtramos
-    if (!admin.empresaId) {
-      throw new UnauthorizedException('El administrador no tiene una empresa asignada');
-    }
+    // Si es Admin normal, solo ve su empresa
+    this.validateEmpresa(user);
 
-    return this.allowedUserService.findAllByEmpresa(admin.empresaId);
+    if (!user.empresaId) {
+      throw new UnauthorizedException('Usuario sin empresa asignada');
+    }
+    return this.workerService.findAllByEmpresa(user.empresaId);
   }
 
+  // --- BUSCAR UNO: ADMIN Y SUPERADMIN ---
   @Get('find/:id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.allowedUserService.findOne(id);
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserPayload
+  ) {
+    // El servicio se encarga de verificar que el ID pertenezca a la empresa del usuario
+    return this.workerService.findOne(id, user);
   }
 
+  // --- EDITAR: SOLO ADMIN ---
   @Put('update/:id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateAllowedUserDto: UpdateWorkerDto) {
-    return this.allowedUserService.update(id, updateAllowedUserDto);
+  @Roles(UserRole.ADMIN)
+  update(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body() updateWorkerDto: UpdateWorkerDto,
+    @GetUser() user: UserPayload
+  ) {
+    this.validateEmpresa(user);
+    // El servicio verificará la propiedad antes de actualizar
+    return this.workerService.update(id, updateWorkerDto, user);
   }
 
+  // --- BORRAR: SOLO ADMIN ---
   @Delete('delete/:id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.allowedUserService.remove(id);
+  @Roles(UserRole.ADMIN)
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserPayload
+  ) {
+    this.validateEmpresa(user);
+    this.logger.warn(`[Audit] Admin ${user.email} eliminando trabajador ID ${id}`);
+    return this.workerService.remove(id, user);
   }
 
+  // --- ASIGNAR HORARIO ---
   @Put('assign-schedule/:workerId')
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   async assignSchedule(
-    @Param('workerId', ParseIntPipe) allowedUserId: number,
-    @Body('horarioId', ParseIntPipe) horarioId: number,
-    @GetUser() admin: User,
+    @Param('workerId', ParseIntPipe) workerId: number,
+    @Body('horarioId', ParseIntPipe) horarioId: number, // Extraemos solo el ID
+    @GetUser() user: UserPayload,
   ) {
-    // Definimos el alcance de la empresa según el rol
-    const empresaId = admin.rol === UserRole.SUPERADMIN ? null : admin.empresaId;
-
-    if (admin.rol !== UserRole.SUPERADMIN && !empresaId) {
-      throw new UnauthorizedException(
-        'No tienes una empresa asignada para realizar esta acción',
-      );
+    // Validación básica antes de llamar al servicio
+    if (user.rol !== UserRole.SUPERADMIN && !user.empresaId) {
+      throw new UnauthorizedException('No tienes una empresa asignada');
     }
 
-    // Llamada al servicio
-    return await this.allowedUserService.assignSchedule(
-      allowedUserId,
+    // Llamamos al servicio pasando el usuario para que él valide la seguridad
+    return await this.workerService.assignSchedule(
+      workerId,
       horarioId,
-      empresaId,
+      user
     );
   }
 
+  // --- HELPER PRIVADO ---
+  private validateEmpresa(user: UserPayload) {
+    // Si no es SuperAdmin y no tiene empresa, bloqueamos
+    if (user.rol !== UserRole.SUPERADMIN && !user.empresaId) {
+      throw new UnauthorizedException('Usuario sin empresa asignada para realizar esta acción');
+    }
+  }
 }

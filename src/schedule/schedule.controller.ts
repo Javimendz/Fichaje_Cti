@@ -36,15 +36,14 @@ export class ScheduleController {
     const empresaId = this.getEmpresaId(user);
     
     this.logger.log(`[Audit] Admin ${user.email} creando horario.`);
-    // Ahora pasamos el user normal, el servicio ya sabe extraer el ID o puedes pasar empresaId si refactorizas el servicio
     return this.schedulesService.create(dto, user);
   }
 
   @Get('list-schedules')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   findAll(@GetUser() user: UserPayload) {
-    const empresaId = this.getEmpresaId(user); // 👈 Aquí la magia
-    return this.schedulesService.findAllByEmpresa(empresaId); // ✅ TypeScript ya no se queja
+    const empresaId = this.getEmpresaId(user); 
+    return this.schedulesService.findAllByEmpresa(empresaId); 
   }
 
   @Get('find/:id')

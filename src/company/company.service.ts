@@ -161,23 +161,62 @@ async findOne(id: number, user: UserPayload) {
 
   // 5. Actualizar (El que te faltaba)
  async update(id: number, dto: UpdateCompanyDto) {
-    const { admin, ...empresaDatos } = dto as any;
+  const { admin, ...empresaDatos } = dto as any;
 
-    // 1. Preload para la empresa
-    const empresa = await this.empresaRepository.preload({ id, ...empresaDatos });
-    if (!empresa) throw new NotFoundException(`Empresa con ID ${id} no existe`);
+  // --- 1. VALIDACIÓN DE DUPLICADOS DE EMPRESA ---
+  
+  if (empresaDatos.nombre) {
+    const nombreNormalizado = empresaDatos.nombre.toUpperCase().trim();
+    const empresaExistente = await this.empresaRepository.findOne({
+      where: { nombre: nombreNormalizado }
+    });
+    // Si existe con ese nombre pero tiene un ID distinto al que editamos, es duplicado
+    if (empresaExistente && empresaExistente.id !== id) {
+      throw new BadRequestException(`Ya existe otra empresa registrada con el nombre: ${empresaDatos.nombre}`);
+    }
+    empresaDatos.nombre = nombreNormalizado;
+  }
 
-    // 2. Si viene el objeto 'admin', actualizamos al usuario correspondiente
-    if (admin) {
+  if (empresaDatos.cif) {
+    const cifNormalizado = empresaDatos.cif.toUpperCase().trim();
+    const cifExistente = await this.empresaRepository.findOne({
+      where: { cif: cifNormalizado }
+    });
+    if (cifExistente && cifExistente.id !== id) {
+      throw new BadRequestException(`El CIF ${empresaDatos.cif} ya pertenece a otra empresa.`);
+    }
+    empresaDatos.cif = cifNormalizado;
+  }
 
-      const adminUpdateData = { ...admin };
+  // --- 2. PRELOAD DE LA EMPRESA ---
+  const empresa = await this.empresaRepository.preload({ id, ...empresaDatos });
+  if (!empresa) throw new NotFoundException(`Empresa con ID ${id} no existe`);
 
-    // SI VIENE PASSWORD, LA ENCRIPTAMOS
+  // --- 3. ACTUALIZACIÓN DEL ADMINISTRADOR (USER) ---
+  if (admin) {
+    const adminUpdateData = { ...admin };
+
+    // Validar si el email ya existe en OTRO usuario
+    if (adminUpdateData.email) {
+      const emailLimpio = adminUpdateData.email.toLowerCase().trim();
+      const emailExists = await this.dataSource.getRepository(User).findOne({
+        where: { email: emailLimpio }
+      });
+
+      // Si el email existe y el dueño no es el admin de esta empresa
+      if (emailExists && emailExists.empresaId !== id) {
+        throw new BadRequestException(`El email ${adminUpdateData.email} ya está registrado por otro usuario.`);
+      }
+      adminUpdateData.email = emailLimpio;
+    }
+
+    // Encriptar password si viene
     if (adminUpdateData.password) {
       adminUpdateData.password = await bcrypt.hash(adminUpdateData.password, 10);
     }
 
-
+    try {
+      // Actualizamos al usuario que sea ADMIN y pertenezca a esta empresa
       await this.dataSource
         .createQueryBuilder()
         .update(User)
@@ -185,13 +224,26 @@ async findOne(id: number, user: UserPayload) {
         .where('empresaId = :id', { id })
         .andWhere('rol = :rol', { rol: UserRole.ADMIN })
         .execute();
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new BadRequestException('El email o teléfono del administrador ya están en uso por otro usuario.');
+      }
+      throw new InternalServerErrorException('Error al actualizar los datos del administrador');
     }
-
-    await this.empresaRepository.save(empresa);
-    
-    // Devolvemos la empresa actualizada con su admin
-    return this.findOne(id, { rol: UserRole.SUPERADMIN } as any); 
   }
+
+  // --- 4. GUARDADO FINAL Y RETORNO ---
+  try {
+    await this.empresaRepository.save(empresa);
+    // Devolvemos la empresa actualizada usando el findOne existente
+    return this.findOne(id, { rol: UserRole.SUPERADMIN } as any);
+  } catch (error) {
+    if (error.code === '23505') {
+      throw new BadRequestException('Error de duplicidad: el nombre o CIF de la empresa ya existen.');
+    }
+    throw new InternalServerErrorException('Error inesperado al guardar los cambios de la empresa');
+  }
+}
 
   private formatResponse(empresa: Company) {
     const { usuarios, ...resto } = empresa;

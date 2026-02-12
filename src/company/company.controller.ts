@@ -38,18 +38,14 @@ export class CompanyController {
 
 
 @Get('list-empresas')
-  @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
-  // Usamos 'any' en req para evitar el error de tipado de cookies
-  findAll(@GetUser() user: UserPayload, @Req() req: any) { 
-    console.log('--- DEBUG EN CONTROLADOR ---');
-    console.log('Usuario extraído del Token:', user);
-    console.log('Cookies que llegan:', req.cookies); 
-    
-    // Si req.cookies es undefined aquí, el problema es el main.ts
-    // Si req.cookies tiene el 'jwt' pero 'user' es undefined, es el Secreto JWT
-    
-    return this.empresasService.findAll(user);
-  }
+@Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+findAll(@GetUser() user: UserPayload) { 
+  // 1. Cambiamos userId por id
+  // 2. Usamos el email que ahora sí tenemos disponible
+  console.log(`[Audit] Listado de empresas solicitado por: ${user.email} (ID: ${user.id}) (Rol: ${user.rol})`);
+  
+  return this.empresasService.findAll(user);
+}
 
   @Get('find/:id')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)

@@ -12,14 +12,15 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // 2. Ejecutar el middleware antes que cualquier otra cosa
-  app.use(cookieParser());
+  //app.use(cookieParser());
 
   // 3. Configurar CORS para el puerto 3567
   app.enableCors({
-    origin: 'http://localhost:3567', // Tu Frontend
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // 👈 Permite que las cookies viajen
-  });
+  origin: 'http://localhost:3567',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type, Authorization', 
+  credentials: true,
+});
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   
@@ -35,7 +36,7 @@ async function bootstrap() {
   await app.listen(port);
   
   console.log('--- CONFIGURACIÓN INICIADA ---');
-  console.log(`🚀 Servidor en: http://localhost:${port}/api`);
-  console.log(`🔒 CORS permitido para: http://localhost:3567`);
+  console.log(` Servidor en: http://localhost:${port}/api`);
+  console.log(` CORS permitido para: http://localhost:3567`);
 }
 bootstrap();

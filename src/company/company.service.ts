@@ -14,6 +14,7 @@ import { SetupCompanyDto } from './dto/setup-company.dto';
 
 @Injectable()
 export class CompanyService {
+  logger: any;
   constructor(
     @InjectRepository(Company)
     private readonly empresaRepository: Repository<Company>,
@@ -110,17 +111,39 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
  
 
 async findAll(user: UserPayload) {
-    const query = this.empresaRepository.createQueryBuilder('empresa')
-      .leftJoinAndSelect('empresa.usuarios', 'usuario', 'usuario.rol = :rol', { rol: UserRole.ADMIN });
+  // 1. Iniciamos el QueryBuilder con un alias claro
+  const query = this.empresaRepository.createQueryBuilder('empresa')
+    // Traemos solo el administrador activo para evitar cargar datos innecesarios
+    .leftJoinAndSelect(
+      'empresa.usuarios', 
+      'admin', 
+      'admin.rol = :rol AND admin.isActive = :isActive', 
+      { rol: UserRole.ADMIN, isActive: true }
+    );
 
-    if (user.rol !== UserRole.SUPERADMIN) {
-      if (!user.empresaId) return [];
-      query.where('empresa.id = :id', { id: user.empresaId }).andWhere('empresa.isActive = :active', { active: true });
+  // 2. Filtro de Seguridad por Rol
+  if (user.rol !== UserRole.SUPERADMIN) {
+    // Si no es SUPERADMIN, solo puede ver SU empresa
+    if (!user.empresaId) {
+      this.logger.warn(`Usuario ${user.email} intentó listar empresas sin tener empresaId asignado.`);
+      return []; 
     }
 
-    const empresas = await query.getMany();
-    return empresas.map(emp => this.formatResponse(emp));
+    query.where('empresa.id = :id', { id: user.empresaId })
+         .andWhere('empresa.isActive = :active', { active: true });
   }
+
+  // 3. Ejecución de la consulta
+  try {
+    const empresas = await query.getMany();
+    
+    // 4. Mapeo de respuesta profesional (formateo centralizado)
+    return empresas.map(empresa => this.formatResponse(empresa));
+  } catch (error) {
+    this.logger.error(`Error al listar empresas: ${error.message}`);
+    throw new InternalServerErrorException('Error al recuperar la lista de empresas');
+  }
+}
 
 async findOne(id: number, user: UserPayload) {
     if (user.rol !== UserRole.SUPERADMIN && user.empresaId !== id) {

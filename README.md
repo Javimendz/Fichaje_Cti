@@ -570,7 +570,6 @@ POST        /api/jornada/check-in   Registra la entrada del trabajador."{ latitu
 PUT         /api/jornada/check-out  Registra la salida y cierra la jornada.No requiere body
 GET         /api/jornada/status     Indica si el usuario tiene una jornada abierta. Token       
 GET         /api/jornada/historial  Lista todos los fichajes del trabajador.Token               
-GET         /api/jornada/rango      Filtra fichajes por rango de fechas.
-                                     Query Params: ?inicio=...&fin=...
+GET         /api/jornada/rango?desde=2023-01-01&hasta=2023-01-31     Filtra fichajes por rango de fechas.      Query Params: ?inicio=...&fin=...
 
 ```

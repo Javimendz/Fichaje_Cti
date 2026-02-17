@@ -9,10 +9,10 @@ import {
   PrimaryGeneratedColumn,
   Index 
 } from "typeorm";
-import { Horario } from "./schedules.entity";
-import { FranjaHoraria } from "timeSlot/entities/franja-horaria.entity";
+import { Horario } from "./schedules.entity"; // Ajusta ruta
+import { FranjaHoraria } from "../../timeSlot/entities/franja-horaria.entity"; // Ajusta ruta
+import { Exclude } from "class-transformer";
 
-// Definimos un Enum para evitar errores de tipeo (Lunes vs lunes vs Monday)
 export enum DiaSemana {
   LUNES = 'LUNES',
   MARTES = 'MARTES',
@@ -23,46 +23,45 @@ export enum DiaSemana {
   DOMINGO = 'DOMINGO',
 }
 
-@Entity('distribucion_dia') // Buena práctica: definir nombre de tabla explícito snake_case
+@Entity('distribucion_dia')
 export class DistribucionDia {
 
   @PrimaryGeneratedColumn()
   id: number;
 
-  // --- INFORMACIÓN DEL DÍA ---
-  
   @Column({
     type: 'enum',
     enum: DiaSemana,
     default: DiaSemana.LUNES
   })
-  diaSemana: DiaSemana; // Ahora es tipado fuerte
+  diaSemana: DiaSemana;
 
-  @Column('float', { default: 0 }) // Default 0 evita nulos en cálculos
+  @Column('float', { default: 0 })
   horasDia: number;
 
   // --- RELACIONES ---
 
   // 1. RELACIÓN PADRE (HORARIO)
-  // onDelete: 'CASCADE' -> Si borras el Horario, se borran sus días (DB Level)
   @ManyToOne(() => Horario, (horario) => horario.distribuciones, { 
     onDelete: 'CASCADE',
-    orphanedRowAction: 'delete' // Ayuda a TypeORM a limpiar huérfanos
+    orphanedRowAction: 'delete',
+    nullable: false // Importante: Asegura que siempre tenga padre
   })
-  @JoinColumn({ name: 'horario_id' })
-  horario: Horario;
+  @Exclude()
+  @JoinColumn({ name: 'horario_id' }) // TypeORM CREA la columna 'horario_id' aquí
+  horario?: Horario;
 
-  // Columna explícita para evitar Joins innecesarios
-  // Le ponemos @Index porque buscaremos mucho por "dame los días de este horario"
-  @Column({ name: 'horario_id' })
+  // Si necesitas acceder al ID sin cargar la relación, usa 'relationId' en el servicio
+  // o defínela como solo lectura así:
+  @Column({ name: 'horario_id', nullable: true, insert: false, update: false })
   @Index() 
-  horarioId: number;
+  horarioId: number; 
+  //  Al poner insert: false, TypeORM ignora esta propiedad al guardar
+  // y usa la relación 'horario' para llenar el dato.
 
   // 2. RELACIÓN HIJA (FRANJAS)
-  // cascade: true -> Si guardas este Día, se guardan sus franjas automáticamente
   @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
-    cascade: true,
-    eager: false // Mantenemos false para no saturar memoria si no se pide
+    cascade: true, // Permite guardar franjas automáticamente
   })
   franjas: FranjaHoraria[];
 
@@ -70,6 +69,6 @@ export class DistribucionDia {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', select: false }) // select: false para no traerlo siempre
+  @DeleteDateColumn({ name: 'deleted_at', select: false })
   deletedAt: Date;
 }

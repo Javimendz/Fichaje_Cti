@@ -58,8 +58,8 @@ export class Horario {
   @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
   empresa: Company; // Empresa a la que pertenece el horario
 
-  @Column({ name: 'empresa_id' }) // Columna física en la DB
-  empresaId: number; //
+  @Column({ name: 'empresa_id', nullable: true, insert: false, update: false })
+  empresaId: number;
 
   // Relación con los días (Lunes, Martes...)
   // cascade: true permite guardar el horario y sus días en una sola operación

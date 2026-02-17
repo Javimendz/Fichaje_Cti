@@ -7,7 +7,6 @@ import { User } from 'auth/entities/user.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  // Instanciamos el Logger de Nest con el contexto de esta clase
   private readonly logger = new Logger(JwtStrategy.name);
 
   constructor(
@@ -22,42 +21,41 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-  // 1. Extraemos el ID (sub). 
-  // Ojo: Si al firmar el token no pusiste 'email', aquí será undefined.
-  const { sub: id } = payload; 
+    const { sub: id } = payload;
 
-  if (!id) {
-    this.logger.warn('Validation failed: Payload is missing "sub"');
-    throw new UnauthorizedException('Token inválido');
+    if (!id) {
+      throw new UnauthorizedException('Token inválido: falta sub');
+    }
+
+    // Buscamos al usuario y su empresa
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['empresa'], 
+    });
+
+    if (!user) {
+      this.logger.error(`User ID ${id} no existe en DB`);
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Cuenta desactivada');
+    }
+
+    // --- LOG DE SEGURIDAD ---
+    // Aquí confirmamos que marta.admin tiene empresaId: 1
+    const empresaIdFinal = user.empresa ? user.empresa.id : null;
+    
+    console.log(`[AUTH] Validando: ${user.email} | Empresa ID: ${empresaIdFinal}`);
+
+    // Este objeto es el que llega al decorador @GetUser()
+    return {
+      id: user.id,
+      email: user.email,
+      rol: user.rol,
+      dni: user.dni,
+      // Mapeamos el ID de la relación al nombre que espera tu controlador
+      empresaId: empresaIdFinal, 
+    };
   }
-
-  // 2. Buscamos en DB
-  const user = await this.userRepository.findOne({
-    where: { id },
-    select: ['id', 'email', 'rol', 'dni', 'empresaId', 'isActive'],
-  });
-
-  if (!user) {
-    this.logger.error(`User ID ${id} no existe en DB`);
-    throw new UnauthorizedException('Usuario no encontrado');
-  }
-
-  if (!user.isActive) {
-    this.logger.warn(`Intento de acceso: Cuenta desactivada para ${user.email}`);
-    throw new UnauthorizedException('Cuenta desactivada');
-  }
-
-  // 3. LOG PROFESIONAL
-  // Usamos 'user.email' (de la DB) en lugar de 'payload.email' para asegurar que existe
-  this.logger.log(`[AUTH] Usuario validado: ${user.email} | Rol: ${user.rol}`);
-
-  // 4. EL RETORNO (Lo que recibe @GetUser)
-  return {
-    id: user.id,       
-    email: user.email, 
-    rol: user.rol,
-    dni: user.dni,
-    empresaId: user.empresaId,
-  };
-}
 }

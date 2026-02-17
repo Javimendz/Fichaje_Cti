@@ -9,6 +9,8 @@ import {
   UnauthorizedException,
   ParseIntPipe,
   Logger,
+  UseInterceptors,
+  ClassSerializerInterceptor
 } from '@nestjs/common';
 import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -46,6 +48,12 @@ export class ScheduleController {
     return this.schedulesService.findAllByEmpresa(empresaId); 
   }
 
+  /**
+   * 
+   * @param id  
+   * @param user 
+   * @returns 
+   */
   @Get('find/:id')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   findOne(
@@ -56,6 +64,12 @@ export class ScheduleController {
     return this.schedulesService.findOne(id, empresaId);
   }
 
+  /**
+   *  
+   * @param id      
+   * @param user    
+   * @returns 
+   */
   @Delete('delete/:id')
   @Roles(UserRole.ADMIN)
   remove(
@@ -67,9 +81,15 @@ export class ScheduleController {
     return this.schedulesService.remove(id, empresaId);
   }
 
-  // --- HELPER PRIVADO MEJORADO ---
-  // Cambiamos el nombre de validateEmpresa a getEmpresaId
-  // Ahora RETORNA un number, asegurando a TypeScript que no es null
+  
+
+  
+  /**
+   *     
+   * @param user  
+   * @returns 
+   */
+
   private getEmpresaId(user: UserPayload): number {
     if (!user.empresaId) {
       throw new UnauthorizedException('Usuario sin empresa asignada para realizar esta acción');

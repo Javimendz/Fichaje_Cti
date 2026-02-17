@@ -1,99 +1,99 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm'; 
+import { Repository, DeepPartial, DataSource } from 'typeorm'; // 👈 Importamos DataSource
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
-//  Usamos UserPayload, no la entidad User completa
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 import { DistribucionDia } from './entities/distribucion-dia.entity';
+import { User } from '../auth/entities/user.entity'; // Asegúrate de importar User
 
 @Injectable()
 export class ScheduleService {
   constructor(
     @InjectRepository(Horario)
     private readonly horarioRepository: Repository<Horario>,
-    @InjectRepository(DistribucionDia)
-    private readonly distribucionRepository: Repository<DistribucionDia>,
-    @InjectRepository(FranjaHoraria)
-    private readonly franjaRepository: Repository<FranjaHoraria>,
   ) {}
 
-  /**
-   * Crea un nuevo horario asociado a la empresa del usuario.
-   * Ahora acepta UserPayload para coincidir con el Controlador.
-   */
- async create(dto: CreateHorarioDto, user: UserPayload) {
-    // 1. Validación de Empresa (Seguridad)
-    if (!user.empresaId) {
-      throw new BadRequestException('El usuario debe tener una empresa asignada para crear horarios.');
-    }
-
-    // 2. Conversión y Validación de Fechas
-    // El DTO trae strings (JSON), la Entidad necesita objetos Date
-    const fechaInicio = new Date(dto.fechaInicio);
-    const fechaFin = new Date(dto.fechaFin);
-
-    if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-      throw new BadRequestException('Las fechas proporcionadas no son válidas.');
-    }
-
-    if (fechaInicio >= fechaFin) {
-      throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin.');
-    }
-
-    // 3. Creación del Objeto (Aquí solucionamos el error de TypeScript)
-    // Usamos 'as DeepPartial<Horario>' para decirle a TS que ignore que faltan IDs en los hijos
-    const nuevoHorario = this.horarioRepository.create({
-      ...dto,                  // Copia nombre, tipo y el array de distribuciones
-      fechaInicio: fechaInicio, // Sobreescribimos con el objeto Date real
-      fechaFin: fechaFin,       // Sobreescribimos con el objeto Date real
-      isActive: true,           // Por defecto activo
-      empresa: { id: user.empresaId }, // Vinculamos la empresa por ID
-    } as DeepPartial<Horario>); // 👈 EL TRUCO: Casteo explícito
-
-    // 4. Guardado en Base de Datos
-    try {
-      // Al guardar, TypeORM insertará:
-      // 1. El Horario
-      // 2. Las Distribuciones (si cascade: true en la entidad)
-      // 3. Las Franjas (si cascade: true en DistribucionDia)
-      return await this.horarioRepository.save(nuevoHorario);
-    } catch (error) {
-      // Manejo de errores comunes (ej. Unique Constraint en nombre)
-      throw new BadRequestException(`No se pudo crear el horario: ${error.message}`);
-    }
+async create(dto: CreateHorarioDto, user: UserPayload) {
+  // 1. VALIDACIÓN DE EMPRESA
+  if (!user.empresaId) {
+    throw new BadRequestException('El usuario debe tener una empresa asignada.');
   }
-  /**
-   * Lista horarios por empresa.
-   * El controlador envía directamente el ID (number).
-   */
-  async findAllByEmpresa(empresaId: number) {
-    return await this.horarioRepository.find({
-      where: { 
-        empresa: { id: empresaId }, // 👈 Sintaxis segura de TypeORM para relaciones
-        isActive: true 
-      },
+
+  // 2. CONVERSIÓN Y VALIDACIÓN DE FECHAS
+  const fechaInicio = new Date(dto.fechaInicio);
+  const fechaFin = new Date(dto.fechaFin);
+
+  if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+    throw new BadRequestException('Las fechas proporcionadas no son válidas.');
+  }
+
+  if (fechaInicio >= fechaFin) {
+    throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin.');
+  }
+
+  // 3. CREACIÓN DEL OBJETO EN MEMORIA (DeepPartial)
+  // TypeORM creará las instancias de DistribucionDia y FranjaHoraria automáticamente
+  const nuevoHorario = this.horarioRepository.create({
+    ...dto,
+    fechaInicio,
+    fechaFin,
+    isActive: true,
+    empresa: { id: user.empresaId },
+  } as DeepPartial<Horario>);
+
+  // 4. VINCULACIÓN MANUAL (Obligatorio para evitar 'null value in horario_id')
+  // Establecemos las referencias de los hijos hacia los padres en memoria
+  if (nuevoHorario.distribuciones) {
+    nuevoHorario.distribuciones.forEach((dist) => {
+      dist.horario = nuevoHorario; // Relación Hijo -> Padre
+
+      if (dist.franjas) {
+        dist.franjas.forEach((franja) => {
+          franja.distribucionDia = dist; // Relación Nieto -> Hijo
+        });
+      }
+    });
+  }
+
+  try {
+    // 5. GUARDADO EN BASE DE DATOS
+    // Guardamos el objeto con las referencias circulares (necesario para el cascade insert)
+    const guardado = await this.horarioRepository.save(nuevoHorario);
+
+    // 6. RETORNO SEGURO (RECARGA DESDE DB)
+    // Al buscarlo de nuevo con findOne, TypeORM genera objetos NUEVOS.
+    // Como no pedimos la relación inversa en 'relations', el bucle se rompe aquí.
+    return await this.horarioRepository.findOne({
+      where: { id: guardado.id },
       relations: ['distribuciones', 'distribuciones.franjas'],
       order: {
-        createdAt: 'DESC',
         distribuciones: {
           id: 'ASC',
           franjas: { inicio: 'ASC' }
         }
       }
     });
+
+  } catch (error) {
+    // Capturamos cualquier error de base de datos (nombres duplicados, etc.)
+    throw new BadRequestException(`No se pudo crear el horario: ${error.message}`);
+  }
+}
+
+
+  async findAllByEmpresa(empresaId: number) {
+    return await this.horarioRepository.find({
+      where: { empresa: { id: empresaId }, isActive: true },
+      relations: ['distribuciones', 'distribuciones.franjas'],
+      order: { createdAt: 'DESC' }
+    });
   }
 
-  /**
-   * Busca un horario específico asegurando que pertenezca a la empresa.
-   */
   async findOne(id: number, empresaId: number) {
     const horario = await this.horarioRepository.findOne({
-      where: { 
-        id, 
-        empresa: { id: empresaId } // 👈 Filtro de seguridad vital
-      },
+      where: { id, empresa: { id: empresaId } },
       relations: ['distribuciones', 'distribuciones.franjas']
     });
 
@@ -101,21 +101,10 @@ export class ScheduleService {
     return horario;
   }
 
-  /**
-   * Elimina un horario (físicamente) tras verificar propiedad.
-   */
   async remove(id: number, empresaId: number) {
-    // 1. Reutilizamos findOne para verificar existencia y propiedad
-    // Esto ahorra código y asegura que solo borramos lo que es de la empresa
     await this.findOne(id, empresaId);
-
-    // 2. Ejecutamos el borrado
     const result = await this.horarioRepository.delete(id);
-
-    if (result.affected === 0) {
-        throw new NotFoundException('No se pudo eliminar el horario');
-    }
-
+    if (result.affected === 0) throw new NotFoundException('No se pudo eliminar el horario');
     return { message: 'Horario eliminado correctamente' };
   }
 }

@@ -6,6 +6,7 @@ import { Workday } from 'workday/entities/workday.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
 import { Worker } from 'worker/entities/worker.entity'
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
+import { Attendance } from 'attendance/entities/attendance.entity';
 
 
 /**
@@ -99,5 +100,6 @@ export class User { // Definición de la entidad User
   @OneToOne(() => Worker, (worker) => worker.user)
   worker: Worker;
 
-  
+  @OneToMany(() => Attendance, (attendance) => attendance.usuario)
+  attendances: Attendance[];
 }

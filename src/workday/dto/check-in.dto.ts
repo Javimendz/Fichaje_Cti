@@ -1,5 +1,13 @@
-import { IsNumber, IsOptional, IsInt, Min, Max, IsNotEmpty } from 'class-validator';
+import { IsNumber,  Min, Max } from 'class-validator';
 
+
+// CheckInDto
+// DTO para el check-in y check-out de jornadas laborales. Contiene latitud y longitud con validaciones para asegurar que los valores estén dentro de rangos geográficos válidos. Se utiliza para registrar la ubicación del usuario al iniciar o finalizar su jornada laboral.
+/**
+ * * * * CheckInDto
+ * * DTO para el check-in y check-out de jornadas laborales. Contiene latitud y longitud con validaciones para asegurar que los valores estén dentro de rangos geográficos válidos. Se utiliza para registrar la ubicación del usuario al iniciar o finalizar su jornada laboral.
+ * 
+ */ 
 export class CheckInDto {
 
   @IsNumber({}, { message: 'La latitud debe ser un número' })

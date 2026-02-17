@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FranjaHoraria } from './entities/franja-horaria.entity';
@@ -33,6 +33,11 @@ export class TimeSlotService {
     if (!distribucion) {
       throw new NotFoundException('La Distribución de Día no existe');
     }
+
+    if (!distribucion.horario || !distribucion.horario.empresa) {
+    // Si entras aquí, es que te olvidaste del relations: ['horario', 'horario.empresa'] en la consulta
+    throw new InternalServerErrorException('No se pudo verificar la empresa del horario (Relación no cargada)');
+}
 
     // Verificamos si la empresa del horario coincide con la del usuario
     if (distribucion.horario.empresa.id !== user.empresaId) {

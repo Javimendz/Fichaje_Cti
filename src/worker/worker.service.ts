@@ -12,15 +12,22 @@ import * as bcrypt from 'bcrypt';
 
 // Entidades
 import { Worker } from './entities/worker.entity';
-import { User } from '../auth/entities/user.entity'; // Ajusta la ruta a tu entidad User
+import { User } from '../auth/entities/user.entity'; 
 
 // DTOs e Interfaces
-import { CreateWorkerDto } from './dto/worker.dto'; // Ajusta la ruta si es necesario
+import { CreateWorkerDto } from './dto/worker.dto'; 
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { UserRole } from '../auth/roles.enum';
-import type { UserPayload } from '../auth/interfaces/user-payload.interface'; // 👈 CLAVE: import type
+import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
 import { Horario } from 'schedule/entities/schedules.entity';
 
+
+// El servicio de Worker se encarga de toda la lógica de negocio relacionada con los trabajadores, incluyendo la creación, actualización, eliminación y consulta de trabajadores. Además, maneja la sincronización entre las tablas de User y Worker para asegurar que los datos estén consistentes. El servicio utiliza transacciones para garantizar que las operaciones que afectan a ambas tablas se realicen de manera atómica, evitando problemas de datos inconsistentes en caso de errores. También incluye validaciones para asegurar que los datos sean únicos y que los usuarios tengan los permisos adecuados para realizar acciones relacionadas con los trabajadores.
+/**
+ * * * WorkerService
+ * * Gestiona toda la lógica de negocio relacionada con los trabajadores, incluyendo la creación, actualización, eliminación y consulta de trabajadores. Además, maneja la sincronización entre las tablas de User y Worker para asegurar que los datos estén consistentes. El servicio utiliza transacciones para garantizar que las operaciones que afectan a ambas tablas se realicen de manera atómica, evitando problemas de datos inconsistentes en caso de errores. También incluye validaciones para asegurar que los datos sean únicos y que los usuarios tengan los permisos adecuados para realizar acciones relacionadas con los trabajadores.
+ * * Este servicio es fundamental para la gestión de los trabajadores dentro del sistema, ya que cada trabajador está asociado a una empresa y tiene un rol específico. La gestión de los trabajadores incluye la creación, actualización, eliminación y consulta de trabajadores, y todas estas operaciones deben ser controladas estrictamente en función del rol del usuario que realiza la acción (SuperAdmin o Admin). El servicio delega toda la lógica de negocio y validación al WorkerService, manteniendo el controlador limpio y enfocado en manejar las solicitudes HTTP y la seguridad de acceso.
+ * */
 @Injectable()
 export class WorkerService {
   constructor(
@@ -31,9 +38,14 @@ export class WorkerService {
 
   /**
    * Crea un Usuario (Login) y un Worker (Datos) en una sola transacción.
-   * Soluciona el problema de tipado usando 'UserPayload'.
-   */
-  async create(dto: CreateWorkerDto, admin: UserPayload) { // ✅ Corregido: recibe UserPayload
+    * @param dto DTO con los datos necesarios para crear el trabajador, incluyendo email, password, nombre, etc.
+    * @param admin Usuario autenticado que realiza la solicitud, utilizado para validar permisos y asignar empresaId al nuevo trabajador.
+    * @return El trabajador creado. Si la creación falla por validación o permisos, se lanzará una excepción que será manejada por el WorkerController.
+    * Este método es el único punto de entrada para crear un trabajador, y se encarga de validar que el usuario autenticado tiene una empresa asignada (si no es SuperAdmin), y luego realiza la creación de manera atómica utilizando una transacción. Si cualquier parte del proceso falla (validación, creación del usuario, creación del trabajador), la transacción se revertirá automáticamente, asegurando que no queden datos inconsistentes en la base de datos. Además, se manejan errores específicos como duplicidad de email o DNI para proporcionar mensajes claros al cliente.
+    * Nota: Si en el futuro decides permitir que un SuperAdmin cree trabajadores sin necesidad de una empresa asignada, puedes ajustar la lógica de validación para permitir que el campo empresaId sea opcional solo para SuperAdmin, mientras que para Admins seguirá siendo obligatorio.
+   *
+  */
+  async create(dto: CreateWorkerDto, admin: UserPayload) { 
     
     // 1. Verificación de seguridad (Multi-tenancy)
     if (!admin.empresaId) {
@@ -69,7 +81,6 @@ export class WorkerService {
       const savedUser = await queryRunner.manager.save(User, newUser);
 
       // 3. Crear instancia de WORKER (Perfil)
-      // ⚠️ IMPORTANTE: Usamos el ID del usuario guardado (savedUser.id)
       const newWorker = queryRunner.manager.create(Worker, {
         id: savedUser.id, // Sincronización de IDs (OneToOne)
         nombre: dto.nombre,
@@ -119,6 +130,12 @@ export class WorkerService {
   /**
    * Lista todos los workers (Solo para Admin)
    */
+  /**
+   *  Lista todos los trabajadores del sistema. Este método está diseñado para ser utilizado por usuarios con rol de Admin, y devuelve una lista completa de trabajadores sin filtrar por empresa. La lógica de filtrado por empresa se maneja en el controlador, donde se verifica el rol del usuario autenticado y se llama a este método solo si el usuario es un SuperAdmin. Si el usuario es un Admin normal, se llama a otro método que filtra los trabajadores por la empresa del Admin. Este enfoque permite mantener la lógica de negocio centralizada en el servicio, mientras que el controlador se encarga de manejar la seguridad y las rutas específicas para cada tipo de usuario.
+   * @returns Lista de todos los trabajadores del sistema. Si el usuario autenticado no tiene permisos para acceder a esta información, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda listar todos los trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal.      
+  
+   */
   async findAll() {
     return await this.workerRepository.find({
       relations: ['empresa'],
@@ -128,6 +145,10 @@ export class WorkerService {
 
   /**
    * Lista workers filtrando por empresa (Para Admin normal)
+   * Este método se utiliza para listar los trabajadores asociados a la empresa del Admin normal. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario es un Admin normal, pasando su empresaId como parámetro. Si el usuario es un SuperAdmin, se llama al método findAll() que devuelve todos los trabajadores sin filtrar por empresa. Este enfoque permite mantener la lógica de negocio centralizada en el servicio, mientras que el controlador se encarga de manejar la seguridad y las rutas específicas para cada tipo de usuario.
+   * @param empresaId ID de la empresa para filtrar los trabajadores. Este valor se obtiene del usuario autenticado (Admin normal) y se pasa desde el controlador.
+   * @return Lista de trabajadores asociados a la empresa especificada. Si el usuario autenticado no tiene permisos para acceder a esta información, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda listar todos los trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar al método findAll() independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal.
    */
   async findAllByEmpresa(empresaId: number) {
     return await this.workerRepository.find({
@@ -138,8 +159,13 @@ export class WorkerService {
 
   /**
    * Busca un worker asegurando que pertenezca a la empresa del admin
+   * Este método se utiliza para buscar un trabajador por su ID, asegurando que el trabajador pertenezca a la empresa del Admin normal que realiza la solicitud. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario es un Admin normal, pasando su empresaId como parte del UserPayload. Si el usuario es un SuperAdmin, se llama a otro método que busca el trabajador sin filtrar por empresa. Este enfoque permite mantener la lógica de negocio centralizada en el servicio, mientras que el controlador se encarga de manejar la seguridad y las rutas específicas para cada tipo de usuario.
+   * @param id ID del trabajador a buscar, validado como número entero mediante ParseIntPipe en el controlador.
+   * @param user Usuario autenticado que realiza la solicitud, utilizado para validar permisos y filtrar por empresa. El UserPayload debe incluir el rol del usuario y el ID de la empresa a la que pertenece (si es un Admin normal).
+   * @return El trabajador solicitado si pertenece a la empresa del Admin normal. Si el trabajador no existe, no pertenece a la empresa del Admin, o el usuario autenticado no tiene permisos para acceder a esta información, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda buscar trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal.
    */
-  async findOne(id: number, user: UserPayload) { // ✅ Recibe UserPayload
+  async findOne(id: number, user: UserPayload) {
     const whereCondition: any = { id };
     
     // Si no es SuperAdmin, forzamos el filtro de empresa
@@ -161,6 +187,12 @@ export class WorkerService {
 
   /**
    * Actualiza un worker
+   * Este método se utiliza para actualizar la información de un trabajador específico. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario tiene permisos para actualizar el trabajador (Admin normal solo puede actualizar trabajadores de su empresa, mientras que un SuperAdmin puede actualizar cualquier trabajador). El método realiza validaciones para asegurar que los datos actualizados no generen duplicidades (como email o DNI), y maneja la sincronización entre las tablas de User y Worker si se actualizan campos relacionados con la autenticación (email, nombre, password). Si la actualización falla por validación, permisos o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
+   * @param id ID del trabajador a actualizar, validado como número entero mediante ParseIntPipe en el controlador.
+   * @param dto DTO con los datos a actualizar del trabajador. Puede incluir campos como nombre, email, teléfono, etc.
+   * @param user Usuario autenticado que realiza la solicitud, utilizado para validar permisos y acceso al trabajador a actualizar. Un Admin solo puede actualizar trabajadores de su empresa, mientras que un SuperAdmin puede actualizar cualquier trabajador.
+   * @return El trabajador actualizado. Si el trabajador no existe, el solicitante no tiene acceso a él, o la actualización falla por validación o permisos, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda actualizar trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin actualice cualquier trabajador sin necesidad de validar la empresa, asegúrate de que la lógica de validación y actualización se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
 async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     // 1. Verificamos que el trabajador existe y pertenece a la empresa
@@ -174,7 +206,7 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
       const dniDuplicado = await this.workerRepository.findOne({
         where: { 
           dni: dniLimpio, 
-          id: Not(id) // 👈 "Busca este DNI pero que el ID NO sea el mío"
+          id: Not(id) //  "Busca este DNI pero que el ID NO sea el mío"
         }
       });
       if (dniDuplicado) {
@@ -189,7 +221,7 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
       const emailDuplicado = await this.workerRepository.findOne({
         where: { 
           email: emailLimpio, 
-          id: Not(id) // 👈 "Busca este email pero que el ID NO sea el mío"
+          id: Not(id) //  "Busca este email pero que el ID NO sea el mío"
         }
       });
       if (emailDuplicado) {
@@ -237,6 +269,12 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
 
   /**
    * Elimina un worker (y su usuario asociado)
+   * Este método se utiliza para eliminar un trabajador específico del sistema. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario tiene permisos para eliminar el trabajador (Admin normal solo puede eliminar trabajadores de su empresa, mientras que un SuperAdmin puede eliminar cualquier trabajador). Al eliminar un trabajador, también se elimina su usuario asociado para mantener la integridad de los datos. Si la eliminación falla por permisos o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
+   * @param id ID del trabajador a eliminar, validado como número entero mediante ParseIntPipe en el controlador.
+   * @param user Usuario autenticado que realiza la solicitud, utilizado para validar permisos y acceso al trabajador a eliminar. Un Admin solo puede eliminar trabajadores de su empresa, mientras que un SuperAdmin puede eliminar cualquier trabajador.
+   * @return Un mensaje de éxito si el trabajador se elimina correctamente. Si el trabajador no existe, el solicitante no tiene acceso a él, o la eliminación falla por permisos o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda eliminar trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin elimine cualquier trabajador sin necesidad de validar la empresa, asegúrate de que la lógica de validación y eliminación se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).  
+   * 
    */
   async remove(id: number, user: UserPayload) {
     // 1. Verificar permisos
@@ -254,12 +292,18 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
 
   /**
    * Asigna horario
+   * Este método se utiliza para asignar un horario específico a un trabajador. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario tiene permisos para asignar horarios a ese trabajador (Admin normal solo puede asignar horarios a trabajadores de su empresa, mientras que un SuperAdmin puede asignar horarios a cualquier trabajador). El método realiza validaciones para asegurar que el trabajador existe, pertenece a la empresa del Admin normal (si aplica), y que el horario existe y pertenece a la misma empresa. La asignación del horario se realiza de manera sincronizada en ambas tablas (User y Worker) utilizando una transacción para garantizar la consistencia de los datos. Si la asignación falla por validación, permisos o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
+   * @param workerId ID del trabajador al que se le asignará el horario, validado como número entero mediante ParseIntPipe en el controlador.
+   * @param horarioId ID del horario a asignar, validado como número entero mediante ParseIntPipe en el controlador.
+   * @param user Usuario autenticado que realiza la solicitud, utilizado para validar permisos y acceso al trabajador al que se le asignará el horario. Un Admin solo puede asignar horarios a trabajadores de su empresa, mientras que un SuperAdmin puede asignar horarios a cualquier trabajador.
+   * @return Un mensaje de éxito si el horario se asigna correctamente. Si el trabajador no existe, el horario no existe, el solicitante no tiene permisos para realizar la asignación, o la asignación falla por validación o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
+   * Nota: Si en el futuro decides permitir que un Admin normal también pueda asignar horarios sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin asigne horarios sin necesidad de validar la empresa, asegúrate de que la lógica de validación y asignación se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
  async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
   // 1. Validar trabajador (Filtra por empresa del admin)
   const worker = await this.findOne(workerId, user);
 
-  // 2. Validar ID de empresa para TypeScript
+  // 2. Validar ID de empresa 
   const empresaId = user.empresaId;
   if (!empresaId) {
     throw new UnauthorizedException('El administrador debe tener una empresa asignada');

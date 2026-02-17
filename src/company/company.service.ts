@@ -1,4 +1,7 @@
+
 // src/empresas/empresas.service.ts
+// --- Servicio para la gestión de Empresas ---
+// El servicio de Company se encarga de toda la lógica de negocio relacionada con las empresas, incluyendo la creación, actualización, eliminación y consulta de empresas. Además, maneja la lógica de seguridad relacionada con el acceso a las empresas según el rol del usuario (SuperAdmin, Admin). El servicio utiliza TypeORM para interactuar con la base de datos y gestiona transacciones para operaciones críticas como la creación de una empresa junto con su usuario Admin asociado. También incluye validaciones para evitar duplicados y garantizar la integridad de los datos.
 import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -9,9 +12,29 @@ import { User } from 'auth/entities/user.entity';
 import { UserRole } from 'auth/roles.enum';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { CreateCompanyDto } from './dto/create-company.dto';
 import { SetupCompanyDto } from './dto/setup-company.dto';
 
+
+// El servicio de Company se encarga de toda la lógica de negocio relacionada con las empresas, incluyendo la creación, actualización, eliminación y consulta de empresas. Además, maneja la lógica de seguridad relacionada con el acceso a las empresas según el rol del usuario (SuperAdmin, Admin). El servicio utiliza TypeORM para interactuar con la base de datos y gestiona transacciones para operaciones críticas como la creación de una empresa junto con su usuario Admin asociado. También incluye validaciones para evitar duplicados y garantizar la integridad de los datos.
+// El servicio delega toda la lógica de validación y gestión de datos, manteniendo el controlador limpio y enfocado en manejar las solicitudes HTTP y la seguridad de acceso. Es fundamental para la estructura del sistema, ya que cada empresa puede tener múltiples usuarios asociados (Admins y Workers), y la gestión de estas empresas es una tarea crítica que debe ser controlada estrictamente, especialmente en lo que respecta a la creación, actualización y eliminación de empresas.
+// El servicio incluye métodos para:
+// - createWithAdmin: Crea una nueva empresa junto con un usuario Admin asociado en una transacción atómica.    
+// - findAll: Lista las empresas a las que el usuario tiene acceso, con un log de auditoría para monitorear el acceso a información sensible.
+// - findOne: Obtiene una empresa por su ID, validando que el usuario tenga acceso a ella.
+// - update: Actualiza los datos de una empresa y su Admin asociado, con validaciones para evitar duplicados.
+// - remove: Elimina una empresa, validando que exista antes de intentar eliminarla.
+// - findByName: Método auxiliar para el Seed, que busca una empresa por su nombre.
+
+
+// --- Servicio para la gestión de Empresas ---
+/*
+* CompanyService
+* Gestiona toda la lógica de negocio relacionada con las empresas, incluyendo la creación, actualización, eliminación y consulta de empresas. Además, maneja la lógica de seguridad relacionada con el acceso a las empresas según el rol del usuario (SuperAdmin, Admin). El servicio utiliza TypeORM para interactuar con la base de datos y gestiona transacciones para operaciones críticas como la creación de una empresa junto con su usuario Admin asociado. También incluye validaciones para evitar duplicados y garantizar la integridad de los datos.
+* El servicio delega toda la lógica de validación y gestión de datos, manteniendo el controlador limpio y enfocado en manejar las solicitudes HTTP y la seguridad de acceso. Es fundamental para la estructura del sistema, ya que cada empresa puede tener múltiples usuarios asociados (Admins y Workers), y la gestión de estas empresas es una tarea crítica que debe ser controlada estrictamente, especialmente en lo que respecta a la creación, actualización y eliminación de empresas.
+* El servicio incluye métodos para:
+* - createWithAdmin: Crea una nueva empresa junto con un usuario Admin asociado en una transacción atómica.
+* - findAll: Lista las empresas a las que el usuario tiene acceso, con un log de auditoría para monitorear el acceso a información sensible.  
+*/
 @Injectable()
 export class CompanyService {
   logger: any;
@@ -21,8 +44,18 @@ export class CompanyService {
     private readonly dataSource: DataSource, // Inyectado para transacciones
   ) {}
 
+  // 1. Método para crear una empresa junto con un usuario Admin
+  // Este método es el único punto de entrada para crear una empresa, y solo puede ser accedido por un SuperAdmin. Se encarga de crear la empresa y el usuario Admin asociado en una transacción atómica, garantizando que ambos se creen correctamente o ninguno se cree en caso de error.
+  // El método recibe un DTO que incluye los datos de la empresa y del Admin a crear. Primero valida que el CIF de la empresa no esté registrado,
+  // luego inicia una transacción para crear la empresa y el Admin. Si ocurre algún error durante el proceso, se realiza un rollback de la transacción para mantener la integridad de los datos. Finalmente, devuelve un objeto con información sobre la empresa y el Admin creado.
+  /**
+   *  
+   * @param dto DTO que incluye datos de la empresa y del Admin a crear 
+   * @returns La empresa creada junto con el usuario Admin asociado
+   * * Este endpoint es el único método para crear una empresa, y solo puede ser accedido por un SuperAdmin. Este método también se encarga de crear un usuario Admin asociado a la empresa, garantizando que cada empresa tenga al menos un Admin desde su creación.
+   * 
+   */
 async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos los campos
-  // 1. Validación previa (Fuera de la transacción para ahorrar recursos)
   const cifExiste = await this.empresaRepository.findOneBy({ cif: dto.cif });
   if (cifExiste) throw new BadRequestException('El CIF de la empresa ya está registrado');
 
@@ -43,32 +76,25 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
   contactoNombre: dto.nombreContacto,
   telefonoContacto: dto.telefonoContacto,
   telefonoEmpresa: dto.telefonoEmpresa,
-  
-  // AÑADE ESTOS CAMPOS AQUÍ:
-  isActive: true               // Por defecto al crearla
+    isActive: true             
 });
     
     const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
 
-    // 2. Extraer datos del admin y limpiar el objeto
-    // Quitamos 'empresaId' si viene en el DTO para evitar conflictos, 
-    // ya que usaremos el ID generado arriba.
     const { empresaId, ...adminData } = dto.admin;
 
-    // 3. Crear el Administrador vinculado
     const nuevoAdmin = queryRunner.manager.create(User, {
       ...adminData,
       password: bcrypt.hashSync(dto.admin.password, 10),
       rol: UserRole.ADMIN,
-      empresa: empresaGuardada,        // Vinculación de objeto (TypeORM)
-      empresaId: empresaGuardada.id,  // Vinculación de FK (Base de datos)
+      empresa: empresaGuardada,        // Vinculación de objeto 
+      empresaId: empresaGuardada.id,  // Vinculación de FK
       isVerified: true,
       isActive: true,
     });
     
     await queryRunner.manager.save(nuevoAdmin);
 
-    // 4. Confirmar cambios
     await queryRunner.commitTransaction();
 
    return {
@@ -88,32 +114,31 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
     await queryRunner.rollbackTransaction();
     
     if (error.code === '23505') {
+      // Este código de error es específico de PostgreSQL para violaciones de unicidad, lo que indica que el email del Admin o el CIF de la empresa ya están registrados.
+      // Distinguir entre email y CIF para un mensaje de error más claro
       throw new BadRequestException('El email o DNI ya están registrados');
     }
+    // Para otros errores, devolvemos un mensaje genérico de error interno, pero podríamos mejorar esto dependiendo del tipo de error.
+    // Log del error para diagnóstico (en un entorno real, usaríamos un logger en lugar de console.error)
+
     throw new InternalServerErrorException('No se pudo procesar el alta: ' + error.message);
   } finally {
     await queryRunner.release();
   }
 }
-/*
-  // 2. Crear empresa simple (El que te faltaba)
-  async create(dto: CreateEmpresaDto) {
-    if (dto.cif) {
-    const existe = await this.empresaRepository.findOneBy({ cif: dto.cif.toUpperCase() });
-    if (existe) throw new BadRequestException('Ya existe una empresa con ese CIF');
-  }
-  
-  const nuevaEmpresa = this.empresaRepository.create(dto);
-  return await this.empresaRepository.save(nuevaEmpresa);
-  }
-*/
-  // 3. Listar empresas con filtro de seguridad
- 
 
+
+// 2. Método para listar empresas con log de auditoría
+// Este método permite a los SuperAdmin listar todas las empresas, mientras que los Admin solo pueden ver la empresa a la que pertenecen. El método incluye un log de auditoría que registra el email, ID y rol del usuario que solicita el listado de empresas, lo cual es útil para monitorear el acceso a información sensible y detectar posibles actividades no autorizadas. La lógica de filtrado y validación se delega al CompanyService, manteniendo el controlador limpio.
+// El método utiliza un QueryBuilder para construir la consulta de manera flexible, permitiendo incluir condiciones dinámicas según el rol del usuario. Además, se maneja la respuesta de manera profesional, formateando los datos antes de devolverlos al controlador.
+/**
+ * 
+ * @param user Usuario autenticado que realiza la solicitud. Se utiliza para validar el acceso a las empresas y para registrar un log de auditoría con su email, ID y rol.
+ * @returns Lista de empresas a las que el usuario tiene acceso (todas para SuperAdmin, solo la suya para Admin).
+ * Este endpoint permite a los SuperAdmin listar todas las empresas, mientras que los Admin solo pueden ver la empresa a la que pertenecen. El método delega la lógica de filtrado y validación al CompanyService, manteniendo el controlador limpio.
+ */
 async findAll(user: UserPayload) {
-  // 1. Iniciamos el QueryBuilder con un alias claro
   const query = this.empresaRepository.createQueryBuilder('empresa')
-    // Traemos solo el administrador activo para evitar cargar datos innecesarios
     .leftJoinAndSelect(
       'empresa.usuarios', 
       'admin', 
@@ -121,7 +146,7 @@ async findAll(user: UserPayload) {
       { rol: UserRole.ADMIN, isActive: true }
     );
 
-  // 2. Filtro de Seguridad por Rol
+  //  Filtro de Seguridad por Rol
   if (user.rol !== UserRole.SUPERADMIN) {
     // Si no es SUPERADMIN, solo puede ver SU empresa
     if (!user.empresaId) {
@@ -133,7 +158,7 @@ async findAll(user: UserPayload) {
          .andWhere('empresa.isActive = :active', { active: true });
   }
 
-  // 3. Ejecución de la consulta
+  //  Ejecución de la consulta
   try {
     const empresas = await query.getMany();
     
@@ -144,6 +169,17 @@ async findAll(user: UserPayload) {
     throw new InternalServerErrorException('Error al recuperar la lista de empresas');
   }
 }
+
+// 3. Método para obtener una empresa por ID con validación de acceso
+// Este método permite obtener una empresa por su ID, pero solo si el usuario tiene acceso a ella (SuperAdmin puede acceder a cualquier empresa, Admin solo a la suya). La lógica de validación y obtención de la empresa se delega al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso. El método utiliza un QueryBuilder para incluir la relación con los usuarios Admin de manera eficiente, y maneja las excepciones de manera profesional para proporcionar mensajes claros en caso de errores.
+// El método también formatea la respuesta para incluir solo la información relevante de la empresa y su Admin asociado, manteniendo una estructura de datos limpia y profesional.
+/**
+ * 
+ *  * @param id ID de la empresa a obtener. Se valida que sea un número entero mediante ParseIntPipe.
+ *  * @param user Usuario autenticado que realiza la solicitud. Se utiliza para validar que el usuario tiene acceso a la empresa solicitada.
+ *  * @returns La empresa solicitada. Si la empresa no existe o el usuario no tiene acceso, se lanzará una excepción que será manejada por el CompanyService.  
+  * * Este endpoint es accesible solo para SuperAdmin, ya que la gestión de empresas es una tarea crítica que debe ser controlada estrictamente. El método delega toda la lógica de validación y obtención de la empresa al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+ */
 
 async findOne(id: number, user: UserPayload) {
     if (user.rol !== UserRole.SUPERADMIN && user.empresaId !== id) {
@@ -159,11 +195,18 @@ async findOne(id: number, user: UserPayload) {
     return this.formatResponse(empresa);
   }
 
-  // 5. Actualizar (El que te faltaba)
+  // 4. Método para actualizar una empresa y su Admin asociado
+  // Este método permite actualizar los datos de una empresa y su Admin asociado. Solo puede ser accedido por un SuperAdmin, ya que la gestión de empresas es una tarea crítica que debe ser controlada estrictamente. El método delega toda la lógica de validación y actualización al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso. El método incluye validaciones para evitar duplicados de nombre y CIF, y maneja la actualización del Admin asociado, incluyendo la validación de email y encriptación de contraseña si se proporciona.
+  /**
+   * 
+   * * @param id ID de la empresa a actualizar. Se valida que sea un número entero mediante ParseIntPipe. 
+   * * @param dto DTO con los datos a actualizar de la empresa. Puede incluir campos de la empresa y del Admin asociado. 
+   * * @returns La empresa actualizada. Si la empresa no existe o no se puede actualizar, se lanzará una excepción que será manejada por el CompanyService. 
+   * * Este endpoint es accesible solo para SuperAdmin, ya que la gestión de empresas es una tarea crítica que debe ser controlada estrictamente. El método delega toda la lógica de validación y actualización al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   */
  async update(id: number, dto: UpdateCompanyDto) {
   const { admin, ...empresaDatos } = dto as any;
 
-  // --- 1. VALIDACIÓN DE DUPLICADOS DE EMPRESA ---
   
   if (empresaDatos.nombre) {
     const nombreNormalizado = empresaDatos.nombre.toUpperCase().trim();
@@ -188,11 +231,11 @@ async findOne(id: number, user: UserPayload) {
     empresaDatos.cif = cifNormalizado;
   }
 
-  // --- 2. PRELOAD DE LA EMPRESA ---
+  // ---  PRELOAD DE LA EMPRESA ---
   const empresa = await this.empresaRepository.preload({ id, ...empresaDatos });
   if (!empresa) throw new NotFoundException(`Empresa con ID ${id} no existe`);
 
-  // --- 3. ACTUALIZACIÓN DEL ADMINISTRADOR (USER) ---
+  // ---  ACTUALIZACIÓN DEL ADMINISTRADOR (USER) ---
   if (admin) {
     const adminUpdateData = { ...admin };
 
@@ -232,7 +275,7 @@ async findOne(id: number, user: UserPayload) {
     }
   }
 
-  // --- 4. GUARDADO FINAL Y RETORNO ---
+  // ---  GUARDADO FINAL Y RETORNO ---
   try {
     await this.empresaRepository.save(empresa);
     // Devolvemos la empresa actualizada usando el findOne existente
@@ -252,15 +295,32 @@ async findOne(id: number, user: UserPayload) {
       admin: (usuarios && usuarios.length > 0) ? usuarios[0] : null
     };
   }
-  // 6. Eliminar / Soft Delete (El que te faltaba)
+
+  // 5. Método para eliminar una empresa
+  // Este método se encarga de eliminar una empresa, pero primero valida que la empresa exista. La eliminación de una empresa es una acción crítica que puede afectar a muchos usuarios y datos asociados, por lo que solo debe ser realizada por un SuperAdmin. La lógica de eliminación, incluyendo la validación de que la empresa existe y la gestión de las relaciones (como usuarios asociados), se delega al CompanyService para mantener el controlador limpio. El método utiliza el repositorio para eliminar la empresa, lo que también eliminará en cascada a los usuarios asociados debido a la configuración de la entidad.
+/**
+ * 
+ * * @param id ID de la empresa a eliminar. Se valida que sea un número entero mediante ParseIntPipe.
+ * * @returns Resultado de la operación de eliminación. Si la empresa no existe o no se puede eliminar, se lanzará una excepción que será manejada por el CompanyService.
+ *   
+ * */
+
   async remove(id: number) {
   const empresa = await this.empresaRepository.findOneBy({ id });
   if (!empresa) throw new NotFoundException('Empresa no encontrada');
   
   // Esto elimina la empresa y, por la cascada, a todos sus usuarios y horarios
   return await this.empresaRepository.remove(empresa);
+
 }
+
+  // 
   // Auxiliar para el Seed
+  /**
+   * Método auxiliar para el Seed, que busca una empresa por su nombre. Este método es útil para evitar la creación de empresas duplicadas durante el proceso de seeding, permitiendo verificar si una empresa con el mismo nombre ya existe antes de intentar crearla. El método utiliza el repositorio de TypeORM para realizar la consulta y devuelve la empresa encontrada o null si no existe.
+   * * @param nombre Nombre de la empresa a buscar. Se normaliza a mayúsculas y se recortan espacios para evitar problemas de formato.
+   * * @returns La empresa encontrada con el nombre especificado, o null si no existe.
+   */ 
   async findByName(nombre: string) {
     return await this.empresaRepository.findOneBy({ nombre });
   }

@@ -1,16 +1,15 @@
 import {
   IsNotEmpty,
   IsString,
-  IsEmail,
   IsOptional,
   MinLength,
   Matches,
-  IsDateString,
   IsNumber,
   MaxLength,
 } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import { UserBaseDto } from './user-base.dto';
+import { Column } from 'typeorm';
 /**
  * CreateWorkerDto
  * * DTO para crear un usuario con rol de WORKER.
@@ -42,13 +41,6 @@ export class CreateWorkerDto extends UserBaseDto { // DTO para crear un WORKER
 
   // --- IDENTIFICACIÓN Y CONTACTO ---
  
- 
-  
- 
-  
-  
- 
- 
   
   @IsOptional() // Campo opcional
   @IsNumber() // Valida que sea un número
@@ -68,10 +60,8 @@ export class CreateWorkerDto extends UserBaseDto { // DTO para crear un WORKER
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message: 'La contraseña es demasiado débil. Debe incluir mayúsculas, minúsculas y números'
   })
-  // Saneamiento: IMPORTANTE no usar .trim() en contraseñas, ya que los espacios
-  // pueden ser parte de una clave válida y segura.
-  @Expose()
-  password?: string;
+  // Saneamiento: Elimina espacios y convierte a minúsculas para evitar problemas de formato
+  password: string;
 
 
 }

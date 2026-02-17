@@ -1,5 +1,5 @@
-import { IsEmail, IsOptional, IsString, IsNotEmpty, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength, Max, Min, IsInt, ArrayUnique } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { IsEmail, IsOptional, IsString, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength, Max, Min, IsInt, ArrayUnique } from 'class-validator';
+import { Expose, Transform } from 'class-transformer';
 
 export class UserBaseDto {
   @IsOptional()

@@ -1,6 +1,12 @@
 import { Expose, Transform } from "class-transformer";
 import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLength, ValidateIf } from "class-validator";
 
+
+// LoginDto
+/**
+ * * * * LoginDto
+ * * * DTO para el proceso de inicio de sesión. Permite a los usuarios autenticarse utilizando su correo electrónico o DNI junto con su contraseña. El LoginDto utiliza class-validator para validar los datos de entrada, asegurando que el correo electrónico tenga un formato válido y que la contraseña cumpla con ciertos requisitos de seguridad, como una longitud mínima y la inclusión de mayúsculas, números o símbolos. Este DTO es esencial para garantizar que solo se acepten credenciales válidas durante el proceso de autenticación, mejorando así la seguridad del sistema.
+ * */
 export class LoginDto {
   @IsOptional()
   @Expose()

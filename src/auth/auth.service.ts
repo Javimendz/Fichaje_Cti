@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
@@ -6,12 +6,17 @@ import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
 import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
-import { VerifyCodeDto } from "./dto/verify-code.dto";
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
 import { Worker } from "worker/entities/worker.entity";
 import { User } from "users/entities/user.entity";
 
+
+/**
+ * * * * AuthService
+ *  * * Gestiona la autenticación de usuarios en el sistema. Contiene la lógica de negocio relacionada con la autenticación, como validar las credenciales de los usuarios, generar tokens JWT, y gestionar las sesiones de los usuarios a través de cookies. El servicio utiliza el UserRepository para acceder a los datos de los usuarios en la base de datos, el JwtService para generar y validar tokens JWT, y el AllowedPhonesService para validar los números de teléfono permitidos. Este servicio es fundamental para garantizar la seguridad del sistema y controlar el acceso a los recursos protegidos.
+ * */
+ 
 @Injectable()
 export class AuthService {
 
@@ -19,9 +24,6 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly allowedPhonesService: AllowedPhonesService,
-    @InjectRepository(Worker)
-    private readonly allowedUserRepository: Repository<Worker>,
   ) {}
 
   // =====================================
@@ -29,7 +31,15 @@ export class AuthService {
   // (Para Admin y Superadmin)
   // =====================================
   // auth.service.ts
-
+  /**
+   *  
+   * @param loginDto DTO que contiene las credenciales de inicio de sesión (email o dni, y password). El método valida que se haya proporcionado al menos un identificador (email o dni), y luego busca el usuario en la base de datos utilizando el identificador proporcionado. Si el usuario no existe, está inactivo, o las credenciales son incorrectas, se lanzará una excepción de UnauthorizedException. Si las credenciales son correctas, se genera un token JWT con un payload que incluye el ID del usuario, su rol, y opcionalmente el ID de la empresa si el usuario no es un SuperAdmin. El token se firma con una clave secreta y tiene una expiración configurada según el rol del usuario (12 horas para Admins y SuperAdmins, 1 hora para Workers). El método devuelve un objeto que incluye el token JWT y los datos del usuario autenticado. 
+   * @returns Un objeto que contiene el token JWT y los datos del usuario autenticado.
+   * * Este método maneja el proceso de inicio de sesión de los usuarios. Recibe las credenciales del usuario a través del DTO LoginDto, y utiliza el UserRepository para buscar al usuario en la base de datos utilizando el email o dni proporcionado. Si el usuario no existe, está inactivo, o las credenciales son incorrectas, se lanzará una excepción de UnauthorizedException. Si las credenciales son correctas, se genera un token JWT con un payload que incluye el ID del usuario, su rol, y opcionalmente el ID de la empresa si el usuario no es un SuperAdmin. El token se firma con una clave secreta y tiene una expiración configurada según el rol del usuario (12 horas para Admins y SuperAdmins, 1 hora para Workers). El método devuelve un objeto que incluye el token JWT y los datos del usuario autenticado.
+   * * Este método es fundamental para el proceso de autenticación en el sistema, ya que valida las credenciales de los usuarios y genera un token JWT que se utiliza para controlar el acceso a los recursos protegidos en el sistema. Además, la inclusión del ID de la empresa en el payload del token para usuarios que no son SuperAdmins permite implementar una lógica de autorización basada en la empresa a la que pertenece el usuario.
+   * 
+   * Nota: Si en el futuro decides permitir que los Admins también puedan iniciar sesión con su email, asegúrate de que el proceso de validación y generación del token se ajuste correctamente para manejar ambos casos (email y dni) sin afectar la seguridad ni la funcionalidad del sistema.
+   */
 async login(loginDto: LoginDto) {
   const { email, dni, password } = loginDto;
 
@@ -87,10 +97,13 @@ async login(loginDto: LoginDto) {
 }
 
 
-
+// --- LOGOUT ---
+/** 
+ * * @param userId ID del usuario que cierra sesión. Este parámetro se puede utilizar para realizar cualquier limpieza adicional necesaria en el servidor, como invalidar tokens, actualizar el estado del usuario, o registrar la actividad de logout. En este ejemplo, simplemente se devuelve un mensaje de éxito junto con el ID del usuario que ha cerrado sesión.
+ * * @returns Un objeto que contiene un mensaje de éxito indicando que la sesión se ha finalizado en el servidor, junto con el ID del usuario que ha cerrado sesión. Este método se puede expandir en el futuro para incluir lógica adicional relacionada con el proceso de logout, como invalidar tokens JWT, actualizar el estado del usuario en la base de datos, o registrar la actividad de logout para auditoría.
+ * * Este método maneja el proceso de cierre de sesión de los usuarios en el servidor. Recibe el ID del usuario que cierra sesión, y devuelve un mensaje de éxito junto con el ID del usuario. En un entorno real, este método podría incluir lógica adicional para invalidar tokens JWT, actualizar el estado del usuario en la base de datos, o registrar la actividad de logout para auditoría. Sin embargo, en este ejemplo se mantiene simple para ilustrar el proceso básico de logout en el servidor.
+ * */
 async logout(userId: number) {
-    // Aquí podrías añadir lógica adicional si fuera necesario
-    // Por ahora, simplemente confirmamos que el proceso puede proceder
     return { 
       message: 'Sesión finalizada en servidor',
       userId 

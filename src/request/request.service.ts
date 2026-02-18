@@ -112,7 +112,6 @@ async create(dto: CreateRequestDto, user: User) {
 
  async revisar(id: number, dto: RevisarRequestDto, admin: User) {
     // 1. Buscar la solicitud cargando relaciones necesarias para la Ausencia futura
-    // 🔥 MEJORA: Cargamos 'usuario' y 'empresa' aquí para usarlos luego en la creación de Ausencia
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
       relations: ['revision', 'usuario', 'empresa'], 
@@ -145,8 +144,6 @@ async create(dto: CreateRequestDto, user: User) {
       // ---------------------------------------------------------
       // PASO B: Crear Registro de Revisión (Audit Log)
       // ---------------------------------------------------------
-      // 🔥 CORRECCIÓN: Pasamos los objetos completos (solicitud, admin)
-      // TypeORM extraerá los IDs automáticamente y los pondrá en las columnas FK.
       const nuevaRevision = queryRunner.manager.create(RevisionRequest, {
         solicitud: solicitud, // Pasamos el objeto, no el ID
         admin: admin,         // Pasamos el objeto admin completo
@@ -170,7 +167,6 @@ async create(dto: CreateRequestDto, user: User) {
     const diffTime = Math.abs(fin.getTime() - inicio.getTime());
     const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // 🔥 LA CORRECCIÓN: Asegúrate de mapear empresaId correctamente
     const nuevaAusencia = queryRunner.manager.create(Ausencia, {
         tipo: solicitud.tipo,
         fechaInicio: solicitud.fechaInicio,

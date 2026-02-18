@@ -419,24 +419,32 @@ http://localhost:3000/api/schedules
 POST - Json 
 
 {
-  "nombre": "Horario Oficina Central 2026",
-  "fechaInicio": "2026-02-01",
+  "nombre": "Horario Invierno 2026 - IT",
+  "fechaInicio": "2026-01-01",
   "fechaFin": "2026-12-31",
-  "tipo": "Fijo",
+  "tipo": "FIJO",
   "distribuciones": [
     {
-      "diaSemana": "Lunes",
-      "horasDia": 9, 
+      "diaSemana": "LUNES",
+      "horasDia": 8.5,
       "franjas": [
-        { "inicio": "08:00", "fin": "14:00" },
+        { "inicio": "08:30", "fin": "14:00" },
         { "inicio": "15:00", "fin": "18:00" }
       ]
     },
     {
-      "diaSemana": "Martes",
-      "horasDia": 8,
+      "diaSemana": "MIERCOLES",
+      "horasDia": 8.5,
       "franjas": [
-        { "inicio": "09:00", "fin": "17:00" }
+        { "inicio": "08:30", "fin": "14:00" },
+        { "inicio": "15:00", "fin": "18:00" }
+      ]
+    },
+    {
+      "diaSemana": "VIERNES",
+      "horasDia": 7,
+      "franjas": [
+        { "inicio": "08:00", "fin": "15:00" }
       ]
     }
   ]

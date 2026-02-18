@@ -97,8 +97,7 @@ export class CreateHorarioDto {
   @IsArray({ message: 'Las distribuciones deben enviarse en formato de lista (array)' })
   @ArrayMinSize(1, { message: 'El horario debe tener al menos una distribución de día configurada' })
   @ValidateNested({ each: true })
-  // Crucial: @Type le dice a class-transformer que cada elemento del array 
-  // debe ser una instancia de DistribucionDiaDto
+ 
   @Type(() => DistribucionDiaDto)
   @Expose()
   distribuciones: DistribucionDiaDto[];

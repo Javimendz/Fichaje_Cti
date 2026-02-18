@@ -110,96 +110,106 @@ async create(dto: CreateRequestDto, user: User) {
  * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
  */
 
- async revisar(id: number, dto: RevisarRequestDto, admin: User) { // Revisión de una solicitud existente
-  // 1. Buscar la solicitud con su revisión para validar
-  const solicitud = await this.solicitudRepo.findOne({ // Buscar por ID
-    where: { id }, // Condición de búsqueda
-    relations: ['revision'], // Cargamos la relación para verificar si ya existe
-  });
-
-  if (!solicitud) { // Validación de existencia
-    throw new NotFoundException(`No se encontró la solicitud con ID ${id}`); // Error si no existe
-  }
-
-  // 2. VALIDACIÓN: Evitar el error de clave única en la BD
-  // Si ya tiene una revisión o el estado no es PENDIENTE, lanzamos error amigable
-  if (solicitud.revision || solicitud.estado !== RequestStatus.PENDIENTE) {
-    throw new BadRequestException(
-      `Esta solicitud ya fue procesada anteriormente. Estado actual: ${solicitud.estado}`
-    );
-  }
-
-  // 3. Iniciar Transacción
-  const queryRunner = this.dataSource.createQueryRunner(); // Crear un query runner
-  await queryRunner.connect(); // Conectar
-  await queryRunner.startTransaction(); // Iniciar transacción
-
-  try { // Bloque try-catch-finally para manejar la transacción
-    // 4. Actualizar el estado de la Solicitud
-    solicitud.estado = dto.estado; // Actualizar estado según DTO
-    await queryRunner.manager.save(solicitud); // Guardar cambios en la transacción
-
-    // 5. Crear el registro de la Revisión (evitando el error de revisado_por_id)
-    const nuevaRevision = queryRunner.manager.create(RevisionRequest, { // Crear instancia de RevisionSolicitud
-      solicitudId: solicitud.id, // Asociar a la solicitud
-      adminId: admin.id, // Asociar al admin que revisa
-      estadoResultante: dto.estado, 
-      comentarioAdmin: dto.comentarioAdmin, // Comentarios opcionales
+ async revisar(id: number, dto: RevisarRequestDto, admin: User) {
+    // 1. Buscar la solicitud cargando relaciones necesarias para la Ausencia futura
+    // 🔥 MEJORA: Cargamos 'usuario' y 'empresa' aquí para usarlos luego en la creación de Ausencia
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['revision', 'usuario', 'empresa'], 
     });
-    await queryRunner.manager.save(nuevaRevision); // Guardar la revisión en la transacción
 
-    // 6. SI ESTÁ APROBADA: Crear la Ausencia automáticamente
-    if (dto.estado === RequestStatus.APROBADA) { // Crear ausencia si es aprobada
-      // Cálculo de días para la tabla de ausencias
-      const inicio = new Date(solicitud.fechaInicio); // Fecha de inicio
-      const fin = new Date(solicitud.fechaFin); // Fecha de fin
-      inicio.setHours(0, 0, 0, 0);
-      fin.setHours(0, 0, 0, 0);
-      const diffTime = fin.getTime() - inicio.getTime();
-    const diasTotales = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      // Crear la ausencia asociada
+    if (!solicitud) {
+      throw new NotFoundException(`No se encontró la solicitud con ID ${id}`);
+    }
 
-      const nuevaAusencia = queryRunner.manager.create(Ausencia, { // Crear instancia de Ausencia
-        tipo: solicitud.tipo, // Tipo de ausencia según la solicitud
-        fechaInicio: solicitud.fechaInicio,  // Fecha de inicio
-        fechaFin: solicitud.fechaFin,    // Fecha de fin
-        usuarioId: solicitud.usuarioId, // Asociar al usuario de la solicitud
-        empresaId: solicitud.empresaId, // Asociar a la empresa de la solicitud
-        motivo: `Aprobado por ${admin.nombre}: ${solicitud.motivo || 'Sin descripción'}`, // Motivo con referencia al admin
-        estado: AusenciaEstado.APROBADA, // Estado aprobado
-        diasTotales: diasTotales, // Días totales calculados
-        diasConsumidos: 0 // Inicialmente 0
+    // 2. Validaciones de Estado
+    if (solicitud.revision || solicitud.estado !== RequestStatus.PENDIENTE) {
+      throw new BadRequestException(
+        `Esta solicitud ya fue procesada anteriormente. Estado actual: ${solicitud.estado}`
+      );
+    }
+
+    // 3. Iniciar Transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // ---------------------------------------------------------
+      // PASO A: Actualizar Estado de la Solicitud
+      // ---------------------------------------------------------
+      solicitud.estado = dto.estado;
+      // Usamos el manager de la transacción para guardar
+      await queryRunner.manager.save(solicitud);
+
+      // ---------------------------------------------------------
+      // PASO B: Crear Registro de Revisión (Audit Log)
+      // ---------------------------------------------------------
+      // 🔥 CORRECCIÓN: Pasamos los objetos completos (solicitud, admin)
+      // TypeORM extraerá los IDs automáticamente y los pondrá en las columnas FK.
+      const nuevaRevision = queryRunner.manager.create(RevisionRequest, {
+        solicitud: solicitud, // Pasamos el objeto, no el ID
+        admin: admin,         // Pasamos el objeto admin completo
+        estadoResultante: dto.estado, // Guardamos la decisión
+        comentarioAdmin: dto.comentarioAdmin,
       });
 
-      await queryRunner.manager.save(nuevaAusencia); // Guardar la ausencia en la transacción
-    }
+      await queryRunner.manager.save(nuevaRevision);
 
-    // 7. Confirmar cambios
-    await queryRunner.commitTransaction();
-
-    return { // Respuesta exitosa
-      ok: true, // Indicador de éxito
-      message: `Solicitud ${dto.estado.toLowerCase()} correctamente`, // Mensaje dinámico
-      solicitudId: solicitud.id, // ID de la solicitud revisada
-      ausenciaGenerada: dto.estado === RequestStatus.APROBADA // Indicador si se generó ausencia
-    };
-
-  } catch (error) { // Manejo de errores
-    // Si algo falla, deshacemos todo
-    await queryRunner.rollbackTransaction(); // Revertir cambios
-    console.error('Error en transacción de revisión:', error); // Log del error
+      // ---------------------------------------------------------
+      // PASO C: Generar Ausencia (Solo si fue APROBADA)
+      // ---------------------------------------------------------
+      if (dto.estado === RequestStatus.APROBADA) {
+    const inicio = new Date(solicitud.fechaInicio);
+    const fin = new Date(solicitud.fechaFin);
     
-    // Si el error es de base de datos pero se escapó de la validación inicial
-    if (error.code === '23505') { // Código de error de clave única en PostgreSQL
-       throw new BadRequestException('Esta solicitud ya cuenta con una revisión registrada.'); // Error amigable
-    }
+    // Normalización de fechas para el cálculo
+    inicio.setHours(0, 0, 0, 0);
+    fin.setHours(0, 0, 0, 0);
     
-    throw new BadRequestException('No se pudo procesar la revisión de la solicitud'); // Error genérico
-  } finally { 
-    // Liberar la conexión
-    await queryRunner.release();
+    const diffTime = Math.abs(fin.getTime() - inicio.getTime());
+    const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    // 🔥 LA CORRECCIÓN: Asegúrate de mapear empresaId correctamente
+    const nuevaAusencia = queryRunner.manager.create(Ausencia, {
+        tipo: solicitud.tipo,
+        fechaInicio: solicitud.fechaInicio,
+        fechaFin: solicitud.fechaFin,
+        usuarioId: solicitud.usuarioId,
+        // Usamos el ID que viene de la relación cargada o de la columna física
+        empresaId: solicitud.empresaId, 
+        motivo: `Aprobado por ${admin.nombre}: ${solicitud.motivo || 'Sin descripción'}`,
+        estado: AusenciaEstado.APROBADA,
+        diasTotales: diasTotales,
+        diasConsumidos: 0
+    });
+
+        await queryRunner.manager.save(nuevaAusencia);
+      }
+
+      // 4. Confirmar Cambios
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+        message: `Solicitud ${dto.estado.toLowerCase()} correctamente`,
+        solicitudId: solicitud.id,
+        ausenciaGenerada: dto.estado === RequestStatus.APROBADA
+      };
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.error('Error en transacción de revisión:', error);
+      
+      if (error.code === '23505') { // Error unique constraint (por si acaso)
+         throw new BadRequestException('Esta solicitud ya tiene una revisión registrada.');
+      }
+      
+      throw new BadRequestException(`No se pudo procesar la revisión: ${error.message}`);
+    } finally {
+      await queryRunner.release();
+    }
   }
-}
 
 /**
  *  Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.

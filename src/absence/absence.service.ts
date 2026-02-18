@@ -31,9 +31,9 @@ if (!usuario.empresaId) {
 
     const nuevaAusencia = this.ausenciaRepository.create({
       ...dto,
-      fechaInicio: inicio, // Corregido: de fecha_inicio a fechaInicio
-      fechaFin: fin,       // Corregido: de fecha_fin a fechaFin
-      diasTotales: diasTotales, // Corregido: de dias_totales a diasTotales
+      fechaInicio: inicio, 
+      fechaFin: fin,       
+      diasTotales: diasTotales, 
       usuarioId: usuario.id,
       empresaId: usuario.empresaId,
     });
@@ -43,21 +43,14 @@ if (!usuario.empresaId) {
   }
 
 async updateEstado(id: number, estado: AusenciaEstado, admin: User) {
-  console.log('DATOS DEL ADMIN RECIBIDOS:', admin); // <--- DEPURACIÓN
-  
   const ausencia = await this.ausenciaRepository.findOne({ where: { id } });
   if (!ausencia) throw new NotFoundException('Ausencia no encontrada');
 
-  const nombreAdmin = admin.nombre || 'Administrador'; // Fallback por si sigue fallando
-  
-  const updateData: any = { 
-  estado,
-  diasConsumidos: estado === AusenciaEstado.APROBADA ? ausencia.diasTotales : 0,
-  motivo: `${ausencia.motivo || ''} (Procesado por: ${nombreAdmin})`.trim()
-};
+  ausencia.estado = estado;
+  ausencia.diasConsumidos = estado === AusenciaEstado.APROBADA ? ausencia.diasTotales : 0;
+  ausencia.motivo = `${ausencia.motivo || ''} (Procesado por: ${admin.nombre || 'Admin'})`.trim();
 
-  await this.ausenciaRepository.update(id, updateData);
-  return this.findOne(id, admin);
+  return await this.ausenciaRepository.save(ausencia);
 }
 
   async findAllByUsuario(usuarioId: number) {

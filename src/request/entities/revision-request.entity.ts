@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne, CreateDateColumn } from 'typeorm';
 import { Request } from './request.entity';
 import { User } from 'auth/entities/user.entity';
+import { RequestStatus } from 'request/dto/revisar-request.dto';
 
 /**
  * RevisionSolicitud Entity
@@ -35,7 +36,7 @@ export class RevisionRequest { // Definición de la entidad RevisionSolicitud
 @JoinColumn({ name: 'revisado_por_id' }) // Columna de unión personalizada
 admin: User; // Administrador que revisó la solicitud
 
-  @Column({ name: 'revisado_por_id' }) // Columna para la clave foránea del administrador
+  @Column({ name: 'revisado_por_id'}) // Columna para la clave foránea del administrador
 adminId: number; // ID del administrador que revisó la solicitud
 
   @Column({ type: 'text', nullable: true }) // Comentario opcional del administrador
@@ -44,5 +45,6 @@ adminId: number; // ID del administrador que revisó la solicitud
   @CreateDateColumn() // Fecha de la decisión automática
   fechaDecision: Date; // Fecha en que se tomó la decisión sobre la solicitud
 
-  
+  @Column({ type: 'enum', enum: RequestStatus })
+  estadoResultante: RequestStatus;
 }

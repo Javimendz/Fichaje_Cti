@@ -8,7 +8,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AllowedPhonesModule } from './allowed-phones/allowed-phones.module';
 import { SeedModule } from 'seed/seed.module';
 import { CompanyModule } from './company/company.module';
-import { RolesModule } from './roles/roles.module';
 import { CodigoAccesoModule } from './codigo-acceso/codigo-acceso.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { WorkdayModule } from './workday/workday.module';
@@ -77,7 +76,7 @@ import { RequestModule } from './request/request.module';
     ScheduleModule,
     AbsenceModule,
     AlarmsModule, 
-    SeedModule, CompanyModule, RolesModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule
+    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule
    
    ],
   

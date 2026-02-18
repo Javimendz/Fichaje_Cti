@@ -300,50 +300,66 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
    * Nota: Si en el futuro decides permitir que un Admin normal también pueda asignar horarios sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin asigne horarios sin necesidad de validar la empresa, asegúrate de que la lógica de validación y asignación se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
  async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
-  // 1. Validar trabajador (Filtra por empresa del admin)
-  const worker = await this.findOne(workerId, user);
-
-  // 2. Validar ID de empresa 
-  const empresaId = user.empresaId;
-  if (!empresaId) {
-    throw new UnauthorizedException('El administrador debe tener una empresa asignada');
-  }
-
-  // 3. Validar que el horario existe y pertenece a la empresa
-  const horario = await this.dataSource.getRepository(Horario).findOne({
-    where: { 
-      id: horarioId, 
-      empresa: { id: empresaId } 
+    // 1. VALIDACIÓN DE SEGURIDAD (El Admin debe tener empresa)
+    if (!user.empresaId) {
+      throw new UnauthorizedException('No tienes una empresa asignada para gestionar horarios');
     }
-  });
 
-  if (!horario) {
-    throw new NotFoundException(`El horario con ID ${horarioId} no existe en tu empresa`);
+    // 2. BUSCAR TRABAJADOR (Validando que pertenezca a la empresa del Admin)
+    // No necesitamos cargar relaciones pesadas, solo verificar existencia y empresa
+    const worker = await this.workerRepository.findOne({
+      where: { 
+        id: workerId, 
+        empresaId: user.empresaId // Usamos la columna física para filtrar rápido
+      }
+    });
+
+    if (!worker) {
+      throw new NotFoundException(`El trabajador con ID ${workerId} no existe en tu empresa`);
+    }
+
+    // 3. BUSCAR HORARIO (Validando que pertenezca a la empresa del Admin)
+    const horario = await this.dataSource.getRepository(Horario).findOne({
+      where: { 
+        id: horarioId, 
+        empresa: { id: user.empresaId } // O empresaId si la definiste en Horario como readonly
+      }
+    });
+
+    if (!horario) {
+      throw new NotFoundException(`El horario con ID ${horarioId} no existe en tu empresa`);
+    }
+
+    // 4. TRANSACCIÓN DE ACTUALIZACIÓN
+    // Usamos una transacción para asegurar que si falla User, no se actualice Worker (y viceversa)
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        
+        // A) Actualizar WORKER
+        // ALERTA: Tu entidad tiene 'horarioId'. Usar esto es lo más seguro.
+        await manager.update(Worker, workerId, { 
+          horarioId: horarioId // Actualización directa a la columna física
+        }as any);
+
+        // B) Actualizar USER
+        // Como Worker.id === User.id (Shared Primary Key), usamos el mismo 'workerId'.
+        // Nota: Esto asume que la entidad User también tiene una relación con Horario.
+        await manager.update(User, workerId, { 
+           // Si en User no tienes 'horarioId' columna, usa la relación:
+           horario: { id: horarioId } 
+        });
+      });
+
+      return { 
+        message: 'Horario asignado correctamente', 
+        workerId: worker.id,
+        horarioAsignado: horario.nombre 
+      };
+
+    } catch (error) {
+      console.error('Error en transacción assignSchedule:', error);
+      throw new InternalServerErrorException('Error al sincronizar el horario en las tablas');
+    }
   }
 
-  // 4. Actualización Sincronizada (Ambas tablas)
-  try {
-  await this.dataSource.transaction(async (manager) => {
-    // 1. Actualizamos Worker
-    // Usamos 'as any' o el objeto de relación para saltar la restricción del QueryDeepPartial
-    await manager.update(Worker, workerId, { 
-      horario: { id: horarioId } 
-    } as any);
-
-    // 2. Actualizamos User
-    await manager.update(User, workerId, { 
-      horario: { id: horarioId } 
-    } as any);
-  });
-
-  return { 
-    message: 'Horario asignado correctamente en ambas tablas', 
-    worker: worker.nombre,
-    horario: horario.nombre 
-  };
-
-  } catch (error) {
-    throw new InternalServerErrorException('Error al sincronizar el horario en las tablas de usuario y trabajador');
-  }
-}
 }

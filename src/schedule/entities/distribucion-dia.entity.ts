@@ -26,6 +26,7 @@ export enum DiaSemana {
 @Entity('distribucion_dia')
 export class DistribucionDia {
 
+
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -39,36 +40,32 @@ export class DistribucionDia {
   @Column('float', { default: 0 })
   horasDia: number;
 
-  // --- RELACIONES ---
-
-  // 1. RELACIÓN PADRE (HORARIO)
+  // PADRE
   @ManyToOne(() => Horario, (horario) => horario.distribuciones, { 
     onDelete: 'CASCADE',
-    orphanedRowAction: 'delete',
-    nullable: false // Importante: Asegura que siempre tenga padre
+    nullable: false
   })
   @Exclude()
-  @JoinColumn({ name: 'horario_id' }) // TypeORM CREA la columna 'horario_id' aquí
-  horario?: Horario;
+  @JoinColumn({ name: 'horario_id' })
+  horario: Horario;
 
-  // Si necesitas acceder al ID sin cargar la relación, usa 'relationId' en el servicio
-  // o defínela como solo lectura así:
-  @Column({ name: 'horario_id', nullable: true, insert: false, update: false })
-  @Index() 
-  horarioId: number; 
-  //  Al poner insert: false, TypeORM ignora esta propiedad al guardar
-  // y usa la relación 'horario' para llenar el dato.
+  // FK de lectura (correcta así)
+  @Column({ name: 'horario_id' })
+  @Index()
+  horarioId: number;
 
-  // 2. RELACIÓN HIJA (FRANJAS)
-  @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, { 
-    cascade: true, // Permite guardar franjas automáticamente
+  // HIJOS
+  @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, {
+    cascade: true,
+    eager: true
   })
   franjas: FranjaHoraria[];
 
-  // --- AUDITORÍA ---
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @DeleteDateColumn({ name: 'deleted_at', select: false })
-  deletedAt: Date;
+  
+
+
+  
 }

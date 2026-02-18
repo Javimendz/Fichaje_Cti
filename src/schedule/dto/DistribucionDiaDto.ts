@@ -1,27 +1,19 @@
-  import { IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber, IsOptional, ArrayMinSize, Min, Max, IsEnum } from 'class-validator'; // 👈 Añade IsNumber
+  import { IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, ArrayMinSize, Min, Max, IsEnum } from 'class-validator'; // 👈 Añade IsNumber
   import { Expose, Transform, Type } from 'class-transformer';
   import { CreateTimeSlotDto } from 'timeSlot/dto/create-timeSlot.dto';
+import { DiaSemana } from 'schedule/entities/distribucion-dia.entity';
 
-    // Definimos los días válidos para evitar errores de escritura
-    export enum DiasSemana {
-      LUNES = 'LUNES',
-      MARTES = 'MARTES',
-      MIERCOLES = 'MIERCOLES',
-      JUEVES = 'JUEVES',
-      VIERNES = 'VIERNES',
-      SABADO = 'SABADO',
-      DOMINGO = 'DOMINGO',
-    }
+   
 
   export class DistribucionDiaDto {
    @IsNotEmpty({ message: 'El día de la semana es obligatorio' })
-  @IsEnum(DiasSemana, { 
+  @IsEnum(DiaSemana, { 
     message: 'El día debe ser un día válido (LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO)' 
   })
   // Saneamiento: Lo pasamos a mayúsculas y quitamos espacios para que coincida con el Enum
   @Transform(({ value }) => typeof value === 'string' ? value.trim().toUpperCase() : value)
   @Expose()
-  diaSemana: string;
+  diaSemana: DiaSemana;
 
    @IsNotEmpty({ message: 'El total de horas del día es obligatorio' })
   @IsNumber({}, { message: 'Las horas del día deben ser un valor numérico' })

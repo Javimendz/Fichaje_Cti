@@ -54,17 +54,25 @@ export class Horario {
   // ============================================
 
   // Relación con Empresa (N:1)
-  @ManyToOne(() => Company, (empresa) => empresa.horarios, { onDelete: 'CASCADE' }) // Si se elimina la empresa, se eliminan sus horarios
-  @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
-  empresa: Company; // Empresa a la que pertenece el horario
+  // 1. RELACIÓN PRINCIPAL (Encargada de las escrituras/joins)
+@ManyToOne(() => Company, (empresa) => empresa.horarios, { 
+    onDelete: 'CASCADE',
+    nullable: false 
+  })
+  @JoinColumn({ name: 'empresa_id' }) // Vincula con la columna física
+  empresa: Company;
 
-  @Column({ name: 'empresa_id', nullable: true, insert: false, update: false })
+  // 2. Columna Física (AHORA PERMITIMOS ESCRITURA)
+  // Quitamos insert:false y update:false para poder asignar el ID manualmente
+  @Column({ name: 'empresa_id' }) 
   empresaId: number;
 
   // Relación con los días (Lunes, Martes...)
   // cascade: true permite guardar el horario y sus días en una sola operación
 @OneToMany(() => DistribucionDia, (dist) => dist.horario, { 
-  cascade: true 
+  cascade: true,
+    eager: true
+
 })
   distribuciones: DistribucionDia[]; // Días de distribución del horario
 

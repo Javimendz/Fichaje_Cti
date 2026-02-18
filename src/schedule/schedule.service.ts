@@ -4,84 +4,102 @@ import { Repository, DeepPartial, DataSource } from 'typeorm'; // 👈 Importamo
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
+import { DiaSemana, DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
-import { DistribucionDia } from './entities/distribucion-dia.entity';
-import { User } from '../auth/entities/user.entity'; // Asegúrate de importar User
+
 
 @Injectable()
 export class ScheduleService {
   constructor(
-    @InjectRepository(Horario)
-    private readonly horarioRepository: Repository<Horario>,
+      @InjectRepository(Horario)
+  private readonly horarioRepository: Repository<Horario>,
+private readonly dataSource: DataSource, // 👈 INYECCIÓN NECESARIA
+  
   ) {}
 
+
+
 async create(dto: CreateHorarioDto, user: UserPayload) {
-  // 1. VALIDACIÓN DE EMPRESA
-  if (!user.empresaId) {
-    throw new BadRequestException('El usuario debe tener una empresa asignada.');
-  }
+  if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
 
-  // 2. CONVERSIÓN Y VALIDACIÓN DE FECHAS
-  const fechaInicio = new Date(dto.fechaInicio);
-  const fechaFin = new Date(dto.fechaFin);
-
-  if (isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
-    throw new BadRequestException('Las fechas proporcionadas no son válidas.');
-  }
-
-  if (fechaInicio >= fechaFin) {
-    throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin.');
-  }
-
-  // 3. CREACIÓN DEL OBJETO EN MEMORIA (DeepPartial)
-  // TypeORM creará las instancias de DistribucionDia y FranjaHoraria automáticamente
-  const nuevoHorario = this.horarioRepository.create({
-    ...dto,
-    fechaInicio,
-    fechaFin,
-    isActive: true,
-    empresa: { id: user.empresaId },
-  } as DeepPartial<Horario>);
-
-  // 4. VINCULACIÓN MANUAL (Obligatorio para evitar 'null value in horario_id')
-  // Establecemos las referencias de los hijos hacia los padres en memoria
-  if (nuevoHorario.distribuciones) {
-    nuevoHorario.distribuciones.forEach((dist) => {
-      dist.horario = nuevoHorario; // Relación Hijo -> Padre
-
-      if (dist.franjas) {
-        dist.franjas.forEach((franja) => {
-          franja.distribucionDia = dist; // Relación Nieto -> Hijo
-        });
-      }
-    });
-  }
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
 
   try {
-    // 5. GUARDADO EN BASE DE DATOS
-    // Guardamos el objeto con las referencias circulares (necesario para el cascade insert)
-    const guardado = await this.horarioRepository.save(nuevoHorario);
-
-    // 6. RETORNO SEGURO (RECARGA DESDE DB)
-    // Al buscarlo de nuevo con findOne, TypeORM genera objetos NUEVOS.
-    // Como no pedimos la relación inversa en 'relations', el bucle se rompe aquí.
-    return await this.horarioRepository.findOne({
-      where: { id: guardado.id },
-      relations: ['distribuciones', 'distribuciones.franjas'],
-      order: {
-        distribuciones: {
-          id: 'ASC',
-          franjas: { inicio: 'ASC' }
-        }
-      }
+    // ---------------------------------------------------------
+    // PASO 1: GUARDAR EL PADRE (HORARIO)
+    // ---------------------------------------------------------
+    const nuevoHorario = queryRunner.manager.create(Horario, {
+      nombre: dto.nombre,
+      tipo: dto.tipo,
+      fechaInicio: new Date(dto.fechaInicio),
+      fechaFin: new Date(dto.fechaFin),
+      isActive: true,
+      empresa: { id: user.empresaId } as any, // Relación padre
     });
 
-  } catch (error) {
-    // Capturamos cualquier error de base de datos (nombres duplicados, etc.)
-    throw new BadRequestException(`No se pudo crear el horario: ${error.message}`);
+    const horarioGuardado = await queryRunner.manager.save(nuevoHorario);
+    console.log('Horario creado con ID:', horarioGuardado.id);
+
+    // ---------------------------------------------------------
+    // PASO 2: GUARDAR LOS HIJOS (DISTRIBUCIONES)
+    // ---------------------------------------------------------
+    if (dto.distribuciones && dto.distribuciones.length > 0) {
+      for (const distDto of dto.distribuciones) {
+        const nuevaDist = queryRunner.manager.create(DistribucionDia, {
+          diaSemana: distDto.diaSemana as any,
+          horasDia: distDto.horasDia,
+          horario: horarioGuardado, // 🔑 FK asignada automáticamente
+        });
+
+        const distGuardada = await queryRunner.manager.save(nuevaDist);
+
+        // ---------------------------------------------------------
+        // PASO 3: GUARDAR LOS NIETOS (FRANJAS)
+        // ---------------------------------------------------------
+        if (distDto.franjas && distDto.franjas.length > 0) {
+          const franjasInstances = distDto.franjas.map(fDto =>
+            queryRunner.manager.create(FranjaHoraria, {
+              inicio: fDto.inicio,
+              fin: fDto.fin,
+              distribucionDia: distGuardada,   // relación padre
+              distribucionDiaId: distGuardada.id, // FK explícita
+            })
+          );
+
+          await queryRunner.manager.save(franjasInstances);
+        }
+      }
+    }
+
+    // ---------------------------------------------------------
+    // CONFIRMAMOS LA TRANSACCIÓN
+    // ---------------------------------------------------------
+    await queryRunner.commitTransaction();
+
+    // ---------------------------------------------------------
+    // RETORNO FINAL: usamos QueryBuilder para ordenar correctamente
+    // ---------------------------------------------------------
+    const horarioCompleto = await queryRunner.manager
+      .createQueryBuilder(Horario, 'horario')
+      .leftJoinAndSelect('horario.distribuciones', 'distribucion')
+      .leftJoinAndSelect('distribucion.franjas', 'franja')
+      .where('horario.id = :id', { id: horarioGuardado.id })
+      .orderBy('distribucion.id', 'ASC')
+      .addOrderBy('franja.id', 'ASC')
+      .getOne();
+
+    return horarioCompleto;
+
+  } catch (err) {
+    console.error('Error en transacción:', err);
+    await queryRunner.rollbackTransaction();
+    throw new BadRequestException(`No se pudo crear el horario: ${err.message}`);
+  } finally {
+    await queryRunner.release();
   }
 }
-
 
   async findAllByEmpresa(empresaId: number) {
     return await this.horarioRepository.find({

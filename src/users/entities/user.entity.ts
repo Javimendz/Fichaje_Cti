@@ -72,7 +72,7 @@ export class User { // Definición de la entidad User
   tokenExpiraEn: Date | null; // Fecha de expiración del token de restablecimiento de contraseña
 
   // --- RELACIONES: EMPRESA ---
-  @Column( { name: 'empresa_id', nullable: true }) // Columna física en la DB
+  @Column({ name: 'empresa_id', nullable: true }) // Columna física en la DB
   empresaId: number | null; // ID de la empresa a la que pertenece el usuario
 
   @ManyToOne(() => Company, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa

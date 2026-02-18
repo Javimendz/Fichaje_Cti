@@ -13,7 +13,6 @@ export class TimeSlotService {
     @InjectRepository(FranjaHoraria)
     private readonly franjaRepository: Repository<FranjaHoraria>,
     
-    // Inyectamos esto para validar la propiedad del padre antes de crear hijos
     @InjectRepository(DistribucionDia)
     private readonly distribucionRepository: Repository<DistribucionDia>,
   ) {}
@@ -21,25 +20,31 @@ export class TimeSlotService {
   /**
    * Crea una franja horaria.
    * Valida que el 'distribucionDiaId' pertenezca a la empresa del usuario.
+   * Valida que la hora de inicio sea menor a la hora de fin.
+   * Valida que no haya solapamientos con otras franjas del mismo día.
+   * Si todo es correcto, guarda la franja en la base de datos.
+   * @param dto - Datos para crear la franja horaria
+   * @param user - Información del usuario autenticado (para validar empresa)
+   * @returns La franja horaria creada
+   * @throws BadRequestException, NotFoundException, ForbiddenException, InternalServerErrorException
    */
  async create(dto: CreateTimeSlotDto, user: UserPayload) {
-    // 1. VALIDACIÓN DE PROPIEDAD
-    // 🔥 CORRECCIÓN 2: Usamos 'horario' porque así se llama en tu entidad DistribucionDia
+    
     const distribucion = await this.distribucionRepository.findOne({
       where: { id: dto.distribucionDiaId },
-      relations: ['horario', 'horario.empresa'] // Antes tenías 'schedule'
+      relations: ['horario', 'horario.empresa'] 
     });
 
     if (!distribucion) {
       throw new NotFoundException('La Distribución de Día no existe');
     }
 
-    // Validación defensiva
+    
     if (!distribucion.horario || !distribucion.horario.empresa) {
        throw new InternalServerErrorException('Error de integridad: El día no tiene horario o empresa asociada');
     }
 
-    // Verificamos propiedad
+    
     if (distribucion.horario.empresa.id !== user.empresaId) {
        throw new ForbiddenException('No tienes permiso para modificar este horario');
     }
@@ -49,7 +54,7 @@ export class TimeSlotService {
       throw new BadRequestException('La hora de inicio debe ser menor a la hora de fin');
     }
 
-    // 3. EVITAR SOLAPAMIENTO (Overlap Check)
+    // 3. EVITAR SOLAPAMIENTO 
     // Buscamos si hay alguna franja que se cruce con la nueva
     const choque = await this.franjaRepository.createQueryBuilder('franja')
       .where('franja.distribucion_dia_id = :distId', { distId: dto.distribucionDiaId }) // Usa el nombre de la columna DB o la propiedad
@@ -64,7 +69,6 @@ export class TimeSlotService {
     }
 
     // 4. Guardado
-    // Como arreglamos la entidad, ahora podemos asignar el objeto relación
     const nuevaFranja = this.franjaRepository.create({
       inicio: dto.inicio,
       fin: dto.fin,
@@ -97,6 +101,10 @@ export class TimeSlotService {
 
   /**
    * Busca una franja específica asegurando que pertenezca a la empresa.
+   * Si no se encuentra o no pertenece, lanza NotFoundException.
+   * Si el usuario no tiene empresa asignada, lanza UnauthorizedException.
+   * @returns La franja horaria encontrada
+   * 
    */
   async findOne(id: number, user: UserPayload) {
     if (!user.empresaId) {
@@ -106,7 +114,6 @@ export class TimeSlotService {
     const franja = await this.franjaRepository.findOne({
       where: { 
         id,
-        // Seguridad: Solo devolvemos si la relación llega hasta la empresa del usuario
         distribucionDia: {
           horario: {
             empresa: { id: user.empresaId }
@@ -122,6 +129,9 @@ export class TimeSlotService {
 
   /**
    * Actualiza una franja. Reutiliza findOne para asegurar la propiedad.
+   * Valida que el nuevo horario no tenga conflictos si se modifican las horas.
+   * @returns La franja actualizada
+   * 
    */
   async update(id: number, dto: UpdateTimeSlotDto, user: UserPayload) {
     // 1. Buscamos y validamos propiedad
@@ -135,7 +145,6 @@ export class TimeSlotService {
         throw new BadRequestException('Conflicto de horas: inicio >= fin');
     }
 
-    // (Opcional) Aquí podrías repetir la validación de solapamiento excluyendo el ID actual
     
     Object.assign(franja, dto);
     return await this.franjaRepository.save(franja);

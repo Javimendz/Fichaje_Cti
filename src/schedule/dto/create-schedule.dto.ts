@@ -21,6 +21,44 @@ export enum HorarioTipo {
   PARTIDO = 'PARTIDO'
 }
 
+/**
+ * CreateHorarioDto
+ * DTO para crear un nuevo horario. Contiene el nombre del horario, las fechas de inicio y fin, el tipo de horario y una lista de distribuciones por día. Utiliza class-validator para validar los datos de entrada y class-transformer para transformar y exponer las propiedades correctamente.
+ * @property {string} nombre - El nombre del horario. Es obligatorio, debe ser una cadena de texto entre 3 y 50 caracteres, y se transforma para eliminar espacios innecesarios.
+ * @property {string} fechaInicio - La fecha de inicio del horario. Es obligatorio, debe ser una cadena con formato de fecha (AAAA-MM-DD) y se transforma para eliminar espacios.
+ * @property {string} fechaFin - La fecha de fin del horario. Es obligatorio, debe ser una cadena con formato de fecha (AAAA-MM-DD) y se transforma para eliminar espacios.
+ * @property {HorarioTipo} tipo - El tipo de horario. Es obligatorio y debe ser uno de los valores definidos en el enum HorarioTipo (ROTATIVO, FIJO, PARTIDO).
+ * @property {DistribucionDiaDto[]} distribuciones - Una lista de distribuciones por día para el horario. Es obligatorio, debe ser un array con al menos una distribución, y cada elemento del array debe ser una instancia válida de DistribucionDiaDto.
+ * @uses class-validator para validación de datos y class-transformer para transformación y exposición de propiedades.
+ * @example
+ * ```typescript
+ * const nuevoHorario: CreateHorarioDto = {
+ * nombre: 'Horario de Verano',
+ * fechaInicio: '2024-06-01',
+ * fechaFin: '2024-09-30',  
+ * tipo: HorarioTipo.FIJO,
+ * distribuciones: [
+ *  {
+ *    diaSemana: DiaSemana.LUNES,
+ *   horasDia: 8,
+ *   franjas: [
+ *    { inicio: '08:00', fin: '12:00', distribucionDiaId: 1 },
+ *   { inicio: '13:00', fin: '17:00', distribucionDiaId: 1 }
+ *  ]
+ * },
+ * {
+ *   diaSemana: DiaSemana.MARTES,
+ *  horasDia: 6,
+ * franjas: [
+ *   { inicio: '09:00', fin: '12:00', distribucionDiaId: 2 },
+ *  { inicio: '14:00', fin: '17:00', distribucionDiaId: 2 }
+ * ]
+ * }
+ * ]
+ * };
+ * ```
+ */
+
 export class CreateHorarioDto {
   @IsNotEmpty({ message: 'El nombre del horario es obligatorio' })
   @IsString({ message: 'El nombre debe ser una cadena de texto' })

@@ -2,16 +2,13 @@ import { DistribucionDia } from "../../schedule/entities/distribucion-dia.entity
 import { 
   Column, 
   CreateDateColumn, 
-  DeleteDateColumn, 
   Entity, 
-  Index, 
   JoinColumn, 
   ManyToOne, 
   PrimaryGeneratedColumn,
   UpdateDateColumn 
 } from "typeorm";
 import { IsNotEmpty, Matches } from "class-validator";
-import { Exclude } from "class-transformer";
 
 @Entity('franjas_horarias')
 export class FranjaHoraria {

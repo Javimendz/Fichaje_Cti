@@ -5,7 +5,6 @@ import {
   IsEmail,
   IsOptional,
   MinLength,
-  Matches,
   IsNumber,
 } from 'class-validator';
 import { UserBaseDto } from './user-base.dto';

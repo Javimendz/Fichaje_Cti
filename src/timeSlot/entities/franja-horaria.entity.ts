@@ -38,7 +38,7 @@ export class FranjaHoraria {
     onDelete: 'CASCADE', 
     nullable: false 
   })
-  @JoinColumn({ name: 'distribucion_dia_id' }) // Encargada de escribir en la DB
+  @JoinColumn({ name: 'distribucion_dia_id' }) 
   distribucionDia: DistribucionDia;
 
   // --- AUDITORÍA ---

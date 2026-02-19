@@ -94,7 +94,8 @@ findAllBySchedule(
   @GetUser() user: UserPayload
 ) {
   // En el servicio implementarías un filtro donde schedule.id = scheduleId
-  return this.franjaHorariaService.findAllBySchedule(scheduleId, user);
-}
+this.validateEmpresa(user);
+    // Llamamos al servicio pasando el ID del horario Y el usuario (para seguridad)
+    return this.franjaHorariaService.findAllBySchedule(scheduleId, user);}
 
 }

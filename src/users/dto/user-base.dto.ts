@@ -26,7 +26,6 @@ export class UserBaseDto {
   @Expose()
   apellidos?: string;
 
-  // CAMBIO: Ahora es opcional para que el hijo decida si lo pide o no
  @IsOptional()
   @IsString({ message: 'el DNI debe ser una cadena de texto' })
   // Regex: 8 números seguidos de una letra (ignora mayúsculas/minúsculas con el flag /i)

@@ -245,18 +245,31 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     }
 
     // 3. Sincronizar con la tabla User si es necesario (Auth)
-    if (dto.email || dto.nombre || dto.password) {
+  if (dto.email || dto.nombre || dto.password || 'horarioId' in dto) {
       const userUpdateData: any = {};
-      if (dto.email) userUpdateData.email = dto.email.toLowerCase().trim();
+      
+      if (dto.email) userUpdateData.email = dto.email;
       if (dto.nombre) userUpdateData.nombre = dto.nombre;
       if (dto.password) userUpdateData.password = await bcrypt.hash(dto.password, 10);
+      
+      if ('horarioId' in dto) {
+        userUpdateData.horario = dto.horarioId ? { id: dto.horarioId } : null;
+      }
 
+      // Actualizamos en la tabla User
       await this.dataSource.getRepository(User).update(id, userUpdateData);
     }
-
     // 4. Aplicar cambios y guardar
     Object.assign(worker, dto);
-
+    if ('horarioId' in dto) {
+      if (dto.horarioId) {
+        // Si hay un nuevo ID, le asignamos un objeto con ese ID
+        worker.horario = { id: dto.horarioId } as any;
+      } else {
+        // Si mandaron null o vacío, vaciamos la relación
+        worker.horario = null as any;
+      }
+    }
     try {
       return await this.workerRepository.save(worker);
     } catch (error) {

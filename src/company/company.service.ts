@@ -133,8 +133,8 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
 // El método utiliza un QueryBuilder para construir la consulta de manera flexible, permitiendo incluir condiciones dinámicas según el rol del usuario. Además, se maneja la respuesta de manera profesional, formateando los datos antes de devolverlos al controlador.
 /**
  * 
- * @param user Usuario autenticado que realiza la solicitud. Se utiliza para validar el acceso a las empresas y para registrar un log de auditoría con su email, ID y rol.
- * @returns Lista de empresas a las que el usuario tiene acceso (todas para SuperAdmin, solo la suya para Admin).
+ * *@param user Usuario autenticado que realiza la solicitud. Se utiliza para validar el acceso a las empresas y para registrar un log de auditoría con su email, ID y rol.
+ * *@returns Lista de empresas a las que el usuario tiene acceso (todas para SuperAdmin, solo la suya para Admin).
  * Este endpoint permite a los SuperAdmin listar todas las empresas, mientras que los Admin solo pueden ver la empresa a la que pertenecen. El método delega la lógica de filtrado y validación al CompanyService, manteniendo el controlador limpio.
  */
 async findAll(user: UserPayload) {

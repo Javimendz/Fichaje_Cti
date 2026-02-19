@@ -16,7 +16,6 @@ export class Ausencia {
   @Column()
   tipo: string; 
 
-  // CORRECCIÓN: Añadido name para que coincida con Postgres
   @Column({ name: 'fecha_inicio', type: 'date' })
   fechaInicio: Date;
 

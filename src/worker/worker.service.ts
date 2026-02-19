@@ -76,6 +76,7 @@ export class WorkerService {
         empresaId: empresaId,
         isActive: true,
         isVerified: true,
+        horario: dto.horarioId ? { id: dto.horarioId } as Horario : null, // Relación con Horario si se proporciona
       } as DeepPartial<User>);
 
       const savedUser = await queryRunner.manager.save(User, newUser);
@@ -99,7 +100,7 @@ export class WorkerService {
         categoria: dto.categoria,
         actividad: dto.actividad,
         diaPertenece: dto.diaPertenece,
-        
+        horarioId: dto.horarioId,
         rol: UserRole.WORKER,
         isActive: true,
         isVerified: true,

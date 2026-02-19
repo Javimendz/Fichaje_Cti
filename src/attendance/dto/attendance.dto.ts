@@ -2,6 +2,23 @@ import { IsDateString, IsBoolean, IsString, IsNotEmpty, IsNumber, IsOptional, Va
 import { Expose, Transform, Type } from 'class-transformer';
 import { AuthUserDto } from 'auth/dto/authUser.dto';
 
+// DTO para crear o actualizar un registro de asistencia (Attendance)
+/**
+ * AttendanceDto
+ * DTO para representar un registro de asistencia (fichaje) de un trabajador.
+ * Contiene propiedades para la fecha, estado de presencia, motivo de ausencia (si aplica) y vinculación con el usuario.
+ * Utiliza class-validator para validar los datos de entrada y class-transformer
+ * para transformar y exponer los datos de manera adecuada en las respuestas de la API.
+ * @property {number} [id] - ID del registro de asistencia (opcional, generado por la base de datos).
+ * @property {string} fecha - Fecha del registro de asistencia (formato AAAA-MM-DD, obligatorio).
+ * @property {boolean} presente - Indica si el trabajador está presente o ausente (obligatorio).
+ * @property {string} [motivo] - Motivo de ausencia si el trabajador no está presente (opcional, mínimo 5 caracteres, máximo 255 caracteres).
+ * @property {number} [usuarioId] - ID del usuario asociado al registro de asistencia (opcional, vinculado automáticamente al crear un nuevo registro).
+ * @property {AuthUserDto} [usuario] - Información del usuario vinculado al registro de asistencia (opcional, solo para respuestas que incluyan datos del usuario).
+ * Utiliza class-validator para validar los datos de entrada y class-transformer
+ * para transformar y exponer los datos de manera adecuada en las respuestas de la API, asegurando que solo los campos relevantes sean visibles y que los datos estén en el formato correcto.
+ * */ 
+
 export class AttendanceDto {
   @IsNumber({}, { message: 'El ID debe ser un valor numérico' })
   @IsInt({ message: 'El ID debe ser un número entero' })

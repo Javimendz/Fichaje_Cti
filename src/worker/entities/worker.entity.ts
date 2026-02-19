@@ -14,6 +14,7 @@ import { UserRole } from "auth/roles.enum";
 
 @Entity('workers')
 export class Worker {
+  [x: string]: any;
   
   // Usamos PrimaryColumn porque el ID viene heredado de la tabla User
   @PrimaryColumn()

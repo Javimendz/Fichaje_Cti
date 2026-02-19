@@ -581,3 +581,13 @@ GET         /api/jornada/historial  Lista todos los fichajes del trabajador.Toke
 GET         /api/jornada/rango?desde=2023-01-01&hasta=2023-01-31     Filtra fichajes por rango de fechas.      Query Params: ?inicio=...&fin=...
 
 ```
+
+```
+ASISTENCIAS
+🛠️ Método    📍 Endpoint                           📝 Descripción                                     📦 Requerimientos / Body
+POST /api/asistencia Registra un nuevo fichaje (presencia).Body: { presente: boolean, motivo?: string }
+GET  /api/asistencia/my-history Obtiene el historial de fichajes del usuario.Token JWT (Worker o Admin).
+GET  /api/asistencia/empresa   Obtiene listado de fichajes de toda la empresa.Token JWT
+GET  /api/asistencia/user/:id  Obtiene el historial de un usuario específico.Param: id | Token JWT
+
+```

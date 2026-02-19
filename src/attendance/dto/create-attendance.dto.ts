@@ -1,6 +1,19 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, IsInt, IsNotEmpty, Min, MinLength, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty,  MinLength, MaxLength } from 'class-validator';
 
+
+// DTO para crear un nuevo registro de asistencia (fichaje) de un trabajador.
+/**
+ * CreateAttendanceDto
+ * DTO para crear un nuevo registro de asistencia (fichaje) de un trabajador.
+ * Contiene propiedades para el estado de presencia y el motivo de ausencia (si aplica).
+ * Utiliza class-validator para validar los datos de entrada y class-transformer
+ * para transformar y exponer los datos de manera adecuada en las respuestas de la API.
+ * @property {boolean} presente - Indica si el trabajador está presente o ausente (obligatorio).
+ *  @property {string} [motivo] - Motivo de ausencia si el trabajador no está presente (opcional, mínimo 5 caracteres, máximo 255 caracteres).
+ * Utiliza class-validator para validar los datos de entrada y class-transformer
+ * para transformar y exponer los datos de manera adecuada en las respuestas de la API, asegurando que solo los campos relevantes sean visibles y que los datos estén en el formato correcto.
+ * */
 export class CreateAttendanceDto {
   
 

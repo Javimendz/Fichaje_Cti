@@ -9,6 +9,7 @@ import { GetUser } from 'auth/decorators/get-user.decorator';
 import { User } from 'auth/entities/user.entity';
 import { AusenciaEstado } from './entities/ausencia.entity';
 import { UserRole } from 'auth/roles.enum';
+import { UpdateAbsenceDto } from './dto/update-absence.dto';
 
 // Controlador para gestionar las ausencias de los trabajadores
 // Define la ruta base para este controlador y aplica los guards de autenticación y roles
@@ -137,6 +138,33 @@ Usuario autenticado que realiza la solicitud. Se espera que sea un administrador
     return this.ausenciaService.remove(id, user);
   }
 
+
+  // Endpoint para actualizar el estado de una ausencia, accesible solo para administradores de la empresa
+  // El SUPERADMIN no podrá actualizar el estado de ausencias que no le pertenecen, ya que la lógica de negocio en el servicio bloqueará el acceso si no es el dueño o el admin de ESA empresa.
+  /**
+   *  Endpoint para actualizar el estado de una ausencia, accesible solo para administradores de la empresa. El SUPERADMIN no podrá actualizar el estado de ausencias que no le pertenecen, ya que la lógica de negocio en el servicio bloqueará el acceso si no es el dueño o el admin de ESA empresa.
+   * @param id ID de la ausencia cuyo estado se desea actualizar. Se extrae de la ruta mediante el decorador @Param y se valida como un número entero utilizando ParseIntPipe.
+   * @param estado Nuevo estado que se desea asignar a la ausencia. Se extrae del cuerpo de la solicitud mediante el decorador @Body.
+   * @param admin Usuario autenticado que realiza la solicitud. Se espera que sea un administrador de empresa, y se obtiene mediante el decorador @GetUser, que extrae la información del usuario del token JWT.
+   * @return La ausencia actualizada con el nuevo estado, si el administrador tiene permiso para actualizarla.
+   * @throws NotFoundException si no se encuentra la ausencia con el ID proporcionado.
+   * @throws ForbiddenException si el administrador no tiene permiso para actualizar el estado de la ausencia.
+   * @see AbsenceService.updateEstado para la lógica de negocio relacionada con la actualización del estado de una ausencia y la validación de permisos.
+   * @Roles(UserRole.ADMIN) asegura que solo los usuarios con rol de ADMIN puedan acceder a este endpoint, excluyendo a WORKER y SUPERADMIN. Sin embargo, la lógica de negocio en el servicio también verifica que el administrador sea un administrador de la misma empresa que la ausencia, lo que garantiza que el SUPERADMIN no pueda actualizar el estado de ausencias que no le pertenecen.
+   * @GetUser() se utiliza para obtener el usuario autenticado en el contexto de la solicitud, lo que permite que el servicio de ausencias valide si el administrador tiene permiso para actualizar el estado de la ausencia solicitada.
+   * @see https://docs.nestjs.com/controllers#request-payloads
+   * @see https://docs.nestjs.com/security/authentication#accessing-the-authenticated-user
+   * 
+   */
+  @Put('update/:id')
+  @Roles(UserRole.ADMIN, UserRole.WORKER) // Superadmin excluido
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAbsenceDto: UpdateAbsenceDto,
+    @GetUser() user: User
+  ) {
+    return this.ausenciaService.update(id, updateAbsenceDto, user);
+  }
 
   // Endpoint para actualizar el estado de una ausencia, accesible solo para administradores de la empresa
   // El SUPERADMIN no podrá actualizar el estado de ausencias que no le pertenecen, ya que la lógica de negocio en el servicio bloqueará el acceso si no es el dueño o el admin de ESA empresa.

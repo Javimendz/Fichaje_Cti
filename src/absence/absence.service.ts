@@ -78,8 +78,8 @@ if (!usuario.empresaId) {
 
 
 async updateEstado(id: number, estado: AusenciaEstado, admin: User) {
-  const ausencia = await this.ausenciaRepository.findOne({ where: { id } });
-  if (!ausencia) throw new NotFoundException('Ausencia no encontrada');
+  
+  const ausencia = await this.findOne(id, admin);
 
   ausencia.estado = estado;
   ausencia.diasConsumidos = estado === AusenciaEstado.APROBADA ? ausencia.diasTotales : 0;

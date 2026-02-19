@@ -8,7 +8,8 @@ import {
   ArrayMinSize, 
   IsEnum, 
   MaxLength,
-  MinLength
+  MinLength,
+  IsOptional
 } from "class-validator";
 import { DistribucionDiaDto } from "./DistribucionDiaDto";
 import { OneToMany } from "typeorm";
@@ -83,9 +84,11 @@ export class CreateHorarioDto {
     message: 'La fecha de fin debe tener un formato de fecha válido (AAAA-MM-DD)' 
   })
   // Saneamiento: Asegura que no haya espacios laterales que invaliden el string
+  @IsOptional()
+  @IsDateString({}, { message: 'La fecha de fin debe ser una fecha válida (ej: 2026-08-15)' })
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @Expose()
-  fechaFin: string;
+  fechaFin?: string;
 
   @IsNotEmpty({ message: 'El tipo de horario es obligatorio' })
   @IsEnum(HorarioTipo, { 

@@ -47,8 +47,8 @@ export class Horario {
   @Column({ name: 'fecha_inicio', type: 'date' }) // Fecha de inicio
   fechaInicio: Date; // Fecha de inicio de vigencia del horario
 
-  @Column({ name: 'fecha_fin', type: 'date' }) // Fecha de fin
-  fechaFin: Date; // Fecha de fin de vigencia del horario
+  @Column({ name: 'fecha_fin', type: 'date', nullable: true }) // Fecha de fin
+  fechaFin: Date | null; // Fecha de fin de vigencia del horario
 
   // --- RELACIONES ---
   // ============================================

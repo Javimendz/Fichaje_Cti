@@ -7,9 +7,8 @@ import {
   IsNumber,
   MaxLength,
 } from 'class-validator';
-import { Exclude, Expose, Type } from 'class-transformer';
+import {  Type } from 'class-transformer';
 import { UserBaseDto } from './user-base.dto';
-import { Column } from 'typeorm';
 /**
  * CreateWorkerDto
  * * DTO para crear un usuario con rol de WORKER.

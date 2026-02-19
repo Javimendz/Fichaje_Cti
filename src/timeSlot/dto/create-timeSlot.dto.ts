@@ -13,15 +13,20 @@ export class CreateTimeSlotDto {
   @Expose()
   inicio: string;
 
-  @IsNotEmpty({ message: 'La hora de fin es obligatoria' })
   @IsString({ message: 'La hora de fin debe ser una cadena de texto' })
+  @IsOptional()
   @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, { 
     message: 'El formato de fin debe ser HH:mm en formato 24h (ej: 18:30)' 
   })
   // Saneamiento: Elimina espacios accidentales para evitar fallos de coincidencia
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @Expose()
-  fin: string;
+@Transform(({ value }) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed; // Convierte "" en null
+  }
+  return value;
+})  @Expose()
+  fin?: string;
 
  @IsOptional()
   @IsInt({ message: 'El ID de distribución debe ser un número entero' })

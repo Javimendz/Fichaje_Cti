@@ -49,9 +49,10 @@ export class TimeSlotService {
        throw new ForbiddenException('No tienes permiso para modificar este horario');
     }
 
+   
     // 2. Lógica horaria
-    if (dto.inicio >= dto.fin) {
-      throw new BadRequestException('La hora de inicio debe ser menor a la hora de fin');
+    if (dto.fin && dto.inicio >= dto.fin) {
+      throw new BadRequestException('La hora de inicio debe ser anterior a la hora de fin.');
     }
 
     // 3. EVITAR SOLAPAMIENTO 
@@ -141,7 +142,7 @@ export class TimeSlotService {
     const inicioFinal = dto.inicio ?? franja.inicio;
     const finFinal = dto.fin ?? franja.fin;
 
-    if (inicioFinal >= finFinal) {
+    if (finFinal && inicioFinal >= finFinal) {
         throw new BadRequestException('Conflicto de horas: inicio >= fin');
     }
 

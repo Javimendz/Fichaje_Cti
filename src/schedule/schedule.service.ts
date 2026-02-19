@@ -34,7 +34,7 @@ async create(dto: CreateHorarioDto, user: UserPayload) {
       nombre: dto.nombre,
       tipo: dto.tipo,
       fechaInicio: new Date(dto.fechaInicio),
-      fechaFin: new Date(dto.fechaFin),
+      fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : null,
       isActive: true,
       empresa: { id: user.empresaId } as any, // Relación padre
     });

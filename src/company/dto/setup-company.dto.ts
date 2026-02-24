@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { CreateAdminDto } from 'users/dto/create-admin.dto';
+import { CreateUserDto } from 'users/dto/create-user.dto';
 
 export class SetupCompanyDto {
   
@@ -104,6 +105,6 @@ export class SetupCompanyDto {
   @IsNotEmpty({ message: 'Los datos del administrador son obligatorios para el setup' })
   @ValidateNested()
   // Indispensable para que class-transformer sepa a qué clase convertir el objeto plano
-  @Type(() => CreateAdminDto) 
-  admin: CreateAdminDto;
+  @Type(() => CreateUserDto) 
+  admin: CreateUserDto;
 }

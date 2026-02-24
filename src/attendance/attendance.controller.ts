@@ -64,8 +64,7 @@ export class AttendanceController {
   @Get('my-history')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async getHistory(@GetUser() user: UserPayload) {
-    return this.attendanceService.findAllByUser(user.id);
-  }
+return this.attendanceService.findAllByUser(user.id, user.empresaId!);  }
 
   // --- HISTORIAL DE EMPRESA: SOLO ADMIN ---
   /* Endpoint para que un administrador vea todas las asistencias de su empresa.

@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { User } from 'users/entities/user.entity';
+import { Company } from 'company/entities/company.entity';
 @Index(['usuarioId', 'fechaJornada'], { unique: true })
 @Entity('attendances')
 export class Attendance {
@@ -62,4 +63,8 @@ export class Attendance {
   })
   @JoinColumn({ name: 'usuario_id' }) // Vincula la propiedad 'usuario' con la columna 'usuario_id'
   usuario: User;
+
+  @ManyToOne(() => Company, (company) => company.asistencias, { onDelete: 'CASCADE' })
+@JoinColumn({ name: 'empresa_id' })
+empresa: Company;
 }

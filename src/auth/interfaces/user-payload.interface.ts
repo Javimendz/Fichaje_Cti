@@ -11,5 +11,5 @@ export interface UserPayload {
   userId: number;
   dni: string;
   rol: UserRole;
-  empresaId: number | null;
+  empresaId: number;
 }

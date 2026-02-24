@@ -1,4 +1,5 @@
 
+import { Attendance } from "attendance/entities/attendance.entity";
 import { User } from "auth/entities/user.entity";
 import { Horario } from "schedule/entities/schedules.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } from "typeorm";
@@ -58,4 +59,7 @@ export class Company {
     onDelete: 'CASCADE' 
   })
   horarios: Horario[];
+
+  @OneToMany(() => Attendance, (attendance) => attendance.empresa)
+  asistencias: Attendance[];
 }

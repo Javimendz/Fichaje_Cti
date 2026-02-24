@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
@@ -31,6 +31,10 @@ export class AttendanceService {
     * Solo los usuarios con rol ADMIN o WORKER pueden acceder a este método para registrar asistencias, excluyendo a los superadministradores que no deberían tener esta función.
     */
   async create(user: UserPayload, dto: CreateAttendanceDto) {
+    
+    if (!user.empresaId) {
+    throw new BadRequestException('No puedes fichar: no tienes una empresa asignada.');
+    }
     const hoy = new Date().toLocaleDateString('en-CA'); // Formato YYYY-MM-DD estable
 
     const existing = await this.attendanceRepository.findOne({
@@ -56,19 +60,15 @@ export class AttendanceService {
     * El sistema devuelve todas las asistencias registradas por el usuario autenticado, ordenadas por fecha (más reciente primero).     
     *   @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan revisar su historial personal de asistencias, lo cual es útil para que los administradores también puedan verificar sus propios registros.
     */
-  async findAllByUser(usuarioId: number, empresaId?: number) {
-    const where: any = { usuarioId };
-    
-    if (empresaId) {
-      where.empresaId = empresaId;
-    }
-
-    return await this.attendanceRepository.find({
-      where,
-      order: { fechaJornada: 'DESC' },
-    });
-  }
-
+ async findAllByUser(targetUserId: number, adminEmpresaId: number) {
+  return await this.attendanceRepository.find({
+    where: { 
+      usuarioId: targetUserId, 
+      empresaId: adminEmpresaId // Forzamos que coincida con la empresa del admin
+    },
+    order: { fechaJornada: 'DESC' },
+  });
+}
 
   // --- HISTORIAL DE EMPRESA: SOLO ADMIN ---
   /* Método para que un administrador vea todas las asistencias de su empresa.

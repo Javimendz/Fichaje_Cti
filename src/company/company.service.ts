@@ -81,11 +81,12 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
     
     const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
 
-    const { empresaId, ...adminData } = dto.admin;
+    const adminData = dto.admin;
 
+    const hashedPassword = await bcrypt.hash(adminData.password, 10);
     const nuevoAdmin = queryRunner.manager.create(User, {
       ...adminData,
-      password: bcrypt.hashSync(dto.admin.password, 10),
+      password: hashedPassword,
       rol: UserRole.ADMIN,
       empresa: empresaGuardada,        // Vinculación de objeto 
       empresaId: empresaGuardada.id,  // Vinculación de FK

@@ -52,7 +52,7 @@ export class AttendanceController {
     @GetUser() user: UserPayload,
     @Body() dto: CreateAttendanceDto
   ) {
-    return this.attendanceService.create(user.id, dto);
+    return this.attendanceService.create(user, dto);
   }
 
   // --- HISTORIAL PERSONAL: ADMIN Y WORKER ---
@@ -96,8 +96,8 @@ export class AttendanceController {
     @GetUser() admin: UserPayload
   ) {
     if (!admin.empresaId) {
-      throw new BadRequestException('Administrador sin empresa asignada');
-    }
-    return this.attendanceService.findAllByUser(targetUserId);
+    throw new BadRequestException('Administrador sin empresa asignada');
+  }
+  return this.attendanceService.findAllByUser(targetUserId, admin.empresaId);
   }
 }

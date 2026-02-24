@@ -12,8 +12,6 @@ import {
   IsOptional
 } from "class-validator";
 import { DistribucionDiaDto } from "./DistribucionDiaDto";
-import { OneToMany } from "typeorm";
-import { DistribucionDia } from "schedule/entities/distribucion-dia.entity";
 
 // Definir un Enum para el tipo ayuda a que no escriban cualquier cosa
 export enum HorarioTipo {
@@ -59,6 +57,9 @@ export enum HorarioTipo {
  * };
  * ```
  */
+// ---------------------------------------------------------
+// DTO PRINCIPAL: CREATEHORARIODTO
+// ---------------------------------------------------------  
 
 export class CreateHorarioDto {
   @IsNotEmpty({ message: 'El nombre del horario es obligatorio' })
@@ -68,7 +69,7 @@ export class CreateHorarioDto {
   // Saneamiento: Elimina espacios innecesarios al principio y al final
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @Expose()
-  nombre: string;
+  nombre: string; // El nombre del horario, obligatorio, con validación de longitud y saneamiento de espacios
 
   @IsNotEmpty({ message: 'La fecha de inicio es obligatoria' })
   @IsDateString({}, { 
@@ -77,7 +78,8 @@ export class CreateHorarioDto {
   // Saneamiento: Elimina espacios accidentales que podrían romper el parseo en el backend
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @Expose()
-  fechaInicio: string;
+  fechaInicio: string; // La fecha de inicio del horario, obligatoria, con validación de formato de fecha y saneamiento de espacios
+
 
   @IsNotEmpty({ message: 'La fecha de fin es obligatoria' })
   @IsDateString({}, { 
@@ -88,14 +90,15 @@ export class CreateHorarioDto {
   @IsDateString({}, { message: 'La fecha de fin debe ser una fecha válida (ej: 2026-08-15)' })
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @Expose()
-  fechaFin?: string;
+  fechaFin?: string; // La fecha de fin del horario, opcional, con validación de formato de fecha y saneamiento de espacios
 
   @IsNotEmpty({ message: 'El tipo de horario es obligatorio' })
   @IsEnum(HorarioTipo, { 
     message: 'El tipo de horario debe ser uno de los siguientes valores: ROTATIVO, FIJO o PARTIDO' 
   })
   @Expose()
-  tipo: HorarioTipo;
+  tipo: HorarioTipo; // El tipo de horario, obligatorio, debe ser uno de los valores definidos en el enum HorarioTipo
+
 
   @IsArray({ message: 'Las distribuciones deben enviarse en formato de lista (array)' })
   @ArrayMinSize(1, { message: 'El horario debe tener al menos una distribución de día configurada' })
@@ -103,5 +106,5 @@ export class CreateHorarioDto {
  
   @Type(() => DistribucionDiaDto)
   @Expose()
-  distribuciones: DistribucionDiaDto[];
+  distribuciones: DistribucionDiaDto[]; // Una lista de distribuciones por día para el horario, obligatoria, con validación de que sea un array con al menos una distribución y que cada elemento sea una instancia válida de DistribucionDiaDto
 }

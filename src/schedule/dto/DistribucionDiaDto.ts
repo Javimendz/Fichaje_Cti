@@ -35,7 +35,7 @@ import { DiaSemana } from 'schedule/entities/distribucion-dia.entity';
 
    @IsNotEmpty({ message: 'El total de horas del día es obligatorio' })
   @IsNumber({}, { message: 'Las horas del día deben ser un valor numérico' })
-  // El límite lógico es 24 horas, pero podrías ajustarlo según convenio (ej: 12h)
+  // El límite lógico es 24 horas
   @Min(0, { message: 'Las horas no pueden ser negativas' })
   @Max(24, { message: 'Las horas no pueden superar las 24h por día' })
   // Saneamiento: Asegura que si llega como string ("8.5"), se convierta a número real

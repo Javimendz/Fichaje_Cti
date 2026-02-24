@@ -18,7 +18,19 @@ export class ScheduleService {
   ) {}
 
 
+  /// ---------------------------------------------------------
+  /// MÉTODOS PRINCIPAL: CREAR HORARIO CON DISTRIBUCIONES Y FRANJAS
+  /// --------------------------------------------------------- 
 
+/**
+ *  Crea un nuevo horario con sus distribuciones y franjas horarias asociadas en una transacción atómica.
+ *  Si ocurre algún error durante el proceso, se revierte toda la transacción para mantener la integridad de los datos.
+ * @param dto - Datos para crear el horario, incluyendo distribuciones y franjas
+ * @param user - Información del usuario que realiza la acción, se utiliza para asignar la empresa al horario
+ * @returns El horario completo creado, incluyendo sus distribuciones y franjas, ordenados correctamente
+ * @throws BadRequestException si el usuario no tiene empresa asignada o si ocurre un error durante la creación
+ *  
+ */
 async create(dto: CreateHorarioDto, user: UserPayload) {
   if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
 
@@ -102,6 +114,9 @@ async create(dto: CreateHorarioDto, user: UserPayload) {
   }
 }
 
+// ---------------------------------------------------------
+/// MÉTODOS SECUNDARIOS: OBTENER Y ELIMINAR HORARIOS
+// ---------------------------------------------------------    
 /**
  * Busca todos los horarios activos de una empresa, incluyendo sus distribuciones y franjas, ordenados por fecha de creación descendente.
  * @param empresaId - ID de la empresa para filtrar los horarios
@@ -126,6 +141,9 @@ async create(dto: CreateHorarioDto, user: UserPayload) {
    * 
    * 
    */
+  // ---------------------------------------------------------
+  // MÉTODO SECUNDARIO: OBTENER UN HORARIO POR ID CON VALIDACIÓN DE EMPRESA
+  // ---------------------------------------------------------
   async findOne(id: number, empresaId: number) {
     const horario = await this.horarioRepository.findOne({
       where: { id, empresa: { id: empresaId } },
@@ -145,6 +163,9 @@ async create(dto: CreateHorarioDto, user: UserPayload) {
    * @throws InternalServerErrorException si ocurre un error al eliminar el horario
    * 
    */
+  // ---------------------------------------------------------
+  // MÉTODO SECUNDARIO: ELIMINAR UN HORARIO CON VALIDACIÓN DE EMPRESA
+  // ---------------------------------------------------------  
   async remove(id: number, empresaId: number) {
     await this.findOne(id, empresaId);
     const result = await this.horarioRepository.delete(id);

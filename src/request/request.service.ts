@@ -1,13 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 
 import { Request } from "./entities/request.entity";
 import { RevisionRequest } from "./entities/revision-request.entity";
-import { Ausencia, AusenciaEstado } from "../absence/entities/ausencia.entity"; // Verifica esta ruta
 import { User } from "../auth/entities/user.entity";
 import { CreateRequestDto } from "./dto/create-request.dto";
 import { RevisarRequestDto, RequestStatus } from "./dto/revisar-request.dto";
+import { Ausencia } from "absence/entities/ausencia.entity";
+import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
 
 
 /**
@@ -100,29 +101,37 @@ async create(dto: CreateRequestDto, user: User) {
 }
 
 /**
- *  Revisa una solicitud existente, actualizando su estado y creando una ausencia si es aprobada.
- *   
- * @param id ID de la solicitud a revisar. 
- * @param dto  Datos necesarios para la revisión de la solicitud.
- * @param admin  Usuario administrador que realiza la revisión.
- * @returns  Información sobre el resultado de la revisión.
- * @throws NotFoundException si la solicitud no existe.
- * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
- */
-
- async revisar(id: number, dto: RevisarRequestDto, admin: User) {
-    // 1. Buscar la solicitud cargando relaciones necesarias para la Ausencia futura
+   * Revisa una solicitud existente, actualizando su estado y creando una ausencia si es aprobada.
+   * * @param id ID de la solicitud a revisar. 
+   * @param dto  Datos necesarios para la revisión de la solicitud.
+   * @param admin  Usuario administrador que realiza la revisión.
+   * @returns  Información sobre el resultado de la revisión.
+   * @throws NotFoundException si la solicitud no existe.
+   * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
+   */
+  async revisar(id: number, dto: RevisarRequestDto, admin: User) {
+    // 1. Buscar la solicitud cargando relaciones necesarias
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
-      relations: ['revision', 'usuario', 'empresa'], 
+      relations: ['usuario', 'empresa'], 
     });
 
     if (!solicitud) {
       throw new NotFoundException(`No se encontró la solicitud con ID ${id}`);
     }
 
+    // 🛡️ Seguridad Multi-empresa y Conflicto de Intereses
+    if (solicitud.empresaId !== admin.empresaId) {
+      throw new ForbiddenException('No tienes permiso para revisar solicitudes de otra empresa.');
+    }
+    if (solicitud.usuarioId === admin.id) {
+      throw new ForbiddenException('No puedes revisar tu propia solicitud.');
+    }
+
     // 2. Validaciones de Estado
-    if (solicitud.revision || solicitud.estado !== RequestStatus.PENDIENTE) {
+    const revisionExistente = await this.dataSource.getRepository(RevisionRequest).findOne({ where: { solicitudId: id } });
+    
+    if (revisionExistente || solicitud.estado !== RequestStatus.PENDIENTE) {
       throw new BadRequestException(
         `Esta solicitud ya fue procesada anteriormente. Estado actual: ${solicitud.estado}`
       );
@@ -138,16 +147,15 @@ async create(dto: CreateRequestDto, user: User) {
       // PASO A: Actualizar Estado de la Solicitud
       // ---------------------------------------------------------
       solicitud.estado = dto.estado;
-      // Usamos el manager de la transacción para guardar
       await queryRunner.manager.save(solicitud);
 
       // ---------------------------------------------------------
       // PASO B: Crear Registro de Revisión (Audit Log)
       // ---------------------------------------------------------
       const nuevaRevision = queryRunner.manager.create(RevisionRequest, {
-        solicitud: solicitud, // Pasamos el objeto, no el ID
-        admin: admin,         // Pasamos el objeto admin completo
-        estadoResultante: dto.estado, // Guardamos la decisión
+        solicitudId: solicitud.id, 
+        adminId: admin.id,         
+        estadoResultante: dto.estado,
         comentarioAdmin: dto.comentarioAdmin,
       });
 
@@ -157,28 +165,28 @@ async create(dto: CreateRequestDto, user: User) {
       // PASO C: Generar Ausencia (Solo si fue APROBADA)
       // ---------------------------------------------------------
       if (dto.estado === RequestStatus.APROBADA) {
-    const inicio = new Date(solicitud.fechaInicio);
-    const fin = new Date(solicitud.fechaFin);
-    
-    // Normalización de fechas para el cálculo
-    inicio.setHours(0, 0, 0, 0);
-    fin.setHours(0, 0, 0, 0);
-    
-    const diffTime = Math.abs(fin.getTime() - inicio.getTime());
-    const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const inicio = new Date(solicitud.fechaInicio);
+        const fin = new Date(solicitud.fechaFin);
+        
+        // Normalización de fechas para el cálculo preciso de días
+        inicio.setUTCHours(0, 0, 0, 0);
+        fin.setUTCHours(0, 0, 0, 0);
+        
+        const diffTime = Math.abs(fin.getTime() - inicio.getTime());
+        const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    const nuevaAusencia = queryRunner.manager.create(Ausencia, {
-        tipo: solicitud.tipo,
-        fechaInicio: solicitud.fechaInicio,
-        fechaFin: solicitud.fechaFin,
-        usuarioId: solicitud.usuarioId,
-        // Usamos el ID que viene de la relación cargada o de la columna física
-        empresaId: solicitud.empresaId, 
-        motivo: `Aprobado por ${admin.nombre}: ${solicitud.motivo || 'Sin descripción'}`,
-        estado: AusenciaEstado.APROBADA,
-        diasTotales: diasTotales,
-        diasConsumidos: 0
-    });
+        // 🛠️ SOLUCIÓN: Instanciamos manualmente para evitar el error de DeepPartial
+        // y aseguramos que las fechas entren a la base de datos como strings 'YYYY-MM-DD'.
+        const nuevaAusencia = new Ausencia();
+        nuevaAusencia.tipo = solicitud.tipo as any;
+        nuevaAusencia.fechaInicio = inicio.toISOString().split('T')[0];
+        nuevaAusencia.fechaFin = fin.toISOString().split('T')[0];
+        nuevaAusencia.usuarioId = solicitud.usuarioId;
+        nuevaAusencia.empresaId = solicitud.empresaId;
+        nuevaAusencia.motivo = `Aprobado por ${admin.nombre}: ${solicitud.motivo || 'Sin descripción'}`;
+        nuevaAusencia.estado = AusenciaEstado.APROBADA;
+        nuevaAusencia.diasTotales = diasTotales;
+        nuevaAusencia.diasConsumidos = 0;
 
         await queryRunner.manager.save(nuevaAusencia);
       }
@@ -197,7 +205,7 @@ async create(dto: CreateRequestDto, user: User) {
       await queryRunner.rollbackTransaction();
       console.error('Error en transacción de revisión:', error);
       
-      if (error.code === '23505') { // Error unique constraint (por si acaso)
+      if (error.code === '23505') { 
          throw new BadRequestException('Esta solicitud ya tiene una revisión registrada.');
       }
       
@@ -206,7 +214,6 @@ async create(dto: CreateRequestDto, user: User) {
       await queryRunner.release();
     }
   }
-
 /**
  *  Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.
  *  

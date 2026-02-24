@@ -62,13 +62,11 @@ export class Horario {
   @JoinColumn({ name: 'empresa_id' }) // Vincula con la columna física
   empresa: Company;
 
-  // 2. Columna Física (AHORA PERMITIMOS ESCRITURA)
-  // Quitamos insert:false y update:false para poder asignar el ID manualmente
+  // 2. Columna Física 
   @Column({ name: 'empresa_id' }) 
   empresaId: number;
 
   // Relación con los días (Lunes, Martes...)
-  // cascade: true permite guardar el horario y sus días en una sola operación
 @OneToMany(() => DistribucionDia, (dist) => dist.horario, { 
   cascade: true,
     eager: true

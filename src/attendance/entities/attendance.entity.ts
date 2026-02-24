@@ -4,30 +4,40 @@ import {
   Column, 
   ManyToOne, 
   JoinColumn, 
-  CreateDateColumn 
+  CreateDateColumn, 
+  Index
 } from 'typeorm';
 import { IsBoolean, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 import { User } from 'users/entities/user.entity';
-
+@Index(['usuarioId', 'fechaJornada'], { unique: true })
 @Entity('attendances')
 export class Attendance {
   
   @PrimaryGeneratedColumn()
   id: number;
 
+
+@Column({ 
+  name: 'empresa_id', 
+  type: 'int',        // 👈 ESTA ES LA CLAVE: Forzamos el tipo a entero
+  // o
+  nullable: true 
+})  empresaId: number | null;
   // -----------------------------------------------------
   // COLUMNA DE CLAVE FORÁNEA (EXPLÍCITA)
   // -----------------------------------------------------
   // Es útil tener el ID disponible sin cargar toda la relación.
   // Nota: Debe coincidir con el nombre en @JoinColumn
   @Column({ name: 'usuario_id' })
-  @IsNotEmpty({ message: 'El ID del usuario es obligatorio' })
-  @IsNumber({}, { message: 'El usuarioId debe ser un número' })
   usuarioId: number;
 
   // -----------------------------------------------------
   // DATOS DE LA ASISTENCIA
   // -----------------------------------------------------
+
+  @Column({ type: 'date', name: 'fecha_jornada' })
+  fechaJornada: string;
+
   @CreateDateColumn({ type: 'timestamp', name: 'fecha' })
   @IsDate()
   fecha: Date;

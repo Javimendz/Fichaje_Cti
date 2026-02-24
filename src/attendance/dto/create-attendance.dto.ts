@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsNotEmpty,  MinLength, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty,  MinLength, MaxLength, IsString, ValidateIf } from 'class-validator';
 
 
 // DTO para crear un nuevo registro de asistencia (fichaje) de un trabajador.
@@ -24,8 +24,11 @@ export class CreateAttendanceDto {
     @Expose()
     presente: boolean;
 
-  @MinLength(5, { message: 'El motivo debe ser más descriptivo (mínimo 5 caracteres)' })
-    @MaxLength(255, { message: 'El motivo es demasiado largo (máximo 255 caracteres)' })
-    @Expose()
-    motivo?: string;
+  @IsString({ message: 'El motivo debe ser texto' })
+  @ValidateIf(o => o.presente === false)
+  @IsNotEmpty({ message: 'Es obligatorio indicar un motivo si no estás presente' })
+  @MinLength(5, { message: 'El motivo debe ser más descriptivo' })
+  @MaxLength(255)
+  @Expose()
+  motivo?: string;
 }

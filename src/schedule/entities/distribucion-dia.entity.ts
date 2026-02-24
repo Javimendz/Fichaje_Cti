@@ -25,6 +25,9 @@ import { Exclude } from "class-transformer";
  * @enum DiaSemana define los días de la semana disponibles para la distribución.
  *  
  */  
+
+// Enum para los días de la semana
+
 export enum DiaSemana {
   LUNES = 'LUNES',
   MARTES = 'MARTES',
@@ -46,11 +49,13 @@ export class DistribucionDia {
     type: 'enum',
     enum: DiaSemana,
     default: DiaSemana.LUNES
-  })
+  }) // Columna para el día de la semana, utilizando el enum DiaSemana
   diaSemana: DiaSemana;
 
   @Column('float', { default: 0 })
-  horasDia: number;
+  horasDia: number; // Columna para almacenar el total de horas asignadas a este día
+
+  // Relación con el horario padre (N:1)
 
   // PADRE
   @ManyToOne(() => Horario, (horario) => horario.distribuciones, { 
@@ -59,12 +64,14 @@ export class DistribucionDia {
   })
   @Exclude()
   @JoinColumn({ name: 'horario_id' })
-  horario: Horario;
+  horario: Horario; // Relación con el horario al que pertenece esta distribución
 
   
   @Column({ name: 'horario_id' })
   @Index()
-  horarioId: number;
+  horarioId: number; // Columna física para almacenar el ID del horario, indexada para mejorar el rendimiento de las consultas
+
+  // Relación con las franjas horarias (1:N)
 
   // HIJOS
   @OneToMany(() => FranjaHoraria, (franja) => franja.distribucionDia, {
@@ -74,7 +81,7 @@ export class DistribucionDia {
   franjas: FranjaHoraria[];
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt: Date; // Columna para almacenar la fecha de creación del registro
 
   
 

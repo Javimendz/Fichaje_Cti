@@ -58,7 +58,7 @@ import { RequestModule } from './request/request.module';
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
         synchronize: true,
-        dropSchema: false,  
+        dropSchema: false, // Cambiado a false para evitar pérdida de datos en producción
         extra: {
            timezone: 'UTC', 
         },

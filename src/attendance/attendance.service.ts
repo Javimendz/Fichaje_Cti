@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { UserPayload } from 'auth/interfaces/user-payload.interface';
 
 
 // 🟢 AttendanceService
@@ -29,14 +30,24 @@ export class AttendanceService {
     * El sistema vincula automáticamente el registro con el ID del usuario autenticado.
     * Solo los usuarios con rol ADMIN o WORKER pueden acceder a este método para registrar asistencias, excluyendo a los superadministradores que no deberían tener esta función.
     */
-  async create(usuarioId: number, dto: CreateAttendanceDto) {
-    const record = this.attendanceRepository.create({
-      presente: dto.presente,
-      motivo: dto.motivo,
-      usuario: { id: usuarioId } as any // Vinculación directa por ID
-      // Si en la entidad tienes 'empresaId', deberías pasarlo aquí también para facilitar las búsquedas
+  async create(user: UserPayload, dto: CreateAttendanceDto) {
+    const hoy = new Date().toLocaleDateString('en-CA'); // Formato YYYY-MM-DD estable
+
+    const existing = await this.attendanceRepository.findOne({
+      where: { usuarioId: user.id, fechaJornada: hoy }
     });
-    
+
+    if (existing) {
+      throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
+    }
+
+    const record = new Attendance();
+    record.presente = dto.presente;
+    record.motivo = dto.motivo;
+    record.usuarioId = user.id;
+    record.empresaId = user.empresaId ?? null;
+    record.fechaJornada = hoy;
+
     return await this.attendanceRepository.save(record);
   }
 
@@ -45,10 +56,16 @@ export class AttendanceService {
     * El sistema devuelve todas las asistencias registradas por el usuario autenticado, ordenadas por fecha (más reciente primero).     
     *   @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan revisar su historial personal de asistencias, lo cual es útil para que los administradores también puedan verificar sus propios registros.
     */
-  async findAllByUser(usuarioId: number) {
+  async findAllByUser(usuarioId: number, empresaId?: number) {
+    const where: any = { usuarioId };
+    
+    if (empresaId) {
+      where.empresaId = empresaId;
+    }
+
     return await this.attendanceRepository.find({
-      where: { usuario: { id: usuarioId } },
-      order: { fecha: 'DESC' }, 
+      where,
+      order: { fechaJornada: 'DESC' },
     });
   }
 
@@ -59,14 +76,11 @@ export class AttendanceService {
     * Solo los usuarios con rol ADMIN pueden acceder a este método para revisar el historial de asistencias de su empresa, asegurando que los trabajadores no puedan ver los registros de otros empleados.
     * @Roles(UserRole.ADMIN) garantiza que solo los administradores puedan acceder a este método, protegiendo la privacidad de los trabajadores y asegurando que solo el personal autorizado pueda revisar los registros de asistencia de la empresa.
     */
-  async findAllByEmpresa(empresaId: number) {
+ async findAllByEmpresa(empresaId: number) {
     return await this.attendanceRepository.find({
-      // Hacemos un JOIN con el usuario para filtrar por su empresaId
-      where: { 
-        usuario: { empresaId: empresaId } 
-      },
-      relations: ['usuario'], // Traemos el usuario para que el admin sepa quién fichó
-      order: { fecha: 'DESC' }, 
+      where: { empresaId },
+      relations: ['usuario'],
+      order: { fechaJornada: 'DESC', fecha: 'DESC' }
     });
   }
 }

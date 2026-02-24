@@ -1,37 +1,48 @@
-// src/ausencia/entities/ausencia.entity.ts
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { 
+  Column, 
+  Entity, 
+  PrimaryGeneratedColumn, 
+  CreateDateColumn, 
+  UpdateDateColumn,
+  ManyToOne, 
+  JoinColumn, 
+  Index 
+} from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
+import { AusenciaEstado, TipoAusencia } from 'absence/dto/ausencia-estado.enum';
 
-export enum AusenciaEstado {
-  PENDIENTE = 'PENDIENTE',
-  APROBADA = 'APROBADA',
-  RECHAZADA = 'RECHAZADA'
-}
+
 
 @Entity('ausencias')
 export class Ausencia {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  tipo: string; 
+  //   Restringimos a valores exactos del Enum
+  @Column({ type: 'enum', enum: TipoAusencia })
+  tipo: TipoAusencia; 
 
+  // Tipado correcto. TypeORM devuelve un string ('YYYY-MM-DD') 
+  // cuando la columna es type: 'date'.
   @Column({ name: 'fecha_inicio', type: 'date' })
-  fechaInicio: Date;
+  fechaInicio: string;
 
   @Column({ name: 'fecha_fin', type: 'date' })
-  fechaFin: Date;
+  fechaFin: string;
 
-  @Column({ nullable: true })
-  motivo: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  motivo?: string | null;
 
   @Column({ type: 'enum', enum: AusenciaEstado, default: AusenciaEstado.APROBADA })
   estado: AusenciaEstado;
 
-  @Column({ name: 'usuario_id' })
+  //  Índices de Base de Datos y Tipos Explícitos ('int')
+  @Index()
+  @Column({ name: 'usuario_id', type: 'int' })
   usuarioId: number;
 
-  @Column({ name: 'empresa_id' }) 
+  @Index()
+  @Column({ name: 'empresa_id', type: 'int' }) 
   empresaId: number;
 
   @Column({ name: 'dias_consumidos', type: 'int', default: 0 })
@@ -41,12 +52,16 @@ export class Ausencia {
   diasTotales: number;
 
   @ManyToOne(() => User, (user) => user.ausencias, { 
-  nullable: false, 
-  onDelete: 'CASCADE' 
-})
-@JoinColumn({ name: 'usuario_id' })
-usuario: User;
+    nullable: false, 
+    onDelete: 'CASCADE' 
+  })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario: User;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  // Rastro de auditoría
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

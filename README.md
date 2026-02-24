@@ -343,7 +343,7 @@ Requerido el token del admin.
 
 ```
 
-Patch - http://localhost:3000/api/solicitudes/AQUI-PONER-ID-SOLICITUD/revisar
+Patch - http://localhost:3000/api/request/check/AQUI-PONER-ID-SOLICITUD
 
 Body - Json
 
@@ -585,7 +585,7 @@ GET         /api/jornada/rango?desde=2023-01-01&hasta=2023-01-31     Filtra fich
 ```
 ASISTENCIAS
 🛠️ Método    📍 Endpoint                           📝 Descripción                                     📦 Requerimientos / Body
-POST /api/asistencia Registra un nuevo fichaje (presencia).Body: { presente: boolean, motivo?: string }
+POST /api/asistencia/crear-asistencia Registra un nuevo fichaje (presencia).Body: { presente: boolean, motivo?: string }
 GET  /api/asistencia/my-history Obtiene el historial de fichajes del usuario.Token JWT (Worker o Admin).
 GET  /api/asistencia/empresa   Obtiene listado de fichajes de toda la empresa.Token JWT
 GET  /api/asistencia/user/:id  Obtiene el historial de un usuario específico.Param: id | Token JWT

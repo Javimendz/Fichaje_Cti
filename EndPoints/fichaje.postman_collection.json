@@ -169,16 +169,6 @@
     {
       "name": "login Super",
       "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YWZiYWUwMy02NzE3LTQ5ZTgtYWIwYS00ZTJkMmY3N2YwZGEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImFjMTdmNDdlLWVkMjEtNGE2NS05NDNiLTlhNjgwOTc2NGM0MiIsImlhdCI6MTc2ODI5NTE4NCwiZXhwIjoxNzY4Mjk4Nzg0fQ.9Ig9Z5zTyQHq4xZR-s2ASlt7rQeDLlTQJe_Dg1AGYYE",
-              "type": "string"
-            }
-          ]
-        },
         "method": "POST",
         "header": [
           {
@@ -194,7 +184,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n      \"email\": \"superadmin@cti.com\",\r\n  \"password\": \"superpassword\"\r\n}",
+          "raw": "{\r\n      \"email\": \"superadmin@cti.com\",\r\n  \"password\": \"superpassword123M\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -225,7 +215,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyMDM1NTksImV4cCI6MTc3MDI0Njc1OX0.pmKKBg7sIXB4vpkWyWWt5_c4Nl1-2ZK5OYOxP8nNTNs",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5MjEzODMsImV4cCI6MTc3MTk2NDU4M30.F_K2dwMygPgpnmlGqHdKhOjz22dfuavwDdGZXEkONnA",
               "type": "string"
             }
           ]
@@ -248,7 +238,7 @@
           "raw": "\r\n\r\n{\r\n  \"nombreEmpresa\": \"Global Tech Logistics S.A.\",\r\n  \"cif\": \"A87654321\",\r\n  \"direccion\": \"Avenida Central 100, Planta 5\",\r\n  \"poblacion\": \"Barcelona\",\r\n  \"provincia\": \"Barcelona\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"ops@globaltech.com\",\r\n  \"codigoPostal\": \"08001\",\r\n  \"nombreContacto\": \"Marta Sánchez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"+34934123457\",\r\n  \r\n  \"admin\": {\r\n    \"telefono\": \"+34600000001\",\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n  }\r\n}"
         },
         "url": {
-          "raw": "http://localhost:3000/api/empresas/setup",
+          "raw": "http://localhost:3000/api/empresa/crear-empresa",
           "protocol": "http",
           "host": [
             "localhost"
@@ -256,8 +246,8 @@
           "port": "3000",
           "path": [
             "api",
-            "empresas",
-            "setup"
+            "empresa",
+            "crear-empresa"
           ]
         }
       },
@@ -271,7 +261,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YWZiYWUwMy02NzE3LTQ5ZTgtYWIwYS00ZTJkMmY3N2YwZGEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImFjMTdmNDdlLWVkMjEtNGE2NS05NDNiLTlhNjgwOTc2NGM0MiIsImlhdCI6MTc2ODI5NTE4NCwiZXhwIjoxNzY4Mjk4Nzg0fQ.9Ig9Z5zTyQHq4xZR-s2ASlt7rQeDLlTQJe_Dg1AGYYE",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
               "type": "string"
             }
           ]
@@ -373,7 +363,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyODA3OTcsImV4cCI6MTc3MDMyMzk5N30.fI-FkN0jmaxs1A8e2GkgZU89nzoEhu5yGGwViKSn_Ik",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
               "type": "string"
             }
           ]
@@ -382,7 +372,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123453\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"12345678A\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
+          "raw": "{\r\n  \"telefono\": \"600123435\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"87654321X\",\r\n  \"email\": \"jua7ss888@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 2\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -407,26 +397,19 @@
     },
     {
       "name": "listar Workers",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAzODc4NDUsImV4cCI6MTc3MDQzMTA0NX0.HecDdLkqI_DinuLQOWDLNrHmDhxYsVz1pFTpfC-z4EQ",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
               "type": "string"
             }
           ]
         },
         "method": "GET",
         "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123456\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"12345678Z\",\r\n  \"email\": \"juan.perez@empresa.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}"
-        },
         "url": {
           "raw": "http://localhost:3000/api/worker/list-workers",
           "protocol": "http",
@@ -483,7 +466,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyODA3OTcsImV4cCI6MTc3MDMyMzk5N30.fI-FkN0jmaxs1A8e2GkgZU89nzoEhu5yGGwViKSn_Ik",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
               "type": "string"
             }
           ]
@@ -492,7 +475,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123445\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\"\r\n}",
+          "raw": "{\r\n  \"telefono\": \"600123443\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 3\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -500,7 +483,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/worker/update/1",
+          "raw": "http://localhost:3000/api/worker/update/8",
           "protocol": "http",
           "host": [
             "localhost"
@@ -510,7 +493,7 @@
             "api",
             "worker",
             "update",
-            "1"
+            "8"
           ]
         }
       },
@@ -595,7 +578,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0MTUxNjMsImV4cCI6MTc3MTQ1ODM2M30.c1mPIH0ZbXzciEBx9jdUVhYkqbEgBq2YaOw9DcLQ1aE",
               "type": "string"
             }
           ]
@@ -686,7 +669,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjE0NDEsImV4cCI6MTc3MTk2NDY0MX0._cdxWhIE5SY-w70IDQmeH1cCoMcrrHO5J0oNPYNpibM",
               "type": "string"
             }
           ]
@@ -695,7 +678,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"tipo\": \"ENFERMEDAD\",\r\n  \"fechaInicio\": \"2026-10-03\",\r\n  \"fechaFin\": \"2026-11-15\",\r\n  \"motivo\": \"Vacaciones de verano\"\r\n}",
+          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fechaInicio\": \"2027-08-10\",\r\n    \"fechaFin\": \"2027-08-15\",\r\n    \"motivo\": \"Viaje a la playa\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -761,15 +744,24 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzAyMDM1ODcsImV4cCI6MTc3MDI0Njc4N30.XFuwWsKIU7y-_fSz9-G2vVYrKrnvz7hf84kDND-5fkU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjE0NDEsImV4cCI6MTc3MTk2NDY0MX0._cdxWhIE5SY-w70IDQmeH1cCoMcrrHO5J0oNPYNpibM",
               "type": "string"
             }
           ]
         },
-        "method": "PATCH",
+        "method": "PUT",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"estado\": \"APROBADA\",\r\n  \"comentarioAdmin\": \"Disfruta tus vacaciones\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "http://localhost:3000/api/solicitudes/011ba7a7-f18f-4ed0-b5cb-5c9264bdd9cc/revisar",
+          "raw": "http://localhost:3000/api/request/check/3",
           "protocol": "http",
           "host": [
             "localhost"
@@ -777,9 +769,9 @@
           "port": "3000",
           "path": [
             "api",
-            "solicitudes",
-            "011ba7a7-f18f-4ed0-b5cb-5c9264bdd9cc",
-            "revisar"
+            "request",
+            "check",
+            "3"
           ]
         }
       },
@@ -788,11 +780,21 @@
     {
       "name": "schedules",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjksInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoyLCJpYXQiOjE3NzE5MTg1MzIsImV4cCI6MTc3MTk2MTczMn0.kn0lxbeKLpT6xQdBbrYUnicoecFJZ1FTwl_Igu8BQrM",
+              "type": "string"
+            }
+          ]
+        },
         "method": "POST",
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"nombre\": \"Horario Oficina Central 2026\",\r\n  \"fechaInicio\": \"2026-02-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"FIJO\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"Lunes\",\r\n      \"horasDia\": 9, \r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"Martes\",\r\n      \"horasDia\": 8,\r\n      \"franjas\": [\r\n        { \"inicio\": \"09:00\", \"fin\": \"17:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "raw": "{\r\n  \"nombre\": \"Horario Invierno 2026 - IT\",\r\n  \"fechaInicio\": \"2026-01-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"FIJO\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"LUNES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"MIERCOLES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"VIERNES\",\r\n      \"horasDia\": 7,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"15:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -823,7 +825,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
               "type": "string"
             }
           ]
@@ -832,7 +834,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"horarioId\": \"1\"\r\n}",
+          "raw": "{\r\n  \"horarioId\": \"2\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -840,7 +842,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/worker/assign-schedule/51",
+          "raw": "http://localhost:3000/api/worker/assign-schedule/6",
           "protocol": "http",
           "host": [
             "localhost"
@@ -850,7 +852,7 @@
             "api",
             "worker",
             "assign-schedule",
-            "51"
+            "6"
           ]
         }
       },
@@ -906,7 +908,7 @@
         "method": "DELETE",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/schedule/delete/3",
+          "raw": "http://localhost:3000/api/schedule/delete/4",
           "protocol": "http",
           "host": [
             "localhost"
@@ -916,21 +918,21 @@
             "api",
             "schedule",
             "delete",
-            "3"
+            "4"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Attendance",
+      "name": "crear asistencia",
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NzE0MjBiZC0zOTAyLTRmZGItYWE5Ni0wNDRjMzhiODYxYTAiLCJyb2wiOiJTVVBFUkFETUlOIiwiaWF0IjoxNzY5NTk0MTQxLCJleHAiOjE3Njk2MzczNDF9.QsicJD2a9QTb4n_wme_KKufujDkKMUes6s_Xhfg99eM",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
               "type": "string"
             }
           ]
@@ -947,7 +949,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/attendance",
+          "raw": "http://localhost:3000/api/asistencia/crear-asistencia",
           "protocol": "http",
           "host": [
             "localhost"
@@ -955,7 +957,123 @@
           "port": "3000",
           "path": [
             "api",
-            "attendance"
+            "asistencia",
+            "crear-asistencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia my-history",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/my-history",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "my-history"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia empresa",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/empresa",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "empresa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia listar asistencia",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/user/2",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "user",
+            "2"
           ]
         }
       },
@@ -969,7 +1087,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyMDM1NTksImV4cCI6MTc3MDI0Njc1OX0.pmKKBg7sIXB4vpkWyWWt5_c4Nl1-2ZK5OYOxP8nNTNs",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUyLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NiwiaWF0IjoxNzcwODg2MTkwLCJleHAiOjE3NzA5MjkzOTB9.ORQFZhV12SVLZ4fYglOnXXEFl5hQJYHc8O6ygonWl_U",
               "type": "string"
             }
           ]
@@ -977,7 +1095,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/users/1",
+          "raw": "http://localhost:3000/api/users/find/55",
           "protocol": "http",
           "host": [
             "localhost"
@@ -986,7 +1104,8 @@
           "path": [
             "api",
             "users",
-            "1"
+            "find",
+            "55"
           ]
         }
       },
@@ -997,6 +1116,493 @@
       "request": {
         "method": "GET",
         "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar Worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzA3MTE3MjAsImV4cCI6MTc3MDc1NDkyMH0.ZD9X6ovoG0oggcsapeyyV8-bb7sS6gny2j6T1Gujk50",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/worker/update/59",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "update",
+            "59"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.test(\"Asignación exitosa\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    pm.expect(pm.response.json().message).to.include(\"correctamente\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUyLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NiwiaWF0IjoxNzcwODg2MTkwLCJleHAiOjE3NzA5MjkzOTB9.ORQFZhV12SVLZ4fYglOnXXEFl5hQJYHc8O6ygonWl_U",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"horarioId\": 7\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/assign-schedule/63",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "assign-schedule",
+            "63"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "listar-ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/crear-asistencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "crear-asistencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mis ausencias",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "find-ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcxNDkxODM1LCJleHAiOjE3NzE0OTU0MzV9.NbrgqGPwh6coNmGDHdWv96GpSAT0x0QwwPQnLyPjbYo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/find/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "find",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "estado",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"estado\": \"RECHAZADA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/estado/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "estado",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fecha_inicio\": \"2026-08-16\",\r\n    \"fecha_fin\": \"2026-08-20\",\r\n    \"motivo\": \"Segunda parte de mis vacaciones\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/crear-ausencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "crear-ausencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ver mis ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/mis-ausencias",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "mis-ausencias"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ausencia balance",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"año\": 2026,\r\n    \"dias_totales_año\": 22,\r\n    \"dias_gastados\": 5,\r\n    \"dias_disponibles\": 17\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/balance",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "balance"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"motivo\": \"Gripe fuerte y bronquitis (actualizado)\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/update/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "update",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "list-ausencias",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"motivo\": \"Gripe fuerte y bronquitis (actualizado)\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/list-ausencias",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "list-ausencias"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "aprobar ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"estado\": \"APROBADA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/estado/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "estado",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "consultar worker de otra empresa",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"fecha_inicio\": \"2026-08-14\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/update/5",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "update",
+            "5"
+          ]
+        }
       },
       "response": []
     }

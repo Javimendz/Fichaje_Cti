@@ -8,14 +8,13 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { CreateAdminDto } from "./dto/create-admin.dto";
 import { CreateWorkerDto } from "./dto/create-worker.dto";
 import { UserRole } from "auth/roles.enum";
 import type { UserPayload } from "auth/interfaces/user-payload.interface"; 
 import { User } from "./entities/user.entity";
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
 
-type CreateUserDto = CreateAdminDto | CreateWorkerDto;
 
 // El servicio de User se encarga de gestionar la lógica de negocio relacionada con los usuarios del sistema. Incluye métodos para crear, listar, obtener por ID, actualizar y eliminar usuarios, respetando la jerarquía de roles y la seguridad de acceso a los datos. El método de creación es unificado para Admins y Workers, delegando toda la lógica de validación y asignación de roles al servicio, lo que mantiene el controlador limpio y enfocado en manejar las solicitudes HTTP. Además, el servicio maneja las excepciones de manera profesional, lanzando errores específicos para casos como datos duplicados, permisos insuficientes o recursos no encontrados.
 /**
@@ -45,41 +44,59 @@ export class UserService {
 
   // 1. Lógica de Empresa (SuperAdmin vs Admin)
   if (currentUser.rol === UserRole.SUPERADMIN) {
-    if (!dto.empresaId) throw new BadRequestException('Debe especificar empresaId');
-    empresaIdFinal = Number(dto.empresaId);
+    // Si es SuperAdmin, debe venir un ID de empresa en el DTO
+    if (!dto.empresaId) throw new BadRequestException('Debe especificar empresaId para asignar al nuevo Administrador');
+    empresaIdFinal = dto.empresaId;
   } else {
-    if (!currentUser.empresaId) throw new ForbiddenException('No tienes empresa asociada');
+    // Si es Admin, forzamos que el nuevo usuario herede SU empresa
+    if (!currentUser.empresaId) throw new ForbiddenException('No tienes empresa asociada para crear usuarios');
     empresaIdFinal = currentUser.empresaId;
   }
 
-  // 2. Rol solicitado (Limpieza de array si viene como ["ADMIN"])
-  const rolSolicitado = Array.isArray(dto.rol) ? dto.rol[0] : (dto.rol || UserRole.WORKER);
+  // 2. Extracción y normalización del rol
+  const rolExtraido = Array.isArray(dto.rol) ? dto.rol[0] : dto.rol;
+  const rolSolicitado = (rolExtraido || UserRole.WORKER) as UserRole;
 
-  if (rolSolicitado === UserRole.SUPERADMIN && currentUser.rol !== UserRole.SUPERADMIN) {
-    throw new ForbiddenException('No puedes crear un SuperAdmin');
+  // --- 🛡️ LÓGICA DE JERARQUÍA Y PRIVACIDAD SaaS ---
+
+  // REGLA A: Seguridad Global - Nadie crea SuperAdmins
+  if (rolSolicitado === UserRole.SUPERADMIN) {
+    throw new ForbiddenException('No se pueden crear cuentas de SuperAdmin por seguridad del sistema');
   }
 
-  //  Hashing de Contraseña (VITAL para que la DB no reciba nulos o basura)
+  // REGLA B: Restricción del SuperAdmin (Solo crea Admins)
+  if (currentUser.rol === UserRole.SUPERADMIN && rolSolicitado !== UserRole.ADMIN) {
+    throw new ForbiddenException('El SuperAdmin solo tiene permiso para crear Administradores de empresa');
+  }
+
+  // REGLA C: Restricción del Admin (Solo crea Workers)
+  if (currentUser.rol === UserRole.ADMIN && rolSolicitado !== UserRole.WORKER) {
+    throw new ForbiddenException('Como Administrador, solo puedes registrar trabajadores (WORKER)');
+  }
+  // ------------------------------------------------
+
+  // 3. Hashing de Contraseña
   const passwordHash = dto.password 
     ? await bcrypt.hash(dto.password, 10) 
-    : await bcrypt.hash('Temporal123!', 10); // Contraseña por defecto si no viene
+    : await bcrypt.hash('Temporal123!', 10);
 
-  //  Crear objeto compatible con la Entidad
- const newUser = this.userRepository.create({
-  ...dto,            // Campos generales (nombre, email, etc.)
-  password: passwordHash,
-  rol: rolSolicitado as UserRole,
-  empresaId: empresaIdFinal, 
-  isActive: true,
-  isVerified: true,
-});
+  // 4. Creación del objeto compatible con la Entidad
+  const newUser = this.userRepository.create({
+    ...dto,
+    password: passwordHash,
+    rol: rolSolicitado,
+    empresaId: empresaIdFinal, 
+    isActive: true,
+    isVerified: true,
+  });
 
   try {
     return await this.userRepository.save(newUser);
   } catch (error) {
     console.error("ERROR DB:", error);
-    if (error.code === '23505') throw new BadRequestException('DNI, Email o Teléfono duplicado');
-    throw new InternalServerErrorException('Error al guardar: ' + error.message);
+    // Error 23505 es el código de PostgreSQL para violación de restricción UNIQUE (DNI/Email)
+    if (error.code === '23505') throw new BadRequestException('DNI, Email o Teléfono ya registrados en el sistema');
+    throw new InternalServerErrorException('Error crítico al guardar el usuario: ' + error.message);
   }
 }
   // ========================
@@ -92,20 +109,33 @@ export class UserService {
    * * Este endpoint proporciona una forma clara y segura de listar usuarios, respetando la jerarquía de roles y la seguridad de acceso a los datos, mientras mantiene el controlador enfocado en manejar las solicitudes HTTP. El método delega toda la lógica de filtrado y validación al UserService, que se encargará de validar los permisos del usuario autenticado y devolver la lista de usuarios correspondiente según su rol y empresa.
    * * El método utiliza un QueryBuilder para construir la consulta de manera flexible, permitiendo incluir condiciones dinámicas según el rol del usuario. Además, se maneja la respuesta de manera profesional, formateando los datos antes de devolverlos al controlador.
    */ 
-  async findAllByUser(currentUser: UserPayload) {
-    if (currentUser.rol === UserRole.SUPERADMIN) {
-      return await this.userRepository.find({ relations: ['empresa'] });
-    }
-    
-    if (!currentUser.empresaId) {
-      throw new ForbiddenException('El administrador no tiene una empresa asignada');
-    }
-
-    return await this.userRepository.find({
-      where: { empresaId: currentUser.empresaId },
+ async findAllByUser(currentUser: UserPayload) {
+  // 1. Verificación para SuperAdmin
+  if (currentUser.rol === UserRole.SUPERADMIN) {
+    // Solo listamos a los Administradores de todas las empresas
+    return await this.userRepository.find({ 
+      where: { rol: UserRole.ADMIN },
       relations: ['empresa'],
+      order: { createdAt: 'DESC' }
     });
   }
+  
+  // 2. Verificación para Admin
+  if (!currentUser.empresaId) {
+    throw new ForbiddenException('No tienes una empresa asignada para listar usuarios');
+  }
+
+  // El Admin solo lista a los trabajadores de su propia empresa
+  // Excluimos su propio registro de la lista por orden (opcional)
+  return await this.userRepository.find({
+    where: { 
+      empresaId: currentUser.empresaId,
+      rol: UserRole.WORKER 
+    },
+    relations: ['empresa'],
+    order: { nombre: 'ASC' }
+  });
+}
 
   // ========================
   // OBTENER USUARIO POR ID
@@ -172,10 +202,11 @@ export class UserService {
    * @returns Resultado de la operación de eliminación. Si el usuario no existe, el solicitante no tiene acceso a él, o la eliminación falla por validación o permisos, se lanzará una excepción que será manejada por el UserService.
    * * Este endpoint permite eliminar un usuario específico, respetando la jerarquía de roles y la seguridad de acceso a los datos. La eliminación es lógica (soft delete), lo que significa que el usuario no se elimina físicamente de la base de datos, sino que se marca como inactivo o eliminado. El método delega toda la lógica de validación y eliminación al UserService, manteniendo el controlador enfocado en manejar las solicitudes HTTP.
    */
-  async remove(id: number, currentUser: UserPayload) {
+ async remove(id: number, currentUser: UserPayload) {
     const user = await this.findOneById(id, currentUser);
     
-    if (user.id === currentUser.userId) {
+    // 🛡️ CORRECCIÓN: Ajustado a currentUser.id para evitar la auto-eliminación
+    if (user.id === currentUser.id) {
         throw new ForbiddenException('No puedes eliminar tu propia cuenta');
     }
 

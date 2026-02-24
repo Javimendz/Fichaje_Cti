@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
 
 // Auth & Security
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
@@ -22,6 +21,7 @@ import { UserRole } from 'auth/roles.enum';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { Put } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
 
 /**
  * UsersController
@@ -50,15 +50,15 @@ export class UserController {
    * @returns El usuario creado. Si la creación falla por validación o permisos, se lanzará una excepción que será manejada por el UserService.
    * * Este endpoint unificado simplifica la creación de usuarios, evitando la necesidad de tener endpoints separados para Admins y Workers, y centraliza la lógica de creación en el UserService, lo que mejora la mantenibilidad y claridad del código.
    */
-  @Post('crear-user')
+@Post('crear-user')
   @Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
   async create(
-    @Body() dto: CreateAdminDto, 
+    @Body() dto: CreateUserDto, 
     @GetUser() currentUser: UserPayload,
   ) {
+    
     return this.usersService.create(dto, currentUser);
   }
-
 
   // ========================
   // LISTAR USUARIOS
@@ -113,7 +113,7 @@ export class UserController {
    * * Este endpoint permite actualizar la información de un usuario específico, respetando la jerarquía de roles y la seguridad de acceso a los datos. El método delega toda la lógica de validación y actualización al UserService, manteniendo el controlador enfocado en manejar las solicitudes HTTP.  
    */
   @Put('update/:id')
-  @Roles(UserRole.ADMIN) //SUper admin no puede actualizar trabajador cambiarlo
+  @Roles(UserRole.ADMIN) 
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,

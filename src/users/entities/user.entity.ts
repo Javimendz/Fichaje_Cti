@@ -7,6 +7,7 @@ import { Horario } from 'schedule/entities/schedules.entity';
 import { Worker } from 'worker/entities/worker.entity'
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
 import { Attendance } from 'attendance/entities/attendance.entity';
+import { Exclude } from 'class-transformer';
 
 
 /**
@@ -52,7 +53,9 @@ export class User { // Definición de la entidad User
   type: 'text', 
   nullable: false, // La base de datos no permitirá nulos
   select: false    // Seguridad: No se envía en los GET
-})  password: string | null; // Contraseña del usuario (hashed)
+})  
+@Exclude({ toPlainOnly: true })
+password: string | null; // Contraseña del usuario (hashed)
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER }) // Rol del usuario con valor por defecto WORKER
   rol: UserRole; // Rol del usuario en el sistema

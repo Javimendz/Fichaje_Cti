@@ -1,26 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAlarmDto } from './dto/create-alarm.dto';
-import { UpdateAlarmDto } from './dto/update-alarm.dto';
+import { InjectRepository } from "@nestjs/typeorm";
+import { Alarm, AlarmType } from "./entities/alarm.entity";
+import { Repository } from "typeorm";
+import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class AlarmsService {
-  create(createAlarmDto: CreateAlarmDto) {
-    return 'This action adds a new alarm';
+  constructor(
+    @InjectRepository(Alarm)
+    private readonly alarmRepository: Repository<Alarm>,
+  ) {}
+
+  // Generar una alarma de forma manual o automática
+  async triggerAlarm(
+    usuarioId: number, 
+    empresaId: number, 
+    tipo: AlarmType, 
+    descripcion: string
+  ) {
+    const alarma = this.alarmRepository.create({
+      usuario: { id: usuarioId } as any,
+      empresaId,
+      tipo,
+      descripcion,
+    });
+    return await this.alarmRepository.save(alarma);
   }
 
-  findAll() {
-    return `This action returns all alarms`;
+
+  // Listar alarmas para el administrador de la empresa
+  async findAllByCompany(empresaId: number) {
+    return await this.alarmRepository.find({
+      where: { empresaId, revisada: false },
+      relations: ['usuario'],
+      order: { createdAt: 'DESC' }
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} alarm`;
-  }
-
-  update(id: number, updateAlarmDto: UpdateAlarmDto) {
-    return `This action updates a #${id} alarm`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} alarm`;
+  async markAsRead(id: number, empresaId: number) {
+    return await this.alarmRepository.update({ id, empresaId }, { revisada: true });
   }
 }

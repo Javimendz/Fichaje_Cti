@@ -14,7 +14,8 @@ import {
   Min,
   Max,
   IsInt,
-  Validate
+  Validate,
+  IsBoolean
 } from 'class-validator';
 import { IsDni } from '../../auth/decorators/isDniConstraint';
 
@@ -34,7 +35,14 @@ export class CreateWorkerDto {
   @Validate(IsDni) 
   @Expose()
   dni?: string;
+  
+  @IsBoolean({ message: 'El campo isActive debe ser booleano' })
+  @IsOptional() // Normalmente es opcional porque por defecto suele ser true
+  isActive?: boolean;
 
+  @IsNumber({}, { message: 'El ID de empresa debe ser un número válido' })
+  @IsOptional() // A veces se asigna automáticamente desde el token del Admin
+  empresaId?: number;
 
   @IsOptional()
   @IsString({ message: 'El email debe ser una cadena de texto' })

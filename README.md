@@ -10,9 +10,10 @@
 3. Clonar el archivo ``` .env.template ``` y renombrarlo a ``` .env ```
 4. Cambiar las variables de entorno
 5. Instalar cors ``` yarn add cors ```
-6. Instalar cookie  ``` yarn add cookie-parser yar add @types/cookie-parser ```
-6. Instalar ``` yarn add class-transformer class-validator ```
-7. Levantar la base de datos.
+6. Instalar schedule ``` yarn add @nestjs/schedule ```
+7. Instalar cookie  ``` yarn add cookie-parser yar add @types/cookie-parser ```
+8. Instalar ``` yarn add class-transformer class-validator ```
+9. Levantar la base de datos.
 
 Falta implementar obtener todas las solicitudes para el admin.
 

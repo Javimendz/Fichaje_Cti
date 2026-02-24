@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { AlarmsService } from './alarms.service';
-import { CreateAlarmDto } from './dto/create-alarm.dto';
-import { UpdateAlarmDto } from './dto/update-alarm.dto';
+import { Controller, Get, Param, ParseIntPipe, Put, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "auth/guards/jwt-auth.guard";
+import { RolesGuard } from "auth/guards/roles.guard";
+import { AlarmsService } from "./alarms.service";
+import { Roles } from "auth/decorators/roles.decorator";
+import { UserRole } from "auth/roles.enum";
+import { GetUser } from "auth/decorators/get-user.decorator";
+import type { UserPayload } from "auth/interfaces/user-payload.interface";
 
-@Controller('alarms')
-export class AlarmsController {
-  constructor(private readonly alarmsService: AlarmsService) {}
+@Controller('alarmas')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class AlarmController {
+  constructor(private readonly alarmService: AlarmsService) {}
 
-  @Post()
-  create(@Body() createAlarmDto: CreateAlarmDto) {
-    return this.alarmsService.create(createAlarmDto);
+  @Get('pendientes')
+  @Roles(UserRole.ADMIN)
+  async getMyAlarms(@GetUser() user: UserPayload) {
+    return this.alarmService.findAllByCompany(user.empresaId);
   }
 
-  @Get()
-  findAll() {
-    return this.alarmsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.alarmsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAlarmDto: UpdateAlarmDto) {
-    return this.alarmsService.update(+id, updateAlarmDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.alarmsService.remove(+id);
+  @Put('revisar/:id')
+  @Roles(UserRole.ADMIN)
+  async readAlarm(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
+    return this.alarmService.markAsRead(id, user.empresaId);
   }
 }

@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
+import { AlarmType } from 'alarms/entities/alarm.entity';
+import { AlarmsService } from 'alarms/alarms.service';
 
 
 // 🟢 AttendanceService
@@ -22,6 +24,8 @@ export class AttendanceService {
   constructor(
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
+    private readonly alarmService: AlarmsService,
+
   ) {}
 
   // --- CREAR ASISTENCIA: ADMIN Y WORKER ---
@@ -30,30 +34,44 @@ export class AttendanceService {
     * El sistema vincula automáticamente el registro con el ID del usuario autenticado.
     * Solo los usuarios con rol ADMIN o WORKER pueden acceder a este método para registrar asistencias, excluyendo a los superadministradores que no deberían tener esta función.
     */
-  async create(user: UserPayload, dto: CreateAttendanceDto) {
-    
-    if (!user.empresaId) {
+ async create(user: UserPayload, dto: CreateAttendanceDto) {
+  
+  if (!user.empresaId) {
     throw new BadRequestException('No puedes fichar: no tienes una empresa asignada.');
-    }
-    const hoy = new Date().toLocaleDateString('en-CA'); // Formato YYYY-MM-DD estable
-
-    const existing = await this.attendanceRepository.findOne({
-      where: { usuarioId: user.id, fechaJornada: hoy }
-    });
-
-    if (existing) {
-      throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
-    }
-
-    const record = new Attendance();
-    record.presente = dto.presente;
-    record.motivo = dto.motivo;
-    record.usuarioId = user.id;
-    record.empresaId = user.empresaId ?? null;
-    record.fechaJornada = hoy;
-
-    return await this.attendanceRepository.save(record);
   }
+
+  const hoy = new Date().toLocaleDateString('en-CA'); 
+
+  const existing = await this.attendanceRepository.findOne({
+    where: { usuarioId: user.id, fechaJornada: hoy }
+  });
+
+  if (existing) {
+    throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
+  }
+
+  // 1. Creamos el registro de asistencia
+  const record = new Attendance();
+  record.presente = dto.presente;
+  record.motivo = dto.motivo;
+  record.usuarioId = user.id;
+  record.empresaId = user.empresaId; // Eliminamos el ?? null porque ya validamos arriba
+  record.fechaJornada = hoy;
+
+  const savedRecord = await this.attendanceRepository.save(record);
+
+  // 2. 🔔 LÓGICA DE ALARMA: Si el trabajador marca que NO está presente
+      if (dto.presente === false) {
+        await this.alarmService.triggerAlarm(
+          user.id,
+          user.empresaId,
+          AlarmType.ABSENCE, 
+          `El trabajador ${user.email} ha registrado una AUSENCIA. Motivo: ${dto.motivo || 'No especificado'}`
+        );
+      }
+
+    return savedRecord;
+}
 
   // --- HISTORIAL PERSONAL: ADMIN Y WORKER ---
   /* Método para que un trabajador vea su propio historial de asistencias.

@@ -17,18 +17,11 @@ export class FranjaHoraria {
 
  
 
-  @Column({ type: 'time', nullable: false })
-  @IsNotEmpty()
-  // Regex para HH:MM (00:00 a 23:59)
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { 
-    message: 'La hora de inicio debe tener el formato HH:MM (ej: 08:00)' 
-  })
+  @Column({ type: 'time', nullable: false })  
   inicio: string;
 
   @Column({ type: 'time', nullable: true })
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { 
-    message: 'La hora de fin debe tener el formato HH:MM (ej: 18:00)' 
-  })
+
   fin?: string | null;
 
   // --- RELACIONES ---

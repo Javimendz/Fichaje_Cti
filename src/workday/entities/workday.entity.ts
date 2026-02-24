@@ -17,17 +17,28 @@ export class Workday {
   total_minutos: number;
 
   @Column({ type: 'float', nullable: true })
-  latitud: number;
+  latitudEntrada: number;
 
   @Column({ type: 'float', nullable: true })
-  longitud: number;
+  longitudEntrada: number;
 
-  @Column()
+  @Column({ type: 'float', nullable: true })
+  latitudSalida: number;
+
+  @Column({ type: 'float', nullable: true })
+  longitudSalida: number;
+
+  @Column({ default: 'PRESENCIAL' })
+  modalidad: string;
+
+  @Column({ default: 'Entrada' })
   tipo: string; // "Entrada" o "Salida"
 
-  @ManyToOne(() => User, (user) => user.jornadas, { eager: true,onDelete: 'CASCADE'})
-usuario: User;
+  @ManyToOne(() => User, (user) => user.jornadas, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario: User;
 
-@ManyToOne(() => Company, { eager: true })
-empresa: Company;
+  @ManyToOne(() => Company)
+  @JoinColumn({ name: 'empresa_id' })
+  empresa: Company;
 }

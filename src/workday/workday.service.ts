@@ -54,11 +54,11 @@ export class WorkdayService {
     // el objeto completo en la base de datos.
     const newWorkday = this.workdayRepository.create({
       inicio: new Date(),
-      tipo: 'Entrada',
-      latitud: dto.latitud,      // GPS de Entrada
-      longitud: dto.longitud,    // GPS de Entrada
-      usuario: { id: user.id },  //  Vinculación directa por ID
-      empresa: { id: user.empresaId } //  Vinculación directa por ID
+      // Mapeamos al GPS de Entrada
+      latitudEntrada: dto.latitud,      
+      longitudEntrada: dto.longitud,    
+      usuario: { id: user.id },  
+      empresa: { id: user.empresaId } 
     });
 
     return await this.workdayRepository.save(newWorkday);
@@ -94,16 +94,15 @@ export class WorkdayService {
     // la ubicación de donde hizo el check-in. 
     // Lo ideal en tu WorkdayEntity sería tener: latitudEntrada, latitudSalida.
     if (dto.latitud && dto.longitud) {
-       jornada.latitud = dto.latitud; 
-       jornada.longitud = dto.longitud;
+       jornada.latitudSalida = dto.latitud; 
+       jornada.longitudSalida = dto.longitud;
     }
     
     // Cálculo de minutos exactos
     const milisegundos = ahora.getTime() - jornada.inicio.getTime();
     jornada.total_minutos = Math.floor(milisegundos / 60000);
     
-    // Cambiar el tipo
-    jornada.tipo = 'Salida'; 
+    jornada.tipo = 'Salida';
 
     return await this.workdayRepository.save(jornada);
   }
@@ -172,7 +171,14 @@ export class WorkdayService {
         inicio: Between(fechaInicio, fechaFin) 
       },
       order: { inicio: 'DESC' },
-      relations: ['empresa'] // Solo cargamos las relaciones necesarias
+      relations: ['empresa'],
+      // 🛡️ Seleccionamos datos seguros
+      select: {
+        id: true, inicio: true, fin: true, total_minutos: true,
+        latitudEntrada: true, longitudEntrada: true,
+        latitudSalida: true, longitudSalida: true, modalidad: true,
+        empresa: { id: true, nombre: true } // Evitamos traer CIF, datos de pago, etc.
+      }
     });
   }
 }

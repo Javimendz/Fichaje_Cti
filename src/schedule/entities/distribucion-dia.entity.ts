@@ -66,6 +66,8 @@ export class DistribucionDia {
   @JoinColumn({ name: 'horario_id' })
   horario: Horario; // Relación con el horario al que pertenece esta distribución
 
+  @Column({ type: 'boolean', default: true })
+  esLaborable: boolean; // Columna para indicar si este día es laborable o no 
   
   @Column({ name: 'horario_id' })
   @Index()

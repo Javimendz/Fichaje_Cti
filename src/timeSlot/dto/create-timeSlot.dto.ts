@@ -35,6 +35,7 @@ export class CreateTimeSlotDto {
     const transformed = Number(value);
     return isNaN(transformed) ? value : transformed;
   })
+  @IsOptional()
   @Expose()
-  distribucionDiaId: number; // Quitamos el opcional (?)
+  distribucionDiaId?: number;// Quitamos el opcional (?)
 }

@@ -6,99 +6,116 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { AlarmType } from 'alarms/entities/alarm.entity';
 import { AlarmsService } from 'alarms/alarms.service';
+import { User } from 'auth/entities/user.entity';
 
-
-// 🟢 AttendanceService
-// Servicio para gestionar la lógica de negocio relacionada con las asistencias (fichajes) de los trabajadores.
-/**
- * AttendanceService
- * Servicio para gestionar la lógica de negocio relacionada con las asistencias (fichajes) de los trabajadores.
- * Incluye métodos para crear un nuevo registro de asistencia, obtener el historial de asistencias de un trabajador específico y obtener todas las asistencias de una empresa.
- * El método create permite a un trabajador registrar su asistencia (presente o ausente con motivo) vinculando automáticamente el registro con el ID del usuario autenticado.
- * El método findAllByUser devuelve todas las asistencias registradas por un trabajador específico, ordenadas por fecha (más reciente primero).
- * El método findAllByEmpresa devuelve todas las asistencias registradas por los trabajadores de una empresa específica, ordenadas por fecha (más reciente primero) y con información del usuario que realizó cada fichaje.
- * Este servicio es esencial para el sistema de fichaje, ya que permite a los trabajadores registrar su asistencia y a los administradores revisar el historial de asistencias de su empresa.
- * */
 @Injectable()
 export class AttendanceService {
   constructor(
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly alarmService: AlarmsService,
-
   ) {}
 
-  // --- CREAR ASISTENCIA: ADMIN Y WORKER ---
-  /* Método para que un trabajador registre su asistencia.
-    * El trabajador puede marcarse como presente o ausente con un motivo.
-    * El sistema vincula automáticamente el registro con el ID del usuario autenticado.
-    * Solo los usuarios con rol ADMIN o WORKER pueden acceder a este método para registrar asistencias, excluyendo a los superadministradores que no deberían tener esta función.
-    */
- async create(user: UserPayload, dto: CreateAttendanceDto) {
-  
-  if (!user.empresaId) {
-    throw new BadRequestException('No puedes fichar: no tienes una empresa asignada.');
-  }
+  // --- CREAR ASISTENCIA UNIFICADO: ADMIN Y WORKER ---
+  async create(userPayload: UserPayload, dto: CreateAttendanceDto) {
+    if (!userPayload.empresaId) {
+      throw new BadRequestException('No puedes fichar: no tienes una empresa asignada.');
+    }
 
-  const hoy = new Date().toLocaleDateString('en-CA'); 
+    const hoy = new Date().toLocaleDateString('en-CA'); 
 
-  const existing = await this.attendanceRepository.findOne({
-    where: { usuarioId: user.id, fechaJornada: hoy }
-  });
+    // 1. Evitar fichajes duplicados en el mismo día
+    const existing = await this.attendanceRepository.findOne({
+      where: { usuarioId: userPayload.id, fechaJornada: hoy }
+    });
 
-  if (existing) {
-    throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
-  }
+    if (existing) {
+      throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
+    }
 
-  // 1. Creamos el registro de asistencia
-  const record = new Attendance();
-  record.presente = dto.presente;
-  record.motivo = dto.motivo;
-  record.usuarioId = user.id;
-  record.empresaId = user.empresaId; // Eliminamos el ?? null porque ya validamos arriba
-  record.fechaJornada = hoy;
+    // 2. Buscamos al usuario en DB con su horario para poder comprobar retrasos
+    const usuarioDB = await this.userRepository.findOne({
+      where: { id: userPayload.id },
+      relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas']
+    });
 
-  const savedRecord = await this.attendanceRepository.save(record);
+    // 3. Creamos y guardamos el registro de asistencia
+    const record = new Attendance();
+    record.presente = dto.presente;
+    record.motivo = dto.motivo;
+    record.usuarioId = userPayload.id;
+    record.empresaId = userPayload.empresaId;
+    record.fechaJornada = hoy;
 
-  // 2. 🔔 LÓGICA DE ALARMA: Si el trabajador marca que NO está presente
-      if (dto.presente === false) {
-        await this.alarmService.triggerAlarm(
-          user.id,
-          user.empresaId,
-          AlarmType.ABSENCE, 
-          `El trabajador ${user.email} ha registrado una AUSENCIA. Motivo: ${dto.motivo || 'No especificado'}`
-        );
+    const savedRecord = await this.attendanceRepository.save(record);
+
+    // 4. 🔔 LÓGICA DE ALARMAS (El cerebro del sistema)
+    
+    // ESCENARIO A: El trabajador avisa que no va a ir (Ausencia Manual)
+    if (dto.presente === false) {
+      await this.alarmService.triggerAlarm(
+        userPayload.id,
+        userPayload.empresaId,
+        AlarmType.ABSENCE, 
+        `El trabajador ${userPayload.email} ha registrado una AUSENCIA. Motivo: ${dto.motivo || 'No especificado'}`
+      );
+    } 
+    // ESCENARIO B: El trabajador ficha entrada. Comprobamos si llega tarde.
+    else if (dto.presente === true && usuarioDB?.horario) {
+      const ahora = new Date();
+      const diaJS = ahora.getDay();
+      const mapeoDias: Record<number, string> = { 1:'LUNES', 2:'MARTES', 3:'MIERCOLES', 4:'JUEVES', 5:'VIERNES', 6:'SABADO', 0:'DOMINGO' };
+      
+      const distHoy = usuarioDB.horario.distribuciones?.find(d => d.diaSemana === mapeoDias[diaJS]);
+      const primeraFranja = distHoy?.franjas?.[0];
+
+      if (primeraFranja && primeraFranja.inicio) {
+        const margenCortesia = 10; // 10 minutos de gracia
+        const esTarde = this.comprobarRetraso(primeraFranja.inicio, margenCortesia);
+
+        if (esTarde) {
+          await this.alarmService.triggerAlarm(
+            userPayload.id,
+            userPayload.empresaId,
+            AlarmType.LATE_ARRIVAL,
+            `RETRASO: El trabajador ha fichado a las ${ahora.toLocaleTimeString()} (Entrada teórica: ${primeraFranja.inicio}).`
+          );
+        }
       }
+    }
 
     return savedRecord;
-}
+  }
 
   // --- HISTORIAL PERSONAL: ADMIN Y WORKER ---
-  /* Método para que un trabajador vea su propio historial de asistencias.
-    * El sistema devuelve todas las asistencias registradas por el usuario autenticado, ordenadas por fecha (más reciente primero).     
-    *   @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan revisar su historial personal de asistencias, lo cual es útil para que los administradores también puedan verificar sus propios registros.
-    */
- async findAllByUser(targetUserId: number, adminEmpresaId: number) {
-  return await this.attendanceRepository.find({
-    where: { 
-      usuarioId: targetUserId, 
-      empresaId: adminEmpresaId // Forzamos que coincida con la empresa del admin
-    },
-    order: { fechaJornada: 'DESC' },
-  });
-}
+  async findAllByUser(targetUserId: number, adminEmpresaId: number) {
+    return await this.attendanceRepository.find({
+      where: { 
+        usuarioId: targetUserId, 
+        empresaId: adminEmpresaId 
+      },
+      order: { fechaJornada: 'DESC' },
+    });
+  }
 
   // --- HISTORIAL DE EMPRESA: SOLO ADMIN ---
-  /* Método para que un administrador vea todas las asistencias de su empresa.
-    * El sistema devuelve todas las asistencias registradas por los trabajadores de la empresa del administrador autenticado, ordenadas por fecha (más reciente primero).
-    * Solo los usuarios con rol ADMIN pueden acceder a este método para revisar el historial de asistencias de su empresa, asegurando que los trabajadores no puedan ver los registros de otros empleados.
-    * @Roles(UserRole.ADMIN) garantiza que solo los administradores puedan acceder a este método, protegiendo la privacidad de los trabajadores y asegurando que solo el personal autorizado pueda revisar los registros de asistencia de la empresa.
-    */
- async findAllByEmpresa(empresaId: number) {
+  async findAllByEmpresa(empresaId: number) {
     return await this.attendanceRepository.find({
       where: { empresaId },
       relations: ['usuario'],
-      order: { fechaJornada: 'DESC', fecha: 'DESC' }
+      order: { fechaJornada: 'DESC' }
     });
+  }
+
+  // --- MÉTODO AUXILIAR ---
+  private comprobarRetraso(horaTeorica: string, margen: number): boolean {
+    const ahora = new Date();
+    const [h, m] = horaTeorica.split(':').map(Number);
+    const minutosTeoricos = (h * 60) + m + margen;
+    const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+    
+    return minutosActuales > minutosTeoricos;
   }
 }

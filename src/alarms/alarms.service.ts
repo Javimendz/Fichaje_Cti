@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Alarm, AlarmType } from "./entities/alarm.entity";
-import { Repository } from "typeorm";
+import { MoreThanOrEqual, Repository } from "typeorm";
 import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
@@ -26,7 +26,17 @@ export class AlarmsService {
     return await this.alarmRepository.save(alarma);
   }
 
-
+async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date): Promise<boolean> {
+    const alarma = await this.alarmRepository.findOne({
+      where: {
+        usuario: { id: usuarioId },
+        tipo: tipo,
+        createdAt: MoreThanOrEqual(inicioDelDia)
+      }
+    });
+    // Devuelve true si la alarma ya existe, false si no existe
+    return alarma !== null; 
+  }
   // Listar alarmas para el administrador de la empresa
   async findAllByCompany(empresaId: number) {
     return await this.alarmRepository.find({
@@ -39,4 +49,8 @@ export class AlarmsService {
   async markAsRead(id: number, empresaId: number) {
     return await this.alarmRepository.update({ id, empresaId }, { revisada: true });
   }
+
+
+
+  
 }

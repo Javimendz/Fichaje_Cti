@@ -94,6 +94,10 @@ export class TimeSlotService {
       throw new BadRequestException('La hora de inicio debe ser anterior a la hora de fin.');
     }
 
+    if(!dto.distribucionDiaId){
+      throw new BadRequestException('El ID de distribución del día es obligatorio para crear una franja horaria.');
+    }
+
     await this.checkOverlap(dto.distribucionDiaId, dto.inicio, dto.fin);
 
     const nuevaFranja = this.franjaRepository.create({

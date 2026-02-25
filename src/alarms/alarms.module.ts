@@ -10,16 +10,15 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
 imports: [
-    // 1. Registramos las ENTIDADES (Tablas) que usaremos
+    
     TypeOrmModule.forFeature([Alarm, User, Attendance]),
     
-    // 2. Registramos el Módulo de Tareas Programadas
     ScheduleModule.forRoot(), 
   ],
   controllers: [AlarmController],
   providers: [
-    AlarmsService,     // Tu servicio de lógica de alarmas
-    AlarmCronService   // Tu servicio que contiene los @Cron
+    AlarmsService,     // servicio de lógica de alarmas
+    AlarmCronService   // servicio que contiene los @Cron
   ],
   exports: [AlarmsService],
 })

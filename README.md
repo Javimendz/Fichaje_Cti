@@ -12,9 +12,9 @@
 5. Instalar cors ``` yarn add cors ```
 6. Instalar schedule ``` yarn add @nestjs/schedule ```
 7. Instalar socket.io ``` yarn add @nestjs/platform-socket.io  @nestjs/websockets```
-7. Instalar cookie  ``` yarn add cookie-parser yar add @types/cookie-parser ```
-8. Instalar ``` yarn add class-transformer class-validator ```
-9. Levantar la base de datos.
+8. Instalar cookie  ``` yarn add cookie-parser yar add @types/cookie-parser ```
+9. Instalar ``` yarn add class-transformer class-validator ```
+10. Levantar la base de datos.
 
 Falta implementar obtener todas las solicitudes para el admin.
 

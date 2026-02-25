@@ -53,12 +53,6 @@ export class Attendance {
   @MaxLength(255, { message: 'El motivo no puede superar los 255 caracteres' })
   motivo?: string;
 
-  @Column({ type: 'time', nullable: true })
-  horaEntrada: string;
-
-  @Column({ type: 'time', nullable: true })
-  horaSalida: string;
-
   // -----------------------------------------------------
   // RELACIONES
   // -----------------------------------------------------

@@ -1,4 +1,4 @@
-import { IsNumber,  Min, Max } from 'class-validator';
+import { IsNumber,  Min, Max, IsBoolean } from 'class-validator';
 
 
 // CheckInDto
@@ -20,4 +20,7 @@ export class CheckInDto {
   @Min(-180, { message: 'La longitud mínima es -180' })
   @Max(180, { message: 'La longitud máxima es 180' })
   longitud: number;
+
+  @IsBoolean({ message: 'El campo presente debe ser verdadero o falso' })
+  presente: boolean;// Campo para indicar si el usuario está presente o no, útil para check-out
 }

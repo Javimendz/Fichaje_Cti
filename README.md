@@ -11,6 +11,7 @@
 4. Cambiar las variables de entorno
 5. Instalar cors ``` yarn add cors ```
 6. Instalar schedule ``` yarn add @nestjs/schedule ```
+7. Instalar socket.io ``` yarn add @nestjs/platform-socket.io  @nestjs/websockets```
 7. Instalar cookie  ``` yarn add cookie-parser yar add @types/cookie-parser ```
 8. Instalar ``` yarn add class-transformer class-validator ```
 9. Levantar la base de datos.
@@ -506,24 +507,24 @@ POST       /api/auth/login          Inicio de sesión para todos los roles.  "{ 
 ```
 
 ```
-EMPRESA
-🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
-POST        /api/empresa/crear-empresa            Setup Inicial: Crea empresa + Admin principal.
-GET         /api/empresa/list-empresas            Obtiene listado de todas las empresas.
-GET         /api/empresa/find/:id                 Obtiene detalles de una empresa específica.
-PUT         /api/empresa/update/:id               Actualiza datos de una empresa.
-DELETE      /api/empresa/delete/:id               Elimina una empresa del sistema.
+EMPRESA (COMPANY)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/empresa/crear-empresa               Setup Inicial: Crea empresa + Admin principal.       Token (SUPERADMIN) + Body: SetupCompanyDto
+GET         /api/empresa/list-empresas               Lista todas las empresas (con auditoría).            Token (SUPERADMIN/ADMIN)
+GET         /api/empresa/find/:id                   Obtiene detalles de una empresa específica.          Token (SUPERADMIN)
+PUT         /api/empresa/update/:id                  Actualiza datos de geolocalización o razón social.   Token (SUPERADMIN) + Body: UpdateCompanyDto
+DELETE      /api/empresa/delete/:id                  Elimina la empresa y sus datos vinculados.           Token (SUPERADMIN)
 
 ```
 
 ```
-USERS
-🛠️ Método	📍 Endpoint	                            📝 Descripción	                                   📦 Requerimientos / Body
-POST        /api/users/crear-user               Crea usuario, rol Super y Admin
-GET         /api/users/list-users               Obtiene listado de todos los users.
-GET         /api/users/find/:id                 Obtiene detalles de un user específico.
-PUT         /api/users/update/:id               Actualiza datos de un user.
-DELETE      /api/users/delete/:id               Elimina una empresa del sistema.
+USERS (USUARIOS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/users/crear-user                    Crea un usuario (Admin o Worker).                    Token (SUPERADMIN/ADMIN) + Body: CreateUserDto
+GET         /api/users/list-users                    Lista todos los usuarios (según permisos).           Token (SUPERADMIN/ADMIN)
+GET         /api/users/find/:id                      Busca un usuario específico por su ID.               Token (SUPERADMIN/ADMIN)
+PUT         /api/users/update/:id                    Actualiza los datos de un usuario.                   Token (ADMIN) + Body: UpdateUserDto
+DELETE      /api/users/delete/:id                    Elimina un usuario (Borrado lógico).                 Token (ADMIN)
 
 ```
 
@@ -541,54 +542,73 @@ PUT         /api/worker/assign-schedule/:id       Asignar Horario: Vincula horar
 ```
 
 ```
-REQUEST
-🛠️ Método	📍 Endpoint	                           📝 Descripción	                                     📦 Requerimientos / Body
-POST        /api/request/crear-request         El trabajador crea una nueva solicitud.
-GET         /api/request/my-request            El trabajador y Admin ve el estado de sus pedidos.
-GET         /api/request/company-request       El Admin ve todas las solicitudes pendientes.
-PUT         /api/request/check/:id             El Admin aprueba o rechaza una solicitud.
+SOLICITUDES (REQUESTS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/request/crear-request               Crea una nueva solicitud (Permisos, Bajas, etc.).    Token (ADMIN/WORKER) + Body: CreateRequestDto
+PUT         /api/request/check/:id                   Aprueba o rechaza una solicitud específica.          Token (ADMIN) + Body: RevisarRequestDto
+GET         /api/request/my-request                  Lista las solicitudes del usuario autenticado.       Token (ADMIN/WORKER)
+GET         /api/request/company-request             Lista todas las solicitudes de la empresa.           Token (ADMIN)
 
 ```
 
 ```
-SCHEDULE
-🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST    /api/schedule/crear-schedule  Crea un nuevo horario Fijo o Rotativo.
-GET     /api/schedule/list-schedules  Lista todos los horarios de la empresa del admin. Token Admin
-GET     /api/schedule/find/:id       Obtiene el detalle de un horario específico. ID en formato NUM
-DELETE  /api/schedule/delete/:id     Elimina un horario (si no está asignado).Requiere  rol ADMIN
+HORARIOS (SCHEDULES)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/schedule/crear-schedule             Crea un nuevo horario (Planificación base).          Token (ADMIN) + Body: CreateHorarioDto
+GET         /api/schedule/list-schedules             Lista los horarios de la empresa con sus franjas.    Token (ADMIN/WORKER)
+GET         /api/schedule/find/:id                   Busca los detalles de un horario por su ID.          Token (ADMIN/WORKER)
+DELETE      /api/schedule/delete/:id                 Elimina un horario completo del sistema.             Token (ADMIN)
+
+```
+
+```
+LEAVES (VACACIONES Y PERMISOS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/leaves/range                        Crea permisos en un rango de fechas (Vacaciones).    Token (ADMIN) + Body: CreateLeaveRangeDto
+GET         /api/leaves/my-leaves                    Lista los permisos aprobados del usuario actual.     Token (ADMIN/WORKER)
+GET         /api/leaves/user/:id                     Lista los permisos de un trabajador específico.      Token (ADMIN)
 
 ```
 
 
 ```
-TIMESLOT
-🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST   /api/franja-horaria/crear-franja-horaria  Crea una franja. "{ inicio, fin, tipo, horarioId }
-GET    /api/franja-horaria/list-franja-horaria  Obtiene todas franjas registradas. Requiere Token
-GET    /api/franja-horaria/find/:id             Obtiene detalle de una franja específica.  ID  NUM
-PUT    /api/franja-horaria/update/:id      Actualiza horas o tipo de una franja. "{ inicio, fin }"
-DELETE /api/franja-horaria/delete/:id           Borra una franja horaria.Requiere rol ADMIN
+FRANJAS HORARIAS (TIME SLOTS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/franja-horaria/crear                Crea una franja (valida solapamientos y empresa).    Token (ADMIN) + Body: CreateTimeSlotDto
+GET         /api/franja-horaria/list-franja-horaria  Lista todas las franjas de la empresa.               Token (ADMIN/WORKER)
+GET         /api/franja-horaria/find/:id             Busca una franja específica por ID.                  Token (ADMIN/WORKER)
+PUT         /api/franja-horaria/update/:id           Actualiza horas de una franja existente.             Token (ADMIN) + Body: UpdateTimeSlotDto
+DELETE      /api/franja-horaria/delete/:id           Elimina una franja del sistema (con Auditoría).      Token (ADMIN)
+GET         /api/franja-horaria/by-schedule/:id      Lista las franjas vinculadas a un horario (Schedule). Token (ADMIN/WORKER)
 
 ```
 
 ```
-JORNADA
-🛠️ Método	📍 Endpoint	                           📝 Descripción	                                      📦 Requerimientos / Body
-POST        /api/jornada/check-in   Registra la entrada del trabajador."{ latitud, longitud }"
-PUT         /api/jornada/check-out  Registra la salida y cierra la jornada.No requiere body
-GET         /api/jornada/status     Indica si el usuario tiene una jornada abierta. Token       
-GET         /api/jornada/historial  Lista todos los fichajes del trabajador.Token               
-GET         /api/jornada/rango?desde=2023-01-01&hasta=2023-01-31     Filtra fichajes por rango de fechas.      Query Params: ?inicio=...&fin=...
+JORNADAS (WORKDAYS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/jornada/check-in                    Inicia una jornada (evalúa retraso y zona GPS).      Token (Cualquiera) + Body: CheckInDto
+PATCH       /api/jornada/check-out                   Finaliza jornada activa (evalúa salida anticipada).  Token (Cualquiera) + Body: CheckInDto
+GET         /api/jornada/status                      Indica si el usuario tiene una jornada abierta.      Token (Cualquiera)
+GET         /api/jornada/historial                   Devuelve todas las jornadas del usuario actual.      Token (Cualquiera)
+GET         /api/jornada/rango?desde=X&hasta=Y       Filtra jornadas del usuario en un rango de fechas.   Token (Cualquiera) + Query params
+GET         /api/jornada/dashboard/resumen           Dashboard en tiempo real de la empresa de hoy.       Token (ADMIN)
+```
+
+```
+ASISTENCIAS (ATTENDANCE)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+POST        /api/asistencia/crear-asistencia          Registra entrada/ausencia simple (con motivo).       Token (ADMIN/WORKER) + Body: CreateAttendanceDto
+GET         /api/asistencia/my-history               Historial personal de asistencias del usuario.       Token (ADMIN/WORKER)
+GET         /api/asistencia/empresa                  Historial global de todos los empleados de la empresa. Token (ADMIN)
+GET         /api/asistencia/user/:id                 Consulta el historial de un trabajador específico.     Token (ADMIN)
 
 ```
 
 ```
-ASISTENCIAS
-🛠️ Método    📍 Endpoint                           📝 Descripción                                     📦 Requerimientos / Body
-POST /api/asistencia/crear-asistencia Registra un nuevo fichaje (presencia).Body: { presente: boolean, motivo?: string }
-GET  /api/asistencia/my-history Obtiene el historial de fichajes del usuario.Token JWT (Worker o Admin).
-GET  /api/asistencia/empresa   Obtiene listado de fichajes de toda la empresa.Token JWT
-GET  /api/asistencia/user/:id  Obtiene el historial de un usuario específico.Param: id | Token JWT
+ALARMAS (ALARMS)
+🛠️ Método  📍 Endpoint                               📝 Descripción                                       📦 Requerimientos / Auth
+GET         /api/alarmas/pendientes                  Lista todas las alertas sin revisar de la empresa.   Token (ADMIN)
+PUT         /api/alarmas/revisar/:id                 Marca una alarma como leída de forma rápida.         Token (ADMIN)
+PUT         /api/alarmas/resolver/:id                Resuelve una alarma añadiendo una nota de gestión.   Token (ADMIN) + Body: { nota: string }
 
 ```

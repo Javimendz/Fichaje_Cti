@@ -5,20 +5,28 @@ import { AlarmType } from "./entities/alarm.entity";
 import { UserRole } from "auth/roles.enum";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "users/entities/user.entity";
-import { Repository } from "typeorm";
-import { Attendance } from "attendance/entities/attendance.entity";
+import { Between, Repository } from "typeorm";
 import { DiaSemana } from "schedule/entities/distribucion-dia.entity";
 import { Leave, LeaveStatus } from '../leaves/entities/leaf.entity';
+import { Workday } from "workday/entities/workday.entity";
+
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class AlarmCronService {
+  private readonly ZONA_HORARIA = 'Europe/Madrid';
   private readonly logger = new Logger('CronAlarmas');
   
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Attendance)
-    private readonly attendanceRepository: Repository<Attendance>,
+    @InjectRepository(Workday)
+    private readonly workdayRepository: Repository<Workday>,
     private readonly alarmService: AlarmsService,
     @InjectRepository(Leave)
     private readonly leaveRepository: Repository<Leave>
@@ -29,21 +37,18 @@ export class AlarmCronService {
   async checkAbsencesBySchedule() {
     this.logger.log('--- Iniciando escaneo ---');
 
-    const fechaActual = new Date();
-    const hoyString = fechaActual.toLocaleDateString('en-CA'); 
-    const inicioDelDia = new Date(hoyString);
+   const ahora = dayjs().tz(this.ZONA_HORARIA);
+  const hoyString = ahora.format('YYYY-MM-DD'); 
 
-    const mapeoDias: Record<number, DiaSemana> = {
-      1: DiaSemana.LUNES,
-      2: DiaSemana.MARTES,
-      3: DiaSemana.MIERCOLES,
-      4: DiaSemana.JUEVES,
-      5: DiaSemana.VIERNES,
-      6: DiaSemana.SABADO,
-      0: DiaSemana.DOMINGO,
-    };
+  // Rango de horas EXACTO para buscar la jornada de HOY
+  const inicioDelDia = ahora.startOf('day').toDate();
+  const finDelDia = ahora.endOf('day').toDate();
 
-    const diaEnumHoy = mapeoDias[fechaActual.getDay()];
+  const mapeoDias: Record<number, DiaSemana> = {
+    1: DiaSemana.LUNES, 2: DiaSemana.MARTES, 3: DiaSemana.MIERCOLES,
+    4: DiaSemana.JUEVES, 5: DiaSemana.VIERNES, 6: DiaSemana.SABADO, 0: DiaSemana.DOMINGO,
+  };
+  const diaEnumHoy = mapeoDias[ahora.day()];
 
     const trabajadores = await this.userRepository.find({
       where: { rol: UserRole.WORKER, isActive: true },
@@ -51,58 +56,56 @@ export class AlarmCronService {
     });
 
     for (const worker of trabajadores) {
-
+      // 1. Verificamos Permisos (Vacaciones/Bajas)
       const tienePermiso = await this.leaveRepository.findOne({
-      where: {
-        usuarioId: worker.id,
-        fecha: hoyString,
-        estado: LeaveStatus.APPROVED
+        where: {
+          usuarioId: worker.id,
+          fecha: hoyString,
+          estado: LeaveStatus.APPROVED
+        }
+      });
+
+      if (tienePermiso) {
+        this.logger.debug(`[ID: ${worker.id}] No se genera alarma: tiene permiso (${tienePermiso.tipo}).`);
+        continue;
       }
-    });
 
-if (tienePermiso) {
-  this.logger.debug(`[ID: ${worker.id}] No se genera alarma: tiene permiso (${tienePermiso.tipo}).`);
-  continue; // 👈 Saltamos al siguiente trabajador, no hay alarma.
-}
-
-// 2. Si no tiene permiso, seguimos con la lógica de verificar fichaje...
-const fichaje = await this.attendanceRepository.findOne({
-  where: { usuarioId: worker.id, fechaJornada: hoyString },
-});
-
+      // 2. Verificación de Horario
       if (!worker.horario?.distribuciones) {
         this.logger.debug(`[ID: ${worker.id}] Sin horario asignado.`);
         continue;
       }
 
       const distribucionHoy = worker.horario.distribuciones.find(d => d.diaSemana === diaEnumHoy);
-
       if (!distribucionHoy || !distribucionHoy.franjas || distribucionHoy.franjas.length === 0) {
         this.logger.debug(`[ID: ${worker.id}] Sin turno para hoy (${diaEnumHoy}).`);
         continue;
       }
 
-      const primeraFranja = distribucionHoy.franjas[0];
-      const horaEntradaHoy = primeraFranja.inicio; 
-
+      const horaEntradaHoy = distribucionHoy.franjas[0].inicio; 
       if (!horaEntradaHoy) continue;
 
-      // 🛡️ CAMBIO: Reducimos a 15 mins para forzar que salte la alarma AHORA
+      // 3. Verificación de Límite de Tiempo
       const margenMinutos = 15; 
       const horaLimiteSuperada = this.haPasadoHoraLimite(horaEntradaHoy, margenMinutos);
 
       if (horaLimiteSuperada) {
         this.logger.log(`[ID: ${worker.id}] Hora límite superada. Verificando asistencia...`);
         
-        const fichaje = await this.attendanceRepository.findOne({
-          where: { usuarioId: worker.id, fechaJornada: hoyString },
+        // 🛡️ CAMBIO: Buscamos si tiene una Jornada abierta o cerrada hoy
+        const fichaje = await this.workdayRepository.findOne({
+          where: { 
+            usuario: { id: worker.id }, 
+            inicio: Between(inicioDelDia, finDelDia) // Buscamos cualquier jornada iniciada hoy
+          },
         });
 
         if (fichaje) {
-            this.logger.debug(`[ID: ${worker.id}] Asistencia registrada OK.`);
+            this.logger.debug(`[ID: ${worker.id}] Asistencia registrada OK (Tiene jornada).`);
             continue;
         }
 
+        // 4. Creación de Alarma si no ha fichado
         const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, AlarmType.ABSENCE, inicioDelDia);
 
         if (!alarmaExistente) {
@@ -123,16 +126,24 @@ const fichaje = await this.attendanceRepository.findOne({
     this.logger.log('--- Escaneo completado ---');
   }
   
+ 
+  
   private haPasadoHoraLimite(horaEntrada: string, margenMinutos: number): boolean {
-    const ahora = new Date();
-    const minutosActuales = (ahora.getHours() * 60) + ahora.getMinutes();
+  // Obtenemos la hora actual FORZADA a la zona horaria correcta
+  const ahora = dayjs().tz(this.ZONA_HORARIA);
+  
+  // Dayjs usa .hour() y .minute()
+  const minutosActuales = (ahora.hour() * 60) + ahora.minute();
 
-    const partesHora = horaEntrada.split(':');
-    const horasTeoricas = parseInt(partesHora[0], 10);
-    const minutosTeoricos = parseInt(partesHora[1], 10);
-    
-    const minutosTotalesTeoricos = (horasTeoricas * 60) + (minutosTeoricos || 0);
+  const partesHora = horaEntrada.split(':');
+  const horasTeoricas = parseInt(partesHora[0], 10);
+  const minutosTeoricos = parseInt(partesHora[1], 10);
+  
+  const minutosTotalesTeoricos = (horasTeoricas * 60) + (minutosTeoricos || 0);
 
-    return minutosActuales > (minutosTotalesTeoricos + margenMinutos);
-  }
+  return minutosActuales > (minutosTotalesTeoricos + margenMinutos);
+}
+
+
+  
 }

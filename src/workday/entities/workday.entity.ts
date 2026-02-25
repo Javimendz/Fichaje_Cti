@@ -25,6 +25,9 @@ export class Workday {
   @Column({ type: 'float', nullable: true })
   latitudSalida: number;
 
+  @Column({ type: 'boolean', default: false })
+    presente: boolean;
+
   @Column({ type: 'float', nullable: true })
   longitudSalida: number;
 

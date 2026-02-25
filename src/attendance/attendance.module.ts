@@ -4,9 +4,6 @@ import { AttendanceController } from './attendance.controller';
 import { AuthModule } from 'auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Attendance } from './entities/attendance.entity';
-import { AlarmsService } from 'alarms/alarms.service';
-import { AlarmsModule } from 'alarms/alarms.module';
-import { User } from 'auth/entities/user.entity';
 
 
 // 🟢 AttendanceModule
@@ -22,8 +19,7 @@ import { User } from 'auth/entities/user.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Attendance]),
-    AuthModule, User,
-    AlarmsModule 
+    AuthModule,
   ],
   controllers: [AttendanceController],
   providers: [AttendanceService],

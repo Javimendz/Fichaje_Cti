@@ -6,7 +6,8 @@ import {
   Patch, 
   UseGuards, 
   Query, 
-  BadRequestException 
+  BadRequestException, 
+  Inject
 } from '@nestjs/common';
 import { WorkdayService } from './workday.service';
 import { CheckInDto } from './dto/check-in.dto';
@@ -15,11 +16,15 @@ import { CheckInDto } from './dto/check-in.dto';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface'; 
+import { UserRole } from 'auth/roles.enum';
+import { Roles } from 'auth/decorators/roles.decorator';
 
 @Controller('jornada')
 @UseGuards(JwtAuthGuard)
 export class WorkdayController {
-  constructor(private readonly workdayService: WorkdayService) {}
+  constructor(
+    private readonly workdayService: WorkdayService,
+  ) {}
 
   /**
    * Inicia una nueva jornada laboral.
@@ -32,13 +37,9 @@ export class WorkdayController {
    * 
    */
 
-  @Post('check-in')
-  async checkIn(
-    @Body() checkInDto: CheckInDto, 
-    @GetUser() user: UserPayload 
-  ) {
-    return this.workdayService.checkIn(checkInDto, user);
-  }
+ @Post('check-in')
+  async checkIn(@Body() checkInDto: CheckInDto, @GetUser() user: UserPayload) {
+    return await this.workdayService.checkIn(checkInDto, user);  }
 
   /**
    * Finaliza la jornada laboral activa.
@@ -49,14 +50,10 @@ export class WorkdayController {
    * @return La jornada laboral actualizada con la hora de finalización o un mensaje de error si el check-out no es válido (por ejemplo, si no hay una jornada activa).
    * * Este endpoint es esencial para el sistema de fichaje, ya que marca el final de la jornada laboral de un usuario. La información de ubicación puede ser utilizada para validar que el usuario está en un lugar permitido para finalizar su jornada, y la información del usuario se utiliza para asociar correctamente la finalización de la jornada laboral con el usuario en la base de datos.
    */
-  @Patch('check-out') 
-  async checkOut(
-    @Body() checkOutDto: CheckInDto, 
-    @GetUser() user: UserPayload 
-  ) {
-    return this.workdayService.checkOut(checkOutDto, user);
+ @Patch('check-out') 
+  async checkOut(@Body() checkOutDto: CheckInDto, @GetUser() user: UserPayload) {
+    return await this.workdayService.checkOut(checkOutDto, user);
   }
-
   /**
    * Consulta el estado actual (¿Estoy trabajando?).
    * GET /jornada/status
@@ -120,5 +117,11 @@ export class WorkdayController {
       startDate, 
       endDate
     );
+  }
+
+  @Get('dashboard/resumen')
+  @Roles(UserRole.ADMIN) 
+  async getDashboard(@GetUser() user: UserPayload) {
+    return await this.workdayService.getTodayStats(user.empresaId);
   }
 }

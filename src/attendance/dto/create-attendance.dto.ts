@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsNotEmpty,  MinLength, MaxLength, IsString, ValidateIf, IsOptional, IsNumber } from 'class-validator';
+import { IsBoolean, IsNotEmpty,  MinLength, MaxLength, IsString, ValidateIf } from 'class-validator';
 
 
 // DTO para crear un nuevo registro de asistencia (fichaje) de un trabajador.
@@ -31,13 +31,4 @@ export class CreateAttendanceDto {
   @MaxLength(255)
   @Expose()
   motivo?: string;
-
-  @IsOptional()
-  @IsNumber()
-  lat?: number; 
-
-  @IsOptional()
-  @IsNumber()
-  lng?: number;
-
 }

@@ -1,9 +1,12 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between } from 'typeorm';
+import { Repository, IsNull, Between, Not } from 'typeorm';
 import { Workday } from './entities/workday.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface'; 
+import { AlarmsService } from 'alarms/alarms.service';
+import { AlarmType } from 'alarms/entities/alarm.entity';
+import { User } from 'users/entities/user.entity';
 
 
 // Importamos el UserPayload que se obtiene del token JWT para validar la empresa y el usuario que realiza la acción. Esto nos permite asegurar que solo los usuarios autenticados y autorizados puedan iniciar o finalizar su jornada laboral, y que las acciones se registren correctamente asociadas a su empresa y perfil de usuario.
@@ -16,10 +19,13 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 
 @Injectable()
 export class WorkdayService {
+  private readonly logger = new Logger('WorkdayService'); // 👈 Añadimos Logger
   constructor(
     @InjectRepository(Workday)
     private readonly workdayRepository: Repository<Workday>,
-    
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly alarmService: AlarmsService,
   ) {}
 
   // ============================================
@@ -33,35 +39,73 @@ export class WorkdayService {
    * * Este método inicia una nueva jornada laboral para el usuario autenticado. Primero valida que el usuario tenga una empresa asignada, luego verifica que no tenga una jornada activa (con fin = null) para evitar fichajes duplicados. Si todo es correcto, crea una nueva entrada en la base de datos con la hora de inicio, tipo "Entrada", y la ubicación GPS proporcionada. La relación con el usuario y la empresa se establece directamente usando los IDs, lo que optimiza el proceso sin necesidad de cargar las entidades completas.
    * * El método delega toda la lógica de validación y creación al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso. El WorkdayService se encargará de validar los datos, gestionar las relaciones con el usuario y la empresa, y garantizar que un usuario solo pueda tener una jornada activa a la vez.
    */
-  async checkIn(dto: CheckInDto, user: UserPayload) { 
-    
-    // 1. Verificación de seguridad usando el Payload del Token
-    if (!user.empresaId) {
-      throw new BadRequestException('No tienes una empresa asignada para poder fichar.');
-    }
+ async checkIn(dto: CheckInDto, userPayload: UserPayload) { 
+    if (!userPayload.empresaId) throw new BadRequestException('No tienes empresa asignada.');
 
-    // 2. Verificación de jornada abierta (evita fichajes duplicados)
     const activeWorkday = await this.workdayRepository.findOne({
-      where: { usuario: { id: user.id }, fin: IsNull() }
+      where: { usuario: { id: userPayload.id }, fin: IsNull() }
     });
 
-    if (activeWorkday) {
-      throw new BadRequestException('Ya tienes una jornada activa. Debes cerrarla antes de abrir otra.');
+    if (activeWorkday) throw new BadRequestException('Ya tienes una jornada activa.');
+
+    const usuarioDB = await this.userRepository.findOne({
+      where: { id: userPayload.id },
+      relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas', 'empresa']
+    });
+
+    if (!usuarioDB) throw new BadRequestException('Usuario no encontrado.');
+
+    // --- 🌍 FIX GEOFENCING: Forzamos números y damos un radio por defecto ---
+    const latEmpresa = Number(usuarioDB.empresa?.latitud);
+    const lngEmpresa = Number(usuarioDB.empresa?.longitud);
+    const radioPermitido = Number(usuarioDB.empresa?.radioPermitido || 100); // 100m por defecto
+
+    if (dto.latitud && dto.longitud && latEmpresa && lngEmpresa) {
+      const distancia = this.calcularDistancia(
+        Number(dto.latitud), Number(dto.longitud), latEmpresa, lngEmpresa
+      );
+
+      this.logger.log(`📍 Fichaje ID:${userPayload.id} - Distancia a la sede: ${distancia.toFixed(2)}m (Radio: ${radioPermitido}m)`);
+
+      if (distancia > radioPermitido) {
+        await this.alarmService.triggerAlarm(
+          userPayload.id, userPayload.empresaId, AlarmType.UNAUTHORIZED_ZONE,
+          `ZONA NO AUTORIZADA: Fichaje a ${distancia.toFixed(0)}m de la oficina (Radio máx: ${radioPermitido}m).`
+        );
+      }
+    } else {
+      this.logger.warn(`⚠️ [ID:${userPayload.id}] Geofencing omitido: Faltan coordenadas del usuario o empresa.`);
     }
 
-    // 3. Creación optimizada
-    // TypeORM permite asignar relaciones solo pasando el ID, sin necesidad de buscar 
-    // el objeto completo en la base de datos.
+    // --- 3. Creamos la jornada ---
+    const ahora = new Date();
     const newWorkday = this.workdayRepository.create({
-      inicio: new Date(),
-      // Mapeamos al GPS de Entrada
+      inicio: ahora,
       latitudEntrada: dto.latitud,      
-      longitudEntrada: dto.longitud,    
-      usuario: { id: user.id },  
-      empresa: { id: user.empresaId } 
+      longitudEntrada: dto.longitud,
+      presente: dto.presente,
+      tipo: 'Entrada',
+      usuario: { id: userPayload.id },  
+      empresa: { id: userPayload.empresaId } 
     });
 
-    return await this.workdayRepository.save(newWorkday);
+    const savedWorkday = await this.workdayRepository.save(newWorkday);
+
+    await this.alarmService.resolverAlarmasPrevias(userPayload.id, [AlarmType.ABSENCE]);
+
+    // ---  VALIDACIÓN DE RETRASO ---
+    const distHoy = this.obtenerDistribucionHoy(usuarioDB);
+    if (distHoy?.franjas?.[0]?.inicio) {
+      const esTarde = this.comprobarRetraso(ahora, distHoy.franjas[0].inicio, 10);
+      if (esTarde) {
+        await this.alarmService.triggerAlarm(
+          userPayload.id, userPayload.empresaId, AlarmType.LATE_ARRIVAL,
+          `RETRASO: Entrada a las ${ahora.toLocaleTimeString('en-GB')} (Teórica: ${distHoy.franjas[0].inicio}).`
+        );
+      }
+    }
+
+    return savedWorkday;
   }
 
   // ============================================
@@ -76,37 +120,50 @@ export class WorkdayService {
    * * El método delega toda la lógica de validación y actualización al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso. El WorkdayService se encargará de validar los datos, gestionar las relaciones con el usuario y la empresa, y garantizar que un usuario solo pueda cerrar una jornada activa.
    * * ATENCIÓN AL BUG DEL GPS: Si tu entidad Workday solo tiene los campos 'latitud' y 'longitud', al actualizar estos campos en el check-out estarías sobrescribiendo la ubicación de entrada. Lo ideal sería tener campos separados para la ubicación de entrada y salida (por ejemplo, latitudEntrada, longitudEntrada, latitudSalida, longitudSalida) para conservar ambas ubicaciones. Si decides sobrescribirlos, ten en cuenta que perderás la información de la ubicación de entrada. 
    */
-  async checkOut(dto: CheckInDto, user: UserPayload) {
-    // 1. Buscamos la jornada que está abierta (fin = null)
+  async checkOut(dto: CheckInDto, userPayload: UserPayload) {
     const jornada = await this.workdayRepository.findOne({
-      where: { usuario: { id: user.id }, fin: IsNull() }
+      where: { usuario: { id: userPayload.id }, fin: IsNull() }
     });
 
-    if (!jornada) {
-      throw new BadRequestException('No hay ninguna jornada activa para cerrar.');
-    }
+    if (!jornada) throw new BadRequestException('No hay jornada activa.');
+
+    const usuarioDB = await this.userRepository.findOne({
+      where: { id: userPayload.id },
+      relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas', 'empresa']
+    });
 
     const ahora = new Date();
     jornada.fin = ahora;
     
-   
-    // Si tu entidad solo tiene 'latitud' y 'longitud', al hacer esto estás BORRANDO 
-    // la ubicación de donde hizo el check-in. 
-    // Lo ideal en tu WorkdayEntity sería tener: latitudEntrada, latitudSalida.
     if (dto.latitud && dto.longitud) {
        jornada.latitudSalida = dto.latitud; 
        jornada.longitudSalida = dto.longitud;
     }
     
-    // Cálculo de minutos exactos
-    const milisegundos = ahora.getTime() - jornada.inicio.getTime();
-    jornada.total_minutos = Math.floor(milisegundos / 60000);
-    
+    jornada.total_minutos = Math.floor((ahora.getTime() - jornada.inicio.getTime()) / 60000);
     jornada.tipo = 'Salida';
+    jornada.presente = dto.presente;
 
-    return await this.workdayRepository.save(jornada);
+    const savedWorkday = await this.workdayRepository.save(jornada);
+
+    if(!usuarioDB) throw new NotFoundException('Usuario no encontrado.');  
+    
+    const distHoy = this.obtenerDistribucionHoy(usuarioDB);
+    if (distHoy && distHoy.franjas && distHoy.franjas.length > 0) {
+      const ultimaFranja = distHoy.franjas[distHoy.franjas.length - 1];
+      if (ultimaFranja.fin) {
+        const esPronto = this.comprobarSalidaAnticipada(ahora, ultimaFranja.fin, 5); 
+        if (esPronto) {
+          await this.alarmService.triggerAlarm(
+            userPayload.id, userPayload.empresaId, AlarmType.EARLY_DEPARTURE,
+            `SALIDA ANTICIPADA: Fichó a las ${ahora.toLocaleTimeString('en-GB')} (Teórica: ${ultimaFranja.fin}).`
+          );
+        }
+      }
+    }
+
+    return savedWorkday;
   }
-
   // ============================================
   // 3. ESTADO ACTUAL (Status)
   // ============================================
@@ -181,4 +238,78 @@ export class WorkdayService {
       }
     });
   }
+
+  // ============================================
+  // MÉTODOS AUXILIARES (Lógica de negocio)
+  // ============================================
+  private obtenerDistribucionHoy(usuario: User) {
+    const diaJS = new Date().getDay();
+    const mapeoDias: Record<number, string> = { 1:'LUNES', 2:'MARTES', 3:'MIERCOLES', 4:'JUEVES', 5:'VIERNES', 6:'SABADO', 0:'DOMINGO' };
+    return usuario?.horario?.distribuciones?.find(d => d.diaSemana === mapeoDias[diaJS]);
+  }
+
+  private comprobarRetraso(horaActual: Date, horaTeoricaStr: string, margenMins: number): boolean {
+    const [h, m] = horaTeoricaStr.split(':').map(Number);
+    const minutosTeoricos = (h * 60) + m + margenMins;
+    const minutosActuales = (horaActual.getHours() * 60) + horaActual.getMinutes();
+    return minutosActuales > minutosTeoricos;
+  }
+
+  private comprobarSalidaAnticipada(horaActual: Date, horaTeoricaFinStr: string, margenMins: number): boolean {
+    const [h, m] = horaTeoricaFinStr.split(':').map(Number);
+    const minutosTeoricos = (h * 60) + m - margenMins; 
+    const minutosActuales = (horaActual.getHours() * 60) + horaActual.getMinutes();
+    return minutosActuales < minutosTeoricos; 
+  }
+
+  private calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; 
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+
+async getTodayStats(empresaId: number) {
+  const inicioDia = new Date();
+  inicioDia.setHours(0, 0, 0, 0);
+  
+  const finDia = new Date();
+  finDia.setHours(23, 59, 59, 999);
+
+  // 1. Contamos quiénes están trabajando (Check-in hecho, check-out pendiente)
+  const activos = await this.workdayRepository.count({
+    where: { 
+      empresa: { id: empresaId }, 
+      fin: IsNull(), 
+      inicio: Between(inicioDia, finDia) 
+    }
+  });
+
+  // 2. Contamos quiénes ya han terminado hoy
+  const terminados = await this.workdayRepository.count({
+    where: { 
+      empresa: { id: empresaId }, 
+      fin: Not(IsNull()), 
+      inicio: Between(inicioDia, finDia) 
+    }
+  });
+
+  // 3. Contamos las alarmas críticas sin revisar (usando el método que creamos antes)
+  const alarmasCriticas = await this.alarmService.countPendingToday(empresaId);
+
+  return {
+    fecha: inicioDia.toLocaleDateString('es-ES'),
+    stats: {
+      trabajandoAhora: activos,
+      jornadasFinalizadas: terminados,
+      alertasPendientes: alarmasCriticas
+    }
+  };
+}
+
 }

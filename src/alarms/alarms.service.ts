@@ -14,6 +14,7 @@ export class AlarmsService {
     @InjectRepository(Alarm)
     private readonly alarmRepository: Repository<Alarm>,
     private readonly alarmsGateway: AlarmsGateway,
+    
   ) {}
 
   // Generar una alarma de forma manual o automática

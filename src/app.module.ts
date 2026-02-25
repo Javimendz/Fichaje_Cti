@@ -15,7 +15,6 @@ import { TimeSlotModule } from './timeSlot/timeSlot.module';
 import { AbsenceModule } from './absence/absense.module';
 import { WorkerModule } from './worker/worker.module';
 import { RequestModule } from './request/request.module';
-import { LeavesModule } from './leaves/leaves.module';
 
 /**
  * 
@@ -77,7 +76,7 @@ import { LeavesModule } from './leaves/leaves.module';
     ScheduleModule,
     AbsenceModule,
     AlarmsModule, 
-    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule, LeavesModule
+    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule
    
    ],
   

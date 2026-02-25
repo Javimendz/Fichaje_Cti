@@ -6,14 +6,14 @@ import { Alarm } from './entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
 import { AlarmCronService } from './alarms.crone.service';
 import { ScheduleModule } from '@nestjs/schedule';
-import { Leave } from 'leaves/entities/leaf.entity';
 import { Workday } from 'workday/entities/workday.entity';
 import { WorkdayModule } from 'workday/workday.module';
 import { AlarmsGateway } from './gateway/alarms.gateway';
+import { Ausencia } from 'absence/entities/ausencia.entity';
 
 @Module({
 imports: [
-    TypeOrmModule.forFeature([Alarm, User, Workday, Leave]),
+    TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]),
     ScheduleModule.forRoot(),
     forwardRef(() => WorkdayModule), 
   ],

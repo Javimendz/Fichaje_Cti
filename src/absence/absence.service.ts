@@ -37,7 +37,6 @@ export class AbsenceService {
     const currentYear = new Date().getFullYear();
     const diasMaximos = 22; // Días estándar por ley
 
-    // Usamos QueryBuilder para sumar los días consumidos directamente en la BD
     const result = await this.ausenciaRepository.createQueryBuilder('ausencia')
       .select('SUM(ausencia.dias_consumidos)', 'total')
       .where('ausencia.usuario_id = :usuarioId', { usuarioId })
@@ -55,7 +54,6 @@ export class AbsenceService {
       dias_disponibles: diasMaximos - diasGastados
     };
   }
-
 
   // Método para crear una nueva ausencia, validando que no haya solapamientos con otras ausencias existentes del mismo usuario y que las fechas sean correctas. La ausencia se crea con estado PENDIENTE y se vincula al usuario autenticado.
   // El método create recibe los datos de la nueva ausencia a través del DTO CreateAbsenceDto y el usuario autenticado. Primero, valida que el usuario esté vinculado a una empresa, luego convierte las fechas de inicio y fin a formato UTC para evitar problemas de zona horaria. Valida que la fecha de inicio no sea posterior a la fecha de fin, y luego verifica que no haya solapamientos con otras ausencias existentes del mismo usuario que estén en estado PENDIENTE o APROBADA. Si todo es correcto, calcula el total de días de la ausencia, crea un nuevo registro en la base de datos con estado PENDIENTE y lo devuelve.
@@ -87,11 +85,11 @@ export class AbsenceService {
     const fechaInicioStr = inicio.toISOString().split('T')[0];
     const fechaFinStr = fin.toISOString().split('T')[0];
 
-    // Fórmula: Nueva_Inicio <= Vieja_Fin Y Nueva_Fin >= Vieja_Inicio
+    // Validación de solapamiento
     const solapamiento = await this.ausenciaRepository.findOne({
       where: {
         usuarioId: usuario.id,
-        estado: In([AusenciaEstado.PENDIENTE, AusenciaEstado.APROBADA]), // Ignoramos las RECHAZADAS
+        estado: In([AusenciaEstado.PENDIENTE, AusenciaEstado.APROBADA]),
         fechaInicio: LessThanOrEqual(fechaFinStr),
         fechaFin: MoreThanOrEqual(fechaInicioStr),
       }
@@ -107,7 +105,7 @@ export class AbsenceService {
     const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     const nuevaAusencia = new Ausencia();
-    nuevaAusencia.tipo = dto.tipo as any;
+    nuevaAusencia.tipo = dto.tipo;
     nuevaAusencia.motivo = dto.motivo;
     nuevaAusencia.fechaInicio = fechaInicioStr;
     nuevaAusencia.fechaFin = fechaFinStr;
@@ -119,7 +117,6 @@ export class AbsenceService {
 
     return await this.ausenciaRepository.save(nuevaAusencia);
   }
-  
   // Método para actualizar el estado de una ausencia, permitiendo aprobarla o rechazarla. Solo los administradores pueden acceder a este método, y se valida que la ausencia exista y que el nuevo estado sea diferente al actual.
   // El método updateEstado recibe el ID de la ausencia a actualizar, el nuevo estado y el usuario administrador que realiza la acción. Primero, valida que la ausencia exista y que el usuario tenga permiso para modificarla. Luego, verifica que el nuevo estado sea diferente al actual para evitar cambios innecesarios. Si todo es correcto, actualiza el estado de la ausencia, ajusta los días consumidos según si se aprueba o se rechaza, añade una marca en el motivo indicando quién procesó la solicitud, guarda los cambios en la base de datos y devuelve la ausencia actualizada.
   // Este método es crucial para que los administradores puedan gestionar las solicitudes de ausencia de manera eficiente, asegurando que solo se procesen cambios válidos y que se mantenga un registro claro de quién aprobó o rechazó cada solicitud.
@@ -135,7 +132,7 @@ export class AbsenceService {
    * @throws ForbiddenException si el usuario no tiene permiso para modificar la ausencia.
    * @throws BadRequestException si el nuevo estado es igual al estado actual de la ausencia.
    */
-  async findOne(id: number, user: User) {
+ async findOne(id: number, user: User) {
     const ausencia = await this.ausenciaRepository.findOne({
       where: { id },
       relations: ['usuario'],
@@ -193,26 +190,11 @@ async findAllByEmpresa(empresaId: number) {
       where: { empresaId },
       relations: ['usuario'],
       order: { createdAt: 'DESC' },
-      // Definimos exactamente qué campos queremos que TypeORM nos devuelva
       select: {
-        id: true,
-        tipo: true,
-        fechaInicio: true,
-        fechaFin: true,
-        motivo: true,
-        estado: true,
-        usuarioId: true,
-        empresaId: true,
-        diasConsumidos: true,
-        diasTotales: true,
-        createdAt: true,
-        updatedAt: true,
-        usuario: { // Del usuario, SOLO traemos los datos públicos
-          id: true,
-          nombre: true,
-          email: true,
-          rol: true
-        }
+        id: true, tipo: true, fechaInicio: true, fechaFin: true,
+        motivo: true, estado: true, usuarioId: true, empresaId: true,
+        diasConsumidos: true, diasTotales: true, createdAt: true, updatedAt: true,
+        usuario: { id: true, nombre: true, email: true, rol: true }
       }
     });
   }

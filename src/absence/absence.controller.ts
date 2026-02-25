@@ -51,6 +51,9 @@ export class AbsenceController {
     return this.ausenciaService.create(createAusenciaDto, user);
   }
 
+
+  
+
   // Endpoint para que un trabajador vea su propio historial de ausencias.
   /* El sistema devuelve todas las solicitudes de ausencia registradas por el usuario autenticado, ordenadas por fecha de inicio (más reciente primero). Solo los usuarios con rol ADMIN o WORKER pueden acceder a este endpoint para ver su historial de ausencias, lo cual es útil para que los administradores también puedan revisar sus propias solicitudes de ausencia.
     @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan revisar su historial personal de ausencias, lo cual es útil para que los administradores también puedan verificar sus propias solicitudes de ausencia.
@@ -88,7 +91,7 @@ export class AbsenceController {
   /* El sistema elimina la solicitud de ausencia especificada por su ID, siempre y cuando el usuario autenticado sea el propietario de la solicitud o un administrador de la empresa del propietario. Solo los usuarios con rol ADMIN o WORKER pueden acceder a este endpoint para eliminar una solicitud de ausencia específica, lo cual es útil para que los administradores puedan gestionar las solicitudes de ausencia de sus trabajadores.
     @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan eliminar una solicitud de ausencia específica, lo cual es útil para que los administradores puedan gestionar las solicitudes de ausencia de sus trabajadores.
   */
-  @Delete('delete/:id')
+ @Delete('delete/:id')
   @Roles(UserRole.ADMIN, UserRole.WORKER) 
   remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
     return this.ausenciaService.remove(id, user);
@@ -114,13 +117,12 @@ export class AbsenceController {
   @Put('estado/:id')
   @Roles(UserRole.ADMIN) 
   async updateEstado(
-  @Param('id', ParseIntPipe) id: number,
-  @Body('estado', new ParseEnumPipe(AusenciaEstado, {
+    @Param('id', ParseIntPipe) id: number,
+    @Body('estado', new ParseEnumPipe(AusenciaEstado, {
       errorHttpStatusCode: 400,
-      exceptionFactory: (error) => {
-        return new BadRequestException(`Valor de estado inválido. Use: PENDIENTE, APROBADA o RECHAZADA`);
-      }
-    })) estado: AusenciaEstado,    @GetUser() admin: User 
+      exceptionFactory: () => new BadRequestException(`Valor inválido. Use: PENDIENTE, APROBADA o RECHAZADA`)
+    })) estado: AusenciaEstado,    
+    @GetUser() admin: User 
   ) {
     return this.ausenciaService.updateEstado(id, estado, admin);
   }

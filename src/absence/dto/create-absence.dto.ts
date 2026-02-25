@@ -20,7 +20,7 @@ import { TipoAusencia } from './ausencia-estado.enum';
 export class CreateAbsenceDto {
   @IsNotEmpty({ message: 'El tipo de ausencia es obligatorio' })
   @IsEnum(TipoAusencia, { 
-    message: 'El tipo debe ser: VACACIONES, ENFERMEDAD, PERMISO u ASUNTOS_PROPIOS' 
+    message: 'El tipo debe ser: VACACIONES, ENFERMEDAD, ASUNTOS_PROPIOS, FESTIVO o PERMISO' 
   })
   @Expose()
   tipo: TipoAusencia;

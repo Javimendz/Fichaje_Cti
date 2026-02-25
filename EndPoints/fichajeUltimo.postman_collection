@@ -1,0 +1,2165 @@
+{
+  "info": {
+    "_postman_id": "f01ff1f3-2c3a-4c90-b381-049696e38179",
+    "name": "fichaje",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49427845",
+    "_collection_link": "https://go.postman.co/collection/49427845-f01ff1f3-2c3a-4c90-b381-049696e38179?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "unimplementados",
+      "item": [
+        {
+          "name": "verify-otp",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlYmY2ZTcwNS0wMmZkLTQ1MjQtYmY1OC1hYzM5Y2YyN2E3MDMiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImFjMTdmNDdlLWVkMjEtNGE2NS05NDNiLTlhNjgwOTc2NGM0MiIsImlhdCI6MTc2Nzk0NzA1NSwiZXhwIjoxNzY3OTUwNjU1fQ.d1seSK6KEa70vtIetyQpKlSMp5xsf_oC3QMIhIgJ9dI",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer <TU_JWT_AQUI>",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"telefono\": \"+34600111223\", \"codigo\": \"123456\" }"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/auth/verify-otp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "verify-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "send-otp",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n\r\n    \"telefono\": \"+34600111238\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/auth/send-otp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "send-otp"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "allowed-phones",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"telefono\": \"+34600111237\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/allowed-phones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "allowed-phones"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seed",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiOTQ4ZDk1Zi1hYTdmLTRlZGYtYjk0My0yODgzNWNlOTg4MGYiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImFjMTdmNDdlLWVkMjEtNGE2NS05NDNiLTlhNjgwOTc2NGM0MiIsImlhdCI6MTc2Nzk1MTEyNiwiZXhwIjoxNzY3OTU0NzI2fQ.czcZolm4o_G9XLIyuK4kMyTFh1y6IJU8YEPwhlGR1XY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text",
+            "disabled": true
+          },
+          {
+            "key": "x-seed-key",
+            "value": "123",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:3000/api/seeds/run",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "seeds",
+            "run"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "login Super",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n      \"email\": \"superadmin@cti.com\",\r\n  \"password\": \"superpassword123M\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Empresas-setup",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5MjEzODMsImV4cCI6MTc3MTk2NDU4M30.F_K2dwMygPgpnmlGqHdKhOjz22dfuavwDdGZXEkONnA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\r\n\r\n{\r\n  \"nombreEmpresa\": \"Global Tech Logistics S.A.\",\r\n  \"cif\": \"A87654321\",\r\n  \"direccion\": \"Avenida Central 100, Planta 5\",\r\n  \"poblacion\": \"Barcelona\",\r\n  \"provincia\": \"Barcelona\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"ops@globaltech.com\",\r\n  \"codigoPostal\": \"08001\",\r\n  \"nombreContacto\": \"Marta Sánchez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"+34934123457\",\r\n  \r\n  \"admin\": {\r\n    \"telefono\": \"+34600000001\",\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n  }\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/crear-empresa",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "crear-empresa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "login Admin",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "login Worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YWZiYWUwMy02NzE3LTQ5ZTgtYWIwYS00ZTJkMmY3N2YwZGEiLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6ImFjMTdmNDdlLWVkMjEtNGE2NS05NDNiLTlhNjgwOTc2NGM0MiIsImlhdCI6MTc2ODI5NTE4NCwiZXhwIjoxNzY4Mjk4Nzg0fQ.9Ig9Z5zTyQHq4xZR-s2ASlt7rQeDLlTQJe_Dg1AGYYE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"dni\": \"87654321X\", \r\n    \"password\": \"contraseña123M\"\r\n\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMDY5MzcsImV4cCI6MTc3MjA1MDEzN30.Oy68DLCzsTgoGAQMXxZH6mkQNsMOej8qP6AP5TIvlKU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"telefono\": \"600123435\",\r\n  \"nombre\": \"PRUEBA\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"87654321X\",\r\n  \"email\": \"jua7ss888@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 3,\r\n  \"isActive\": true,\r\n  \"empresaId\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/crear-worker",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "crear-worker"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "listar Workers",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/worker/list-workers",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "list-workers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener un worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQxLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6MywiaWF0IjoxNzcwNzExODMyLCJleHAiOjE3NzA3NTUwMzJ9.D4MhiHr6H63Kz00mzt-ksl1z7vUaid7o4nn0tiYl3SY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/worker/find/51",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "find",
+            "51"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"telefono\": \"600123443\",\r\n  \"nombre\": \"Juan\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"juan@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/update/8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "update",
+            "8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Actualizar Empresa",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzAyODA4NDksImV4cCI6MTc3MDMyNDA0OX0.nX7UhAbUu5cL4M6sglogP8pJXg-byz3GiBzdX8ZBsxo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Tech Ss\",\r\n  \"cif\": \"B12345677\",\r\n  \"direccion\": \"Calle Falsa 123\",\r\n  \"provincia\": \"Murcia\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"contactoNombre\": \"Juan Pérez\",\r\n  \"telefonoContacto\": \"+34600111233\",\r\n  \"telefonoEmpresa\": \"910000004\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"info@techsolutions.es\",\r\n  \"isActive\": true,\r\n  \"admin\": {\r\n    \"email\": \"admin@beta.com\",\r\n    \"telefono\": \"+34655999888\",\r\n    \"nombre\": \"Nombre FALSE\",\r\n    \"apellidos\": \"Apellidos Reales\",\r\n    \"password\": \"contraseña123J\"\r\n  \r\n    }\r\n  \r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Empresas",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5NDAwMTMsImV4cCI6MTc3MTk4MzIxM30.WdWh0qpo5auYNgsm_2Xd8mugqg9vDDPPeET7eFkRYTA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/list-empresas",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "list-empresas"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "check-in",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAyMDk2NiwiZXhwIjoxNzcyMDI0NTY2fQ.eM7yce7J9GoCfHY87UagF1-mVqbi3UGc_ywUpAi2Ncs",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"latitud\": 80.4531, \r\n  \"longitud\": -3.6883,\r\n  \"presente\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/jornada/check-in",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "jornada",
+            "check-in"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "check-out",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAyMDk2NiwiZXhwIjoxNzcyMDI0NTY2fQ.eM7yce7J9GoCfHY87UagF1-mVqbi3UGc_ywUpAi2Ncs",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"latitud\": 40.4168,\r\n  \"longitud\": -3.7036,\r\n  \"presente\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/jornada/check-out",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "jornada",
+            "check-out"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "historial jornada",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"latitud\": 40.4167,\r\n  \"longitud\": -3.7037\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/jornada/historial",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "jornada",
+            "historial"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "jornada status",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer <TU_JWT_AQUI>",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"latitud\": 40.4167,\r\n  \"longitud\": -3.7037\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/jornada/status",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "jornada",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "request",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjE0NDEsImV4cCI6MTc3MTk2NDY0MX0._cdxWhIE5SY-w70IDQmeH1cCoMcrrHO5J0oNPYNpibM",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fechaInicio\": \"2027-08-10\",\r\n    \"fechaFin\": \"2027-08-15\",\r\n    \"motivo\": \"Viaje a la playa\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/crear-request",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "crear-request"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "solicitudes-obtenerTodas Admin",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ2LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjMsImlhdCI6MTc3MDcxMjIzOCwiZXhwIjoxNzcwNzE1ODM4fQ.-e20jH0KlkXNScmzZ6KM0nbJHb8aTTU73RllNpwbQoA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"ENFERMEDAD\",\r\n  \"fechaInicio\": \"2026-10-03\",\r\n  \"fechaFin\": \"2026-11-15\",\r\n  \"motivo\": \"Vacaciones de verano\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/crear-request",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "crear-request"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "aprobar-solicitud",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjE0NDEsImV4cCI6MTc3MTk2NDY0MX0._cdxWhIE5SY-w70IDQmeH1cCoMcrrHO5J0oNPYNpibM",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"estado\": \"APROBADA\",\r\n  \"comentarioAdmin\": \"Disfruta tus vacaciones\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/check/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "check",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "schedules",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMDY5MzcsImV4cCI6MTc3MjA1MDEzN30.Oy68DLCzsTgoGAQMXxZH6mkQNsMOej8qP6AP5TIvlKU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Horario Invierno 2026 - IT\",\r\n  \"fechaInicio\": \"2026-01-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"FIJO\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"LUNES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"06:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"MIERCOLES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"VIERNES\",\r\n      \"horasDia\": 7,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"15:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/crear-schedule",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "crear-schedule"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Asignar horario",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"horarioId\": \"2\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/assign-schedule/6",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "assign-schedule",
+            "6"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Trabajador por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/find/55",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "find",
+            "55"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Obtener Horario por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/find/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "find",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Borrar horario",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/delete/4",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "delete",
+            "4"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear asistencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMyLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAwOTYzNiwiZXhwIjoxNzcyMDEzMjM2fQ.diaaUQPtgH9GbE6BfT_u1awM5rJnN_j0lpaTe_bRQqs",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"presente\": true,\r\n    \"motivo\": \"entrada a hora\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/crear-asistencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "crear-asistencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia my-history",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/my-history",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "my-history"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia empresa",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/empresa",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "empresa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "asistencia listar asistencia",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"motivo\": \"Llegada a la oficina central\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/user/2",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "user",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "my-history asistencias",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5NDQzMTEsImV4cCI6MTc3MTk4NzUxMX0.3ZEdoYUdLfaGCVEq4WFsMj7EcjY5OUPx8FzahyFpoQg",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/my-history",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "my-history"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener Users",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUyLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NiwiaWF0IjoxNzcwODg2MTkwLCJleHAiOjE3NzA5MjkzOTB9.ORQFZhV12SVLZ4fYglOnXXEFl5hQJYHc8O6ygonWl_U",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/users/find/55",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "find",
+            "55"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "borrar worker",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar Worker",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzA3MTE3MjAsImV4cCI6MTc3MDc1NDkyMH0.ZD9X6ovoG0oggcsapeyyV8-bb7sS6gny2j6T1Gujk50",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/worker/update/59",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "update",
+            "59"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.test(\"Asignación exitosa\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "    pm.expect(pm.response.json().message).to.include(\"correctamente\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUyLCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NiwiaWF0IjoxNzcwODg2MTkwLCJleHAiOjE3NzA5MjkzOTB9.ORQFZhV12SVLZ4fYglOnXXEFl5hQJYHc8O6ygonWl_U",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"horarioId\": 7\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/worker/assign-schedule/63",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "worker",
+            "assign-schedule",
+            "63"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "listar-ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/crear-asistencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "crear-asistencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mis ausencias",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "find-ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IldPUktFUiIsImVtcHJlc2FJZCI6MSwiaWF0IjoxNzcxNDkxODM1LCJleHAiOjE3NzE0OTU0MzV9.NbrgqGPwh6coNmGDHdWv96GpSAT0x0QwwPQnLyPjbYo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/find/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "find",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "estado",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE0OTEwOTgsImV4cCI6MTc3MTUzNDI5OH0.fe0xl9CrjM5ULT6xsJ3-zXwKhFiakBVtru9IcNUzqTY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"estado\": \"RECHAZADA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencia/estado/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencia",
+            "estado",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fecha_inicio\": \"2026-08-16\",\r\n    \"fecha_fin\": \"2026-08-20\",\r\n    \"motivo\": \"Segunda parte de mis vacaciones\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/crear-ausencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "crear-ausencia"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ver mis ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/mis-ausencias",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "mis-ausencias"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ausencia balance",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"año\": 2026,\r\n    \"dias_totales_año\": 22,\r\n    \"dias_gastados\": 5,\r\n    \"dias_disponibles\": 17\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/balance",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "balance"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "actualizar ausencias",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"motivo\": \"Gripe fuerte y bronquitis (actualizado)\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/update/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "update",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "list-ausencias",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"motivo\": \"Gripe fuerte y bronquitis (actualizado)\"\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/list-ausencias",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "list-ausencias"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "aprobar ausencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"estado\": \"APROBADA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/estado/3",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "estado",
+            "3"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "consultar worker de otra empresa",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"fecha_inicio\": \"2026-08-14\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/update/5",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "update",
+            "5"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear franjaHoraria",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"inicio\": \"12:00\",\r\n    \"fin\": \"16:00\",\r\n    \"distribucionDiaId\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/franja-horaria/crear",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "franja-horaria",
+            "crear"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "update franjaHoraria",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"fin\": \"15:00\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/franja-horaria/update/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "franja-horaria",
+            "update",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "listar franjas por horario",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/franja-horaria/by-schedule/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "franja-horaria",
+            "by-schedule",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear-user Super",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"nombre\": \"wroker\",\r\n    \"apellidos\": \"Worker\",\r\n    \"dni\": \"23284804h\",\r\n    \"email\": \"worker12.empresa2@gmail.com\",\r\n    \"rol\": \"WORKER\",\r\n    \"telefono\": \"623456787\",    \r\n    \"empresaId\": 1, \r\n    \"password\": \"Password123!\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/users/crear-user",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "users",
+            "crear-user"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "login 2",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n      \"email\": \"admin.empresa2@gmail.com\",\r\n  \"password\": \"Password123!\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear empresa 2",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5NDAwMTMsImV4cCI6MTc3MTk4MzIxM30.WdWh0qpo5auYNgsm_2Xd8mugqg9vDDPPeET7eFkRYTA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"nombreEmpresa\": \"CTI FORMACION S.L.\",\r\n    \"cif\": \"B12345678\",\r\n    \"poblacion\": \"Madrid\",\r\n    \"email\": \"contacto@cti.com\",\r\n    \"admin\": {\r\n        \"nombre\": \"Marta\",\r\n        \"apellidos\": \"Admin\",\r\n        \"dni\": \"55555555Z\",\r\n        \"email\": \"marta.admin@cti.com\",\r\n        \"password\": \"Password123!\",\r\n        \"telefono\": \"600100200\"\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/crear-empresa",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "crear-empresa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "delete con super",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5NDAwMTMsImV4cCI6MTc3MTk4MzIxM30.WdWh0qpo5auYNgsm_2Xd8mugqg9vDDPPeET7eFkRYTA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/empresa/delete/8",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "empresa",
+            "delete",
+            "8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "pendientes Alarma",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMDY5MzcsImV4cCI6MTc3MjA1MDEzN30.Oy68DLCzsTgoGAQMXxZH6mkQNsMOej8qP6AP5TIvlKU",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/alarmas/pendientes",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "alarmas",
+            "pendientes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "revisar Alarma",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "geoposi asistencia",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "leaves range",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMTI1MzgsImV4cCI6MTc3MjA1NTczOH0.8HAYjKY80cbEGtSFkz7zqoxDQYbiN4SwhmkiL9g9rn4",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"usuarioId\": 34,\r\n  \"fechaInicio\": \"2026-03-10\",\r\n  \"fechaFin\": \"2026-03-12\",\r\n  \"tipo\": \"VACACIONES\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/leaves/range",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "leaves",
+            "range"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "dashboard",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMTI1MzgsImV4cCI6MTc3MjA1NTczOH0.8HAYjKY80cbEGtSFkz7zqoxDQYbiN4SwhmkiL9g9rn4",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"fecha\": \"25/02/2026\",\r\n  \"stats\": {\r\n    \"trabajandoAhora\": 0,\r\n    \"jornadasFinalizadas\": 1,\r\n    \"alertasPendientes\": 2 \r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/jornada/dashboard/resumen",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "jornada",
+            "dashboard",
+            "resumen"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "alarm pendientes",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMTI1MzgsImV4cCI6MTc3MjA1NTczOH0.8HAYjKY80cbEGtSFkz7zqoxDQYbiN4SwhmkiL9g9rn4",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/alarmas/pendientes",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "alarmas",
+            "pendientes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}

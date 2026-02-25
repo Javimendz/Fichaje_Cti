@@ -5,14 +5,15 @@ import { AlarmType } from "./entities/alarm.entity";
 import { UserRole } from "auth/roles.enum";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "users/entities/user.entity";
-import { Between, Repository } from "typeorm";
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
 import { DiaSemana } from "schedule/entities/distribucion-dia.entity";
-import { Leave, LeaveStatus } from '../leaves/entities/leaf.entity';
 import { Workday } from "workday/entities/workday.entity";
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
+import { Ausencia } from "absence/entities/ausencia.entity";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -28,27 +29,27 @@ export class AlarmCronService {
     @InjectRepository(Workday)
     private readonly workdayRepository: Repository<Workday>,
     private readonly alarmService: AlarmsService,
-    @InjectRepository(Leave)
-    private readonly leaveRepository: Repository<Leave>
+    @InjectRepository(Ausencia)
+    private readonly ausenciaRepository: Repository<Ausencia>
   ) {}
 
-  @Cron('*/10 * * * * *')
+ 
   //@Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron('*/10 * * * * *')
   async checkAbsencesBySchedule() {
     this.logger.log('--- Iniciando escaneo ---');
 
-   const ahora = dayjs().tz(this.ZONA_HORARIA);
-  const hoyString = ahora.format('YYYY-MM-DD'); 
+    const ahora = dayjs().tz(this.ZONA_HORARIA);
+    const hoyString = ahora.format('YYYY-MM-DD'); 
 
-  // Rango de horas EXACTO para buscar la jornada de HOY
-  const inicioDelDia = ahora.startOf('day').toDate();
-  const finDelDia = ahora.endOf('day').toDate();
+    const inicioDelDia = ahora.startOf('day').toDate();
+    const finDelDia = ahora.endOf('day').toDate();
 
-  const mapeoDias: Record<number, DiaSemana> = {
-    1: DiaSemana.LUNES, 2: DiaSemana.MARTES, 3: DiaSemana.MIERCOLES,
-    4: DiaSemana.JUEVES, 5: DiaSemana.VIERNES, 6: DiaSemana.SABADO, 0: DiaSemana.DOMINGO,
-  };
-  const diaEnumHoy = mapeoDias[ahora.day()];
+    const mapeoDias: Record<number, DiaSemana> = {
+      1: DiaSemana.LUNES, 2: DiaSemana.MARTES, 3: DiaSemana.MIERCOLES,
+      4: DiaSemana.JUEVES, 5: DiaSemana.VIERNES, 6: DiaSemana.SABADO, 0: DiaSemana.DOMINGO,
+    };
+    const diaEnumHoy = mapeoDias[ahora.day()];
 
     const trabajadores = await this.userRepository.find({
       where: { rol: UserRole.WORKER, isActive: true },
@@ -56,17 +57,19 @@ export class AlarmCronService {
     });
 
     for (const worker of trabajadores) {
-      // 1. Verificamos Permisos (Vacaciones/Bajas)
-      const tienePermiso = await this.leaveRepository.findOne({
+      // 1. Verificamos Permisos (Usando Ausencia)
+      const tieneAusencia = await this.ausenciaRepository.findOne({
         where: {
           usuarioId: worker.id,
-          fecha: hoyString,
-          estado: LeaveStatus.APPROVED
+          estado: AusenciaEstado.APROBADA,
+          fechaInicio: LessThanOrEqual(hoyString),
+          fechaFin: MoreThanOrEqual(hoyString)
         }
       });
 
-      if (tienePermiso) {
-        this.logger.debug(`[ID: ${worker.id}] No se genera alarma: tiene permiso (${tienePermiso.tipo}).`);
+      if (tieneAusencia) {
+        // CORRECCIÓN 2: Cambiado "tienePermiso" por "tieneAusencia"
+        this.logger.debug(`[ID: ${worker.id}] No se genera alarma: tiene permiso (${tieneAusencia.tipo}).`);
         continue;
       }
 
@@ -92,11 +95,10 @@ export class AlarmCronService {
       if (horaLimiteSuperada) {
         this.logger.log(`[ID: ${worker.id}] Hora límite superada. Verificando asistencia...`);
         
-        // 🛡️ CAMBIO: Buscamos si tiene una Jornada abierta o cerrada hoy
         const fichaje = await this.workdayRepository.findOne({
           where: { 
             usuario: { id: worker.id }, 
-            inicio: Between(inicioDelDia, finDelDia) // Buscamos cualquier jornada iniciada hoy
+            inicio: Between(inicioDelDia, finDelDia)
           },
         });
 
@@ -126,23 +128,21 @@ export class AlarmCronService {
     this.logger.log('--- Escaneo completado ---');
   }
   
+  private haPasadoHoraLimite(horaEntrada: string, margenMinutos: number): boolean {
+    const ahora = dayjs().tz(this.ZONA_HORARIA);
+    const minutosActuales = (ahora.hour() * 60) + ahora.minute();
+
+    const partesHora = horaEntrada.split(':');
+    const horasTeoricas = parseInt(partesHora[0], 10);
+    const minutosTeoricos = parseInt(partesHora[1], 10);
+    
+    const minutosTotalesTeoricos = (horasTeoricas * 60) + (minutosTeoricos || 0);
+
+    return minutosActuales > (minutosTotalesTeoricos + margenMinutos);
+  }
+
  
   
-  private haPasadoHoraLimite(horaEntrada: string, margenMinutos: number): boolean {
-  // Obtenemos la hora actual FORZADA a la zona horaria correcta
-  const ahora = dayjs().tz(this.ZONA_HORARIA);
-  
-  // Dayjs usa .hour() y .minute()
-  const minutosActuales = (ahora.hour() * 60) + ahora.minute();
-
-  const partesHora = horaEntrada.split(':');
-  const horasTeoricas = parseInt(partesHora[0], 10);
-  const minutosTeoricos = parseInt(partesHora[1], 10);
-  
-  const minutosTotalesTeoricos = (horasTeoricas * 60) + (minutosTeoricos || 0);
-
-  return minutosActuales > (minutosTotalesTeoricos + margenMinutos);
-}
 
 
   

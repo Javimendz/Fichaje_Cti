@@ -8,6 +8,7 @@ import { User } from "users/entities/user.entity";
 import { Repository } from "typeorm";
 import { Attendance } from "attendance/entities/attendance.entity";
 import { DiaSemana } from "schedule/entities/distribucion-dia.entity";
+import { Leave, LeaveStatus } from '../leaves/entities/leaf.entity';
 
 @Injectable()
 export class AlarmCronService {
@@ -19,10 +20,12 @@ export class AlarmCronService {
     @InjectRepository(Attendance)
     private readonly attendanceRepository: Repository<Attendance>,
     private readonly alarmService: AlarmsService,
+    @InjectRepository(Leave)
+    private readonly leaveRepository: Repository<Leave>
   ) {}
 
-  //@Cron('*/10 * * * * *')
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron('*/10 * * * * *')
+  //@Cron(CronExpression.EVERY_30_MINUTES)
   async checkAbsencesBySchedule() {
     this.logger.log('--- Iniciando escaneo ---');
 
@@ -48,6 +51,25 @@ export class AlarmCronService {
     });
 
     for (const worker of trabajadores) {
+
+      const tienePermiso = await this.leaveRepository.findOne({
+      where: {
+        usuarioId: worker.id,
+        fecha: hoyString,
+        estado: LeaveStatus.APPROVED
+      }
+    });
+
+if (tienePermiso) {
+  this.logger.debug(`[ID: ${worker.id}] No se genera alarma: tiene permiso (${tienePermiso.tipo}).`);
+  continue; // 👈 Saltamos al siguiente trabajador, no hay alarma.
+}
+
+// 2. Si no tiene permiso, seguimos con la lógica de verificar fichaje...
+const fichaje = await this.attendanceRepository.findOne({
+  where: { usuarioId: worker.id, fechaJornada: hoyString },
+});
+
       if (!worker.horario?.distribuciones) {
         this.logger.debug(`[ID: ${worker.id}] Sin horario asignado.`);
         continue;

@@ -1,6 +1,6 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Alarm, AlarmType } from "./entities/alarm.entity";
-import { MoreThanOrEqual, Repository } from "typeorm";
+import { In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
@@ -51,6 +51,21 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
   }
 
 
+async resolverAlarmasPrevias(usuarioId: number, tipos: AlarmType[]) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
 
+  return await this.alarmRepository.update(
+    {
+      usuario: { id: usuarioId },
+      tipo: In([...tipos]), // Necesitas importar 'In' de typeorm
+      revisada: false,
+      createdAt: MoreThan(hoy) // Necesitas importar 'MoreThan' de typeorm
+    },
+    { 
+      revisada: true, 
+      descripcion: "CONSOLIDADA: El trabajador finalmente fichó."    }
+  );
+}
   
 }

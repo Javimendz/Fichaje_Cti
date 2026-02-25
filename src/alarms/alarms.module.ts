@@ -7,11 +7,12 @@ import { User } from 'users/entities/user.entity';
 import { Attendance } from 'attendance/entities/attendance.entity';
 import { AlarmCronService } from './alarms.crone.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { Leave } from 'leaves/entities/leaf.entity';
 
 @Module({
 imports: [
     
-    TypeOrmModule.forFeature([Alarm, User, Attendance]),
+    TypeOrmModule.forFeature([Alarm, User, Attendance,Leave]),
     
     ScheduleModule.forRoot(), 
   ],

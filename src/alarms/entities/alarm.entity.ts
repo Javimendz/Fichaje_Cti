@@ -5,7 +5,8 @@ import { Company } from 'company/entities/company.entity';
 export enum AlarmType {
   ABSENCE = 'AUSENCIA_DETECTADA',
   LATE_ARRIVAL = 'RETRASO',
-  UNAUTHORIZED_ZONE = 'ZONA_NO_AUTORIZADA'
+  UNAUTHORIZED_ZONE = 'ZONA_NO_AUTORIZADA',
+  EARLY_DEPARTURE = 'SALIDA_ANTICIPADA'
 }
 
 @Entity('alarms')

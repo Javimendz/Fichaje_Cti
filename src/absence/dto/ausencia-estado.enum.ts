@@ -17,6 +17,7 @@ export enum AusenciaEstado {
 export enum TipoAusencia {
   VACACIONES = 'VACACIONES',
   ENFERMEDAD = 'ENFERMEDAD',
-  PERMISO = 'PERMISO',
   ASUNTOS_PROPIOS = 'ASUNTOS_PROPIOS',
+  FESTIVO = 'FESTIVO', 
+  PERMISO = 'PERMISO'  
 }

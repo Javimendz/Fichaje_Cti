@@ -15,6 +15,8 @@ import { TimeSlotModule } from './timeSlot/timeSlot.module';
 import { AbsenceModule } from './absence/absense.module';
 import { WorkerModule } from './worker/worker.module';
 import { RequestModule } from './request/request.module';
+import { IssueModule } from './issue/issue.module';
+import { ActivityModule } from './activity/activity.module';
 
 /**
  * 
@@ -76,7 +78,7 @@ import { RequestModule } from './request/request.module';
     ScheduleModule,
     AbsenceModule,
     AlarmsModule, 
-    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule
+    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule, IssueModule, ActivityModule
    
    ],
   

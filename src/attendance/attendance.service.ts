@@ -45,14 +45,13 @@ export class AttendanceService {
       throw new ConflictException(`Ya has registrado tu asistencia para hoy (${hoy}).`);
     }
 
-    const record = new Attendance();
-    record.presente = dto.presente;
-    record.motivo = dto.motivo;
-    record.usuarioId = user.id;
-    record.empresaId = user.empresaId ?? null;
-    record.fechaJornada = hoy;
-
-    return await this.attendanceRepository.save(record);
+     return await this.attendanceRepository.save({
+      presente: dto.presente,
+      motivo: dto.motivo,
+      usuarioId: user.id,
+      empresaId: user.empresaId,
+      fechaJornada: hoy,
+    });
   }
 
   // --- HISTORIAL PERSONAL: ADMIN Y WORKER ---

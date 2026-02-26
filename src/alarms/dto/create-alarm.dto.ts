@@ -42,7 +42,7 @@ import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, 
   // Validación de objeto anidado
   @Expose()
   @Type(() => AuthUserDto)
-  @ValidateNested() // 🛡️ Crucial: Valida que el objeto usuario cumpla sus propias reglas
+  @ValidateNested() 
   @IsOptional()
   usuario: AuthUserDto;
     }

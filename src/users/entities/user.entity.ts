@@ -8,6 +8,8 @@ import { Worker } from 'worker/entities/worker.entity'
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
 import { Attendance } from 'attendance/entities/attendance.entity';
 import { Exclude } from 'class-transformer';
+import { Issue } from 'issue/entities/issue.entity';
+import { Activity } from 'activity/entities/activity.entity';
 
 
 /**
@@ -105,4 +107,15 @@ password: string | null; // Contraseña del usuario (hashed)
 
   @OneToMany(() => Attendance, (attendance) => attendance.usuario)
   attendances: Attendance[];
+
+  @OneToMany(() => Issue, (issue) => issue.usuario)
+  incidencias: Issue[];
+  
+  @ManyToOne(() => Activity, (actividad) => actividad.usuarios, { 
+    nullable: true,         // Permite crear un usuario aunque aún no tenga puesto asignado
+    onDelete: 'SET NULL'    // 🔥 CLAVE: Si se borra el puesto, el trabajador NO se borra, solo se queda sin puesto asignado
+  })
+  @JoinColumn({ name: 'actividad_id' })
+  actividad: Activity;
+
 }

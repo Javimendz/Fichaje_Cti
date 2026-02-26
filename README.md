@@ -612,3 +612,24 @@ PUT         /api/alarmas/revisar/:id                 Marca una alarma como leíd
 PUT         /api/alarmas/resolver/:id                Resuelve una alarma añadiendo una nota de gestión.   Token (ADMIN) + Body: { nota: string }
 
 ```
+
+```
+🛠️ Método	📍 Endpoint	                              📝 Descripción	                                      📦 Requerimientos / Auth
+POST	    /api/actividades/crear	         Crea un nuevo puesto (ej: Ingeniero, Operario).	   Token (ADMIN) + Body: CreateActividadDto
+PATCH	    /api/actividades/editar/:id	     Modifica nombre, descripción o tipo de un puesto.	 Token (ADMIN) + Body: UpdateActividadDto
+PATCH	    /api/actividades/desactivar/:id	 Desactiva un puesto (Soft-Delete) para que no se use más.	Token (ADMIN)
+GET	      /api/actividades/catalogo  	     Lista de puestos de la empresa (Filtrable por soloActivas).	Token (ADMIN / WORKER)
+GET	      /api/actividades/:id	           Obtiene el detalle de un puesto y sus trabajadores asignados.
+
+```
+
+```
+
+🛠️ Método	 📍 Endpoint	         📝 Descripción	📦 Requerimientos / Auth
+POST	 /api/incidencias/crear	           Reporta una nueva incidencia (Anti-spam 15 min).	Token (ADMIN / WORKER) + Body: CreateIssueDto
+GET	   /api/incidencias/mis-incidencias	 Historial personal de incidencias reportadas por el usuario.	Token (ADMIN / WORKER)
+GET	   /api/incidencias/empresa	         Panel del admin para ver incidencias (Filtrable por pendientes).	Token (ADMIN)
+PUT	   /api/incidencias/resolver/:id	   Marca una incidencia como solucionada/resuelta.	Token (ADMIN)
+DELETE /api/incidencias/:id	             Elimina un reporte de incidencia (Solo si es de su empresa).	Token (ADMIN)
+
+```

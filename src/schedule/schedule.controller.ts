@@ -10,7 +10,8 @@ import {
   ParseIntPipe,
   Logger,
   UseInterceptors,
-  ClassSerializerInterceptor
+  ClassSerializerInterceptor,
+  Put
 } from '@nestjs/common';
 import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -20,6 +21,7 @@ import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface'; // 👈 Import type
+import { UpdateScheduleDto } from './dto/update-schedule.dto';
 
 @Controller('schedule')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -160,5 +162,19 @@ export class ScheduleController {
       throw new UnauthorizedException('Usuario sin empresa asignada para realizar esta acción');
     }
     return user.empresaId;
+  }
+
+  @Put('editar/:id')
+  @Roles(UserRole.ADMIN)
+   update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateScheduleDto, // Asegúrate de importar esto
+    @GetUser() user: UserPayload,
+  ) {
+    const empresaId = this.getEmpresaId(user);
+    this.logger.log(`[Audit] Admin ${user.email} actualizando horario ${id}`);
+    
+    // Llamamos al servicio (le pasamos 'user' completo porque el método update del servicio lo pide así)
+    return this.schedulesService.update(id, dto, user);
   }
 }

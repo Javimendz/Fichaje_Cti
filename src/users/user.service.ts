@@ -8,12 +8,11 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { CreateWorkerDto } from "./dto/create-worker.dto";
 import { UserRole } from "auth/roles.enum";
 import type { UserPayload } from "auth/interfaces/user-payload.interface"; 
-import { User } from "./entities/user.entity";
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
+import { User } from "auth/entities/user.entity";
 
 
 // El servicio de User se encarga de gestionar la lógica de negocio relacionada con los usuarios del sistema. Incluye métodos para crear, listar, obtener por ID, actualizar y eliminar usuarios, respetando la jerarquía de roles y la seguridad de acceso a los datos. El método de creación es unificado para Admins y Workers, delegando toda la lógica de validación y asignación de roles al servicio, lo que mantiene el controlador limpio y enfocado en manejar las solicitudes HTTP. Además, el servicio maneja las excepciones de manera profesional, lanzando errores específicos para casos como datos duplicados, permisos insuficientes o recursos no encontrados.
@@ -82,12 +81,15 @@ export class UserService {
 
   // 4. Creación del objeto compatible con la Entidad
   const newUser = this.userRepository.create({
+      
     ...dto,
     password: passwordHash,
     rol: rolSolicitado,
     empresaId: empresaIdFinal, 
     isActive: true,
-    isVerified: true,
+    isVerified: true, 
+
+     
   });
 
   try {

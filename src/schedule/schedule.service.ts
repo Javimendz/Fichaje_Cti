@@ -6,6 +6,7 @@ import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
 import {  DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
+import { User } from 'auth/entities/user.entity';
 
 
 @Injectable()
@@ -14,6 +15,8 @@ export class ScheduleService {
       @InjectRepository(Horario)
   private readonly horarioRepository: Repository<Horario>, // Repositorio para Horario
   private readonly dataSource: DataSource,  // Inyectamos DataSource para manejar transacciones
+  @InjectRepository(User)
+  private readonly userRepository: Repository<User>, // Repositorio para User
   
   ) {}
 
@@ -166,10 +169,100 @@ async create(dto: CreateHorarioDto, user: UserPayload) {
   // ---------------------------------------------------------
   // MÉTODO SECUNDARIO: ELIMINAR UN HORARIO CON VALIDACIÓN DE EMPRESA
   // ---------------------------------------------------------  
-  async remove(id: number, empresaId: number) {
-    await this.findOne(id, empresaId);
-    const result = await this.horarioRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('No se pudo eliminar el horario');
-    return { message: 'Horario eliminado correctamente' };
+async remove(id: number, empresaId: number) {
+  // 1. Desvincular usuarios: Ponemos a NULL el horarioId de quienes tengan este ID
+  // Usamos el objeto de condiciones de forma explícita
+  await this.userRepository.update(
+    { horario: { id: id } }, // Buscamos por la relación
+    { horario: null }         // Seteamos la relación a null
+  );
+
+  // 2. Ahora que nadie lo usa, borramos el horario
+  const result = await this.horarioRepository.delete({ id, empresaId });
+  
+  if (result.affected === 0) {
+    throw new NotFoundException(`No se encontró el horario con ID ${id}`);
   }
+
+  return { mensaje: 'Horario eliminado y usuarios desvinculados.' };
+}
+
+// ---------------------------------------------------------
+  // MÉTODO SECUNDARIO: ACTUALIZAR HORARIO Y SUS FRANJAS
+  // ---------------------------------------------------------
+  async update(id: number, dto: Partial<CreateHorarioDto>, user: UserPayload) {
+    if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
+
+    // 1. Verificamos que el horario existe y pertenece a la empresa
+    const horarioExistente = await this.horarioRepository.findOne({
+      where: { id, empresa: { id: user.empresaId } },
+      relations: ['distribuciones', 'distribuciones.franjas'], // Cargamos las viejas
+    });
+
+    if (!horarioExistente) {
+      throw new NotFoundException(`Horario con ID ${id} no encontrado en tu empresa`);
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 2. Actualizamos los campos básicos del Horario (Padre)
+      if (dto.nombre) horarioExistente.nombre = dto.nombre;
+      if (dto.tipo) horarioExistente.tipo = dto.tipo;
+      if (dto.fechaInicio) horarioExistente.fechaInicio = new Date(dto.fechaInicio);
+      if (dto.fechaFin !== undefined) horarioExistente.fechaFin = dto.fechaFin ? new Date(dto.fechaFin) : null;
+
+      await queryRunner.manager.save(horarioExistente);
+
+      // 3. Reemplazo de distribuciones y franjas (Solo si se envían en el DTO)
+      if (dto.distribuciones) {
+        
+        // A. Borrado manual de hijos y nietos antiguos
+        for (const dist of horarioExistente.distribuciones) {
+          // 🔥 CORRECCIÓN 1: Usamos la relación en lugar de la columna física para borrar
+          await queryRunner.manager.delete(FranjaHoraria, { distribucionDia: { id: dist.id } });
+          // Borramos la distribución (hijo)
+          await queryRunner.manager.delete(DistribucionDia, { id: dist.id });
+        }
+
+        // B. Creación de las nuevas distribuciones y franjas
+        for (const distDto of dto.distribuciones) {
+          const nuevaDist = queryRunner.manager.create(DistribucionDia, {
+            diaSemana: distDto.diaSemana as any,
+            horasDia: distDto.horasDia,
+            horario: horarioExistente, 
+          });
+
+          const distGuardada = await queryRunner.manager.save(nuevaDist);
+
+          if (distDto.franjas && distDto.franjas.length > 0) {
+            const franjasInstances = distDto.franjas.map(fDto =>
+              queryRunner.manager.create(FranjaHoraria, {
+                inicio: fDto.inicio,
+                fin: fDto.fin,
+                distribucionDia: distGuardada, // ✅ Relación correcta inyectada
+                // 🔥 CORRECCIÓN 2: Eliminada la línea problemática aquí
+              })
+            );
+            await queryRunner.manager.save(franjasInstances);
+          }
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      // 4. Retornamos el horario actualizado limpio
+      return await this.findOne(id, user.empresaId); // Añadido el await por seguridad
+
+    } catch (err) {
+      console.error('Error al actualizar horario:', err);
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException(`No se pudo actualizar el horario: ${err.message}`);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
 }

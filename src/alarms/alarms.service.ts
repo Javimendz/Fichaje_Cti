@@ -221,6 +221,9 @@ async findPending(empresaId: number) {
  * Este método valida que la alarma pertenezca a la empresa del administrador que lo solicita
  * para garantizar la seguridad de los datos.
  */
+// Resolver una alarma con una nota del administrador
+// Resolver una alarma con una nota del administrador
+
 async resolve(id: number, nota: string, empresaId: number) {
   // Validamos que la alarma exista Y sea de la empresa del Admin que lo solicita
   const alarma = await this.alarmRepository.findOne({ 

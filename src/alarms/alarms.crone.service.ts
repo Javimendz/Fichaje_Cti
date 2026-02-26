@@ -271,6 +271,7 @@ export class AlarmCronService {
    * // Empleado salió a las 18:05 y debía salir a las 18:00
    * haSalidoAntesDeTiempo(new Date('2024-01-15 18:05:00'), '18:00') // false
    */
+  //  
   private haSalidoAntesDeTiempo(fechaFinReal: Date, horaFinTeorica: string): boolean {
     // Convertimos la hora de la BD a la zona horaria correcta
     const finReal = dayjs(fechaFinReal).tz(this.ZONA_HORARIA);
@@ -286,7 +287,7 @@ export class AlarmCronService {
 
 
 
-
+    
 
 
 

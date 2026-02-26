@@ -7,17 +7,54 @@ import { UserRole } from "auth/roles.enum";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import type { UserPayload } from "auth/interfaces/user-payload.interface";
 
+
+ 
+  
+// AlarmController
+// Controlador para manejar operaciones relacionadas con alarmas  
+//
+// Endpoint: /alarmas
+// Métodos: GET, PUT
+// Descripción: Controlador para manejar operaciones relacionadas con alarmas
+//
+// Endpoint: /alarmas/pendientes
+// Métodos: GET
+// Descripción: Obtener todas las alarmas pendientes de una empresa
+//
+// Endpoint: /alarmas/revisar/:id
+// Métodos: PUT
+// Descripción: Marcar una alarma como leída
+//
+// Endpoint: /alarmas/resolver/:id
+// Métodos: PUT
+// Descripción: Resolver una alarma con una nota opcional 
+
 @Controller('alarmas')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AlarmController {
   constructor(private readonly alarmService: AlarmsService) {}
+
+  // Obtener todas las alarmas pendientes de una empresa
+  /**
+   * Obtener todas las alarmas pendientes de una empresa
+   * 
+   * @param user - Payload del usuario autenticado
+   * @returns Lista de alarmas pendientes de la empresa del usuario
+   */
 
   @Get('pendientes')
   @Roles(UserRole.ADMIN)
   async getMyAlarms(@GetUser() user: UserPayload) {
     return this.alarmService.findAllByCompany(user.empresaId);
   }
-
+  // Marcar una alarma como leída
+  /**
+   * Marcar una alarma como leída
+   * 
+   * @param id - ID de la alarma a marcar como leída
+   * @param user - Payload del usuario autenticado
+   * @returns Alarma marcada como leída
+   */
   @Put('revisar/:id')
   @Roles(UserRole.ADMIN)
   async readAlarm(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
@@ -25,7 +62,15 @@ export class AlarmController {
   }
 
 
-
+  // Resolver una alarma
+  /**
+   * Resolver una alarma
+   * 
+   * @param id - ID de la alarma a resolver
+   * @param nota - Nota opcional para resolver la alarma
+   * @param user - Payload del usuario autenticado
+   * @returns Alarma marcada como resuelta
+   */
 @Put('resolver/:id')
 @Roles(UserRole.ADMIN)
 async resolve(

@@ -11,6 +11,26 @@ import { WorkdayModule } from 'workday/workday.module';
 import { AlarmsGateway } from './gateway/alarms.gateway';
 import { Ausencia } from 'absence/entities/ausencia.entity';
 
+// AlarmsModule
+// Módulo para manejar operaciones relacionadas con alarmas
+//
+// Importaciones:
+// - TypeOrmModule: Para acceder a la entidad Alarm y User.
+// - ScheduleModule: Para programar tareas cron.
+// - forwardRef: Para resolver dependencias circulares.
+// - WorkdayModule: Para acceder a la entidad Workday.
+//
+// Controladores:
+// - AlarmController: Para manejar operaciones relacionadas con alarmas.
+//
+// Proveedores:
+// - AlarmsService: Para manejar lógica de negocio relacionada con alarmas.
+// - AlarmCronService: Para programar tareas cron relacionadas con alarmas.
+// - AlarmsGateway: Para manejar conexiones WebSocket relacionadas con alarmas.
+//
+// Exportaciones:
+// - AlarmsService: Para ser utilizado en otros módulos.
+// - AlarmsGateway: Para ser utilizado en otros módulos.
 @Module({
 imports: [
     TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]),

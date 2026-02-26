@@ -3,6 +3,12 @@
     import { AuthUserDto } from 'auth/dto/authUser.dto'; // Reutilizamos el DTO de usuario
 import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+// CreateAlarmDto
+// DTO para crear una nueva alarma. Incluye validaciones para asegurar que los datos ingresados sean correctos y consistentes, como el tipo de alarma, la descripción, el estado de revisión y el ID de empresa. Este DTO se utiliza en el controlador de alarmas para recibir y validar los datos enviados por los usuarios al crear una nueva alarma.
+    /**
+     * * * * AlarmDto
+     * DTO para crear una nueva alarma. Incluye validaciones para asegurar que los datos ingresados sean correctos y consistentes, como el tipo de alarma, la descripción, el estado de revisión y el ID de empresa. Este DTO se utiliza en el controlador de alarmas para recibir y validar los datos enviados por los usuarios al crear una nueva alarma.     
+*/
     export class AlarmDto {
     @Expose()
   @IsNumber({}, { message: 'El ID debe ser un número' })

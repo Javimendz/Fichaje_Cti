@@ -113,7 +113,7 @@ password: string | null; // Contraseña del usuario (hashed)
   
   @ManyToOne(() => Activity, (actividad) => actividad.usuarios, { 
     nullable: true,         // Permite crear un usuario aunque aún no tenga puesto asignado
-    onDelete: 'SET NULL'    // 🔥 CLAVE: Si se borra el puesto, el trabajador NO se borra, solo se queda sin puesto asignado
+    onDelete: 'SET NULL'    //  Si se borra el puesto, el trabajador NO se borra, solo se queda sin puesto asignado
   })
   @JoinColumn({ name: 'actividad_id' })
   actividad: Activity;

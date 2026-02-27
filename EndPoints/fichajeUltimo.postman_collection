@@ -332,7 +332,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"dni\": \"87654321X\", \r\n    \"password\": \"contraseña123M\"\r\n\r\n}",
+          "raw": "{\r\n    \"dni\": \"00000000T\", \r\n    \"password\": \"contraseña123M\"\r\n\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -363,7 +363,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMDY5MzcsImV4cCI6MTc3MjA1MDEzN30.Oy68DLCzsTgoGAQMXxZH6mkQNsMOej8qP6AP5TIvlKU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwODk5MDEsImV4cCI6MTc3MjEzMzEwMX0.00Pmw_8U2W4xBbBTGino4M0vwYcvKH_zUbtsPjVimGE",
               "type": "string"
             }
           ]
@@ -372,7 +372,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123435\",\r\n  \"nombre\": \"PRUEBA\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"87654321X\",\r\n  \"email\": \"jua7ss888@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 3,\r\n  \"isActive\": true,\r\n  \"empresaId\": 1\r\n}",
+          "raw": "{\r\n  \"telefono\": \"600123436\",\r\n  \"nombre\": \"PRUEBA\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"jua7ss889998@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 4,\r\n  \"isActive\": true,\r\n  \"empresaId\": 1\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -629,7 +629,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAyMDk2NiwiZXhwIjoxNzcyMDI0NTY2fQ.eM7yce7J9GoCfHY87UagF1-mVqbi3UGc_ywUpAi2Ncs",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM3LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjA5MjE3NiwiZXhwIjoxNzcyMDk1Nzc2fQ.-3HX5DDxjQJsyFh-8keCeZWSUNkCUYrTf8cVwewtRck",
               "type": "string"
             }
           ]
@@ -872,7 +872,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMDY5MzcsImV4cCI6MTc3MjA1MDEzN30.Oy68DLCzsTgoGAQMXxZH6mkQNsMOej8qP6AP5TIvlKU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
               "type": "string"
             }
           ]
@@ -881,7 +881,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"nombre\": \"Horario Invierno 2026 - IT\",\r\n  \"fechaInicio\": \"2026-01-01\",\r\n  \"fechaFin\": \"2026-12-31\",\r\n  \"tipo\": \"FIJO\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"LUNES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"06:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"MIERCOLES\",\r\n      \"horasDia\": 8.5,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:30\", \"fin\": \"14:00\" },\r\n        { \"inicio\": \"15:00\", \"fin\": \"18:00\" }\r\n      ]\r\n    },\r\n    {\r\n      \"diaSemana\": \"VIERNES\",\r\n      \"horasDia\": 7,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"15:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "raw": "{\r\n  \"nombre\": \"Horario Invierno 2026 - IT\",\r\n  \"fechaInicio\": \"2026-01-01\",\r\n  \"fechaFin\": \"2026-12-31\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -912,7 +912,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
               "type": "string"
             }
           ]
@@ -921,7 +921,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"horarioId\": \"2\"\r\n}",
+          "raw": "{\r\n  \"horarioId\": \"6\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -929,7 +929,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/worker/assign-schedule/6",
+          "raw": "http://localhost:3000/api/worker/assign-schedule/37",
           "protocol": "http",
           "host": [
             "localhost"
@@ -939,7 +939,7 @@
             "api",
             "worker",
             "assign-schedule",
-            "6"
+            "37"
           ]
         }
       },
@@ -1350,14 +1350,14 @@
       "response": []
     },
     {
-      "name": "listar-ausencias",
+      "name": "crear ausencias",
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
@@ -1365,7 +1365,7 @@
         "method": "POST",
         "header": [],
         "url": {
-          "raw": "http://localhost:3000/api/ausencia/crear-asistencia",
+          "raw": "http://localhost:3000/api/ausencias/crear-ausencia",
           "protocol": "http",
           "host": [
             "localhost"
@@ -1373,8 +1373,8 @@
           "port": "3000",
           "path": [
             "api",
-            "ausencia",
-            "crear-asistencia"
+            "ausencias",
+            "crear-ausencia"
           ]
         }
       },
@@ -1383,8 +1383,31 @@
     {
       "name": "mis ausencias",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
-        "header": []
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/mis-ausencias",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "mis-ausencias"
+          ]
+        }
       },
       "response": []
     },
@@ -1469,7 +1492,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
@@ -1478,7 +1501,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fecha_inicio\": \"2026-08-16\",\r\n    \"fecha_fin\": \"2026-08-20\",\r\n    \"motivo\": \"Segunda parte de mis vacaciones\"\r\n}",
+          "raw": "{\r\n    \"tipo\": \"VACACIONES\",\r\n    \"fecha_inicio\": \"2026-02-25\",\r\n    \"fecha_fin\": \"2026-02-25\",\r\n    \"motivo\": \"Segunda parte de mis vacaciones\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1509,7 +1532,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
@@ -1543,7 +1566,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
@@ -1583,12 +1606,12 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
         },
-        "method": "PATCH",
+        "method": "PUT",
         "header": [],
         "body": {
           "mode": "raw",
@@ -1600,7 +1623,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/ausencias/update/3",
+          "raw": "http://localhost:3000/api/ausencias/update/6",
           "protocol": "http",
           "host": [
             "localhost"
@@ -1610,7 +1633,7 @@
             "api",
             "ausencias",
             "update",
-            "3"
+            "6"
           ]
         }
       },
@@ -1627,7 +1650,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjIxMDYsImV4cCI6MTc3MTk2NTMwNn0.-nfRcVpogJ3yiYFKC83kPEdqolKOjEdZsaKrL54Gj_s",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAzMjY1MSwiZXhwIjoxNzcyMDM2MjUxfQ.mi-CY3Yt6DIIbuUd4LdN2n6Eh4Jp7ZbRNgn1nmP0ErI",
               "type": "string"
             }
           ]
@@ -1662,7 +1685,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjkwODgsImV4cCI6MTc3MTk3MjI4OH0.G_yoYV45c_owoWqgl7Mj3nEU3EbtsI561BPibQN-AyU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMzM0MDYsImV4cCI6MTc3MjA3NjYwNn0.heslymT_DsaGg-eXxvy1PSeajV-hms2tcg1_4vJ5xeE",
               "type": "string"
             }
           ]
@@ -1679,7 +1702,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/ausencias/estado/3",
+          "raw": "http://localhost:3000/api/ausencias/estado/8",
           "protocol": "http",
           "host": [
             "localhost"
@@ -1689,7 +1712,7 @@
             "api",
             "ausencias",
             "estado",
-            "3"
+            "8"
           ]
         }
       },
@@ -1784,7 +1807,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MzUyOTAsImV4cCI6MTc3MTk3ODQ5MH0.OX7APyVmGA1A6fjtWQLB_jyo4b40RGeY3n1BuqPoilU",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
               "type": "string"
             }
           ]
@@ -1793,7 +1816,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"fin\": \"15:00\"\r\n}",
+          "raw": "{\r\n    \r\n    \"inicio\": \"09:00\",\r\n    \"fin\": \"11:00\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1801,7 +1824,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:3000/api/franja-horaria/update/1",
+          "raw": "http://localhost:3000/api/franja-horaria/update/2",
           "protocol": "http",
           "host": [
             "localhost"
@@ -1811,7 +1834,7 @@
             "api",
             "franja-horaria",
             "update",
-            "1"
+            "2"
           ]
         }
       },
@@ -2033,8 +2056,40 @@
     {
       "name": "geoposi asistencia",
       "request": {
-        "method": "GET",
-        "header": []
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM0LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjAxMTEzNiwiZXhwIjoxNzcyMDE0NzM2fQ.4FByAIL6k5d-k59Th1wAE5kcANpZs9cCJf2qZpEbVKg",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"presente\": true,\r\n  \"lat\": 40.4531, \r\n  \"lng\": -3.6883,\r\n  \"motivo\": \"Entrada de jornada\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/asistencia/crear-asistencia",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "asistencia",
+            "crear-asistencia"
+          ]
+        }
       },
       "response": []
     },
@@ -2130,7 +2185,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwMTI1MzgsImV4cCI6MTc3MjA1NTczOH0.8HAYjKY80cbEGtSFkz7zqoxDQYbiN4SwhmkiL9g9rn4",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwODk5MDEsImV4cCI6MTc3MjEzMzEwMX0.00Pmw_8U2W4xBbBTGino4M0vwYcvKH_zUbtsPjVimGE",
               "type": "string"
             }
           ]
@@ -2154,10 +2209,340 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "balance ausencias",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwODk5MDEsImV4cCI6MTc3MjEzMzEwMX0.00Pmw_8U2W4xBbBTGino4M0vwYcvKH_zUbtsPjVimGE",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
-        "header": []
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/ausencias/balance",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "ausencias",
+            "balance"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "resolver alarmas",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwODk5MDEsImV4cCI6MTc3MjEzMzEwMX0.00Pmw_8U2W4xBbBTGino4M0vwYcvKH_zUbtsPjVimGE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nota\": \"Hablé con el empleado, se fue antes por cita médica justificada.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/alarmas/resolver/107",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "alarmas",
+            "resolver",
+            "107"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear incidencia",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM3LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjEwODYxMywiZXhwIjoxNzcyMTEyMjEzfQ.WM2lXM7f8CGsJ1w2zxKXaVsLm8kI2xAC-OHV1HhPpSo",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"NO_ASISTENCIA\",\r\n  \r\n  \"descripcion\": \"Ayer olvidé fichar la salida al salir del cliente.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/incidencias/crear",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "incidencias",
+            "crear"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "editar schedule",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxMjAyMjksImV4cCI6MTc3MjE2MzQyOX0.oF_P0QLcRz6QLGSUWCtMTX_LVbPEPNRQID7ZueiZZJM",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Turno de Mañana - Intensivo\",\r\n  \"horarioId\": 2,\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"JUEVES\",\r\n      \"horasDia\": 7,\r\n      \"franjas\": [\r\n        { \"inicio\": \"08:00\", \"fin\": \"16:00\" }\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/editar/2",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "editar",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear Actividad",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"OPERARIO_PRODUCCION\",\r\n  \"nombre\": \"Técnico de Mantenimiento Eléctrico\",\r\n  \"descripcion\": \"Encargado de revisar los cuadros eléctricos de la planta 2.\",\r\n  \"fecha\": \"2026-03-01\",\r\n  \"activa\": true\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/actividades/crear",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "actividades",
+            "crear"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "catalogo Actividades",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/actividades/catalogo",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "actividades",
+            "catalogo"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "editar Actividad",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"OPERARIO_PRODUCCION\",\r\n  \"nombre\": \"Técnico de Mantenimiento Eléctrico\",\r\n  \"descripcion\": \"Encargado de revisar los cuadros eléctricos de la planta 2.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/actividades/editar/1",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "actividades",
+            "editar",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "desactivar Actividad",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"OPERARIO_PRODUCCION\",\r\n  \"nombre\": \"Técnico de Mantenimiento Eléctrico\",\r\n  \"descripcion\": \"Encargado de revisar los cuadros eléctricos de la planta 2.\",\r\n  \r\n  \"activa\": true\r\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/actividades/desactivar/2",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "actividades",
+            "desactivar",
+            "2"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Actividad solo activas",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/actividades/catalogo?soloActivas=true",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "actividades",
+            "catalogo"
+          ],
+          "query": [
+            {
+              "key": "soloActivas",
+              "value": "true"
+            }
+          ]
+        }
       },
       "response": []
     }

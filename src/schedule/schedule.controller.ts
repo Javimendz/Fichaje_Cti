@@ -157,6 +157,7 @@ export class ScheduleController {
    * ``` 
    */
 
+        
   private getEmpresaId(user: UserPayload): number {
     if (!user.empresaId) {
       throw new UnauthorizedException('Usuario sin empresa asignada para realizar esta acción');
@@ -164,6 +165,7 @@ export class ScheduleController {
     return user.empresaId;
   }
 
+  
   @Put('editar/:id')
   @Roles(UserRole.ADMIN)
    update(

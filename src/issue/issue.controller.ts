@@ -22,7 +22,12 @@ import { GetUser } from 'auth/decorators/get-user.decorator';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
-
+/**
+ *  Controlador para la gestión de incidencias
+ * 
+ * Este controlador proporciona las rutas necesarias para la gestión de incidencias,
+ * como la creación, actualización, resolución y consulta de incidencias. 
+ */
 @Controller('incidencias')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IncidenciaController {
@@ -31,7 +36,14 @@ export class IncidenciaController {
   // ===============================
   // TRABAJADOR
   // ===============================
-
+  /**
+   * 
+   * Crea una nueva incidencia para el usuario autenticado.
+   * 
+   * @param dto Datos para crear la incidencia
+   * @param user Usuario autenticado
+   * @returns La incidencia creada
+   */
   @Post('crear')
   @Roles(UserRole.WORKER, UserRole.ADMIN)
   create(
@@ -45,6 +57,13 @@ export class IncidenciaController {
     );
   }
 
+  /**
+   * 
+   * Obtiene todas las incidencias creadas por el usuario autenticado.
+   * 
+   * @param user Usuario autenticado
+   * @returns Lista de incidencias creadas por el usuario
+   */
   @Get('mis-incidencias')
   @Roles(UserRole.WORKER, UserRole.ADMIN)
   findMine(@GetUser() user: UserPayload) {
@@ -55,6 +74,14 @@ export class IncidenciaController {
   // ADMIN
   // ===============================
 
+  /**
+   * 
+   * Obtiene todas las incidencias de la empresa autenticada.
+   * 
+   * @param user Usuario autenticado
+   * @param pendientes Si se desea filtrar solo por incidencias pendientes
+   * @returns Lista de incidencias de la empresa
+   */
   @Get('empresa')
   @Roles(UserRole.ADMIN)
   findAllForAdmin(
@@ -69,6 +96,14 @@ export class IncidenciaController {
     );
   }
 
+  /**
+   * 
+   * Resuelve una incidencia de la empresa autenticada.
+   * 
+   * @param id ID de la incidencia a resolver
+   * @param user Usuario autenticado
+   * @returns La incidencia resuelta
+   */
   @Put('resolver/:id')
   @Roles(UserRole.ADMIN)
   resolver(
@@ -78,6 +113,15 @@ export class IncidenciaController {
     return this.issueService.resolver(id, user.empresaId);
   }
 
+  /**
+   * 
+   * Actualiza una incidencia de la empresa autenticada.
+   * 
+   * @param id ID de la incidencia a actualizar
+   * @param dto Datos para actualizar la incidencia
+   * @param user Usuario autenticado
+   * @returns La incidencia actualizada
+   */
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   update(
@@ -88,6 +132,14 @@ export class IncidenciaController {
     return this.issueService.update(id, user.empresaId, dto);
   }
 
+  /**
+   * 
+   * Elimina una incidencia de la empresa autenticada.
+   * 
+   * @param id ID de la incidencia a eliminar
+   * @param user Usuario autenticado
+   * @returns La incidencia eliminada
+   */
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   remove(

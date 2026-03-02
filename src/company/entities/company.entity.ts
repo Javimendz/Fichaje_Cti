@@ -43,10 +43,10 @@ export class Company {
   @Column({ name: 'is_active', default: true }) // Mapeo explícito
   isActive: boolean;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'float', nullable: false })
   latitud: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'float', nullable: false })
   longitud: number;
 
   @Column({ type: 'float', default: 100 }) // Radio de 100 metros por defecto

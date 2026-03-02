@@ -73,6 +73,8 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
   provincia: dto.provincia,
   pais: dto.pais,
   email: dto.email,
+  latitud: dto.latitud,
+  longitud: dto.longitud,
   contactoNombre: dto.nombreContacto,
   telefonoContacto: dto.telefonoContacto,
   telefonoEmpresa: dto.telefonoEmpresa,

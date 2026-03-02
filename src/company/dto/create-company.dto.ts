@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 
 export class CreateCompanyDto {
@@ -148,6 +148,14 @@ export class CreateCompanyDto {
   @Expose()
   isActive?: boolean;
 
- 
+  @IsNumber()
+  @Expose()
+  @IsNotEmpty({ message: 'La latitud es obligatoria' })
+  latitud: number;
+
+  @IsNumber()
+  @Expose()
+  @IsNotEmpty({ message: 'La longitud es obligatoria' })
+  longitud: number;
 
 }

@@ -10,6 +10,7 @@ import {
   Query,
   Put,
   ParseIntPipe,
+  Injectable,
 } from '@nestjs/common';
 
 import { IssueService } from './issue.service';
@@ -28,6 +29,7 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
  * Este controlador proporciona las rutas necesarias para la gestión de incidencias,
  * como la creación, actualización, resolución y consulta de incidencias. 
  */
+@Injectable()
 @Controller('incidencias')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IncidenciaController {
@@ -108,9 +110,10 @@ export class IncidenciaController {
   @Roles(UserRole.ADMIN)
   resolver(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateIncidenciaDto,
     @GetUser() user: UserPayload,
   ) {
-    return this.issueService.resolver(id, user.empresaId);
+    return this.issueService.resolver(id, user.empresaId, dto);
   }
 
   /**

@@ -1,3 +1,13 @@
+
+/**
+ *  Enum para representar los diferentes tipos de puestos de trabajo en la fábrica.
+ * 
+ * Este enum define los posibles roles o puestos que pueden tener los trabajadores en la fábrica,
+ * incluyendo puestos de producción, planta, ingeniería y administrativos.  
+ * 
+ * Cada valor en este enum representa un tipo específico de puesto de trabajo,
+ * lo cual ayuda a organizar y gestionar los diferentes roles dentro de la fábrica. 
+ */
 export enum TipoPuesto {
   // --- Puestos de Producción y Planta ---
   OPERARIO_PRODUCCION = 'OPERARIO_PRODUCCION',

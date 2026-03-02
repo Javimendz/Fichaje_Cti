@@ -8,10 +8,10 @@ import {
   Matches,
   IsObject,
   MinLength,
-  MaxLength
+  MaxLength,
+  IsNumber
 } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
-import { CreateAdminDto } from 'users/dto/create-admin.dto';
 import { CreateUserDto } from 'users/dto/create-user.dto';
 
 export class SetupCompanyDto {
@@ -107,4 +107,15 @@ export class SetupCompanyDto {
   // Indispensable para que class-transformer sepa a qué clase convertir el objeto plano
   @Type(() => CreateUserDto) 
   admin: CreateUserDto;
+
+
+   @IsNumber()
+    @Expose()
+    @IsNotEmpty({ message: 'La latitud es obligatoria' })
+    latitud: number;
+  
+    @IsNumber()
+    @Expose()
+    @IsNotEmpty({ message: 'La longitud es obligatoria' })
+    longitud: number;
 }

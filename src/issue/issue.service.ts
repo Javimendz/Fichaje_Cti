@@ -217,15 +217,17 @@ export class IssueService {
    * @throws {BadRequestException} Si la incidencia ya está resuelta
    * 
    */
-  async resolver(id: number, empresaId: number) {
-    const incidencia = await this.findOne(id, empresaId);
+    async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
+      const incidencia = await this.findOne(id, empresaId);
 
-    if (incidencia.resuelta) {
-      throw new BadRequestException('La incidencia ya está resuelta');
+      if (incidencia.resuelta) {
+        throw new BadRequestException('La incidencia ya está resuelta');
+      }
+
+      incidencia.resuelta = true;
+
+      Object.assign(incidencia, dto);
+
+      return this.incidenciaRepository.save(incidencia);
     }
-
-    incidencia.resuelta = true;
-
-    return this.incidenciaRepository.save(incidencia);
-  }
 }

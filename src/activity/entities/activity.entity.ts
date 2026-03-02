@@ -1,6 +1,6 @@
 import { TipoPuesto } from 'activity/dto/tipo-puesto.enum';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { User } from 'users/entities/user.entity';
+import { Worker } from 'worker/entities/worker.entity';
 
 @Entity('actividades')
 export class Activity {
@@ -23,6 +23,8 @@ export class Activity {
   @Column({ type: 'varchar', length: 100 })
   nombre: string; 
 
+
+  
   /**
    *  Opcional: Descripción detallada del puesto (Ej: "Opera la máquina 3 y 4")
    * 
@@ -57,6 +59,9 @@ export class Activity {
    * 
    */
 
+  @OneToMany(() => Worker, (worker) => worker.actividad)
+  workers: Worker[];
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -71,6 +76,5 @@ export class Activity {
    * 
    */
 
-  @OneToMany(() => User, (user) => user.actividad, {onDelete: 'CASCADE'})
-  usuarios: User[];
+  
 }

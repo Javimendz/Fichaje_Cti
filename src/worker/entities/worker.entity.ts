@@ -11,6 +11,7 @@ import { Horario } from "schedule/entities/schedules.entity";
 import { Workday } from "workday/entities/workday.entity";
 import { Ausencia } from "absence/entities/ausencia.entity";
 import { UserRole } from "auth/roles.enum";
+import { Activity } from "activity/entities/activity.entity";
 
 @Entity('workers')
 export class Worker {
@@ -68,8 +69,7 @@ export class Worker {
   @Column({ type: 'varchar', length: 100, nullable: true })
   categoria?: string;
 
-  @Column({ type: 'text', nullable: true })
-  actividad?: string;
+ 
 
   @Column({ type: 'int', nullable: true })
   diaPertenece?: number;
@@ -111,6 +111,10 @@ export class Worker {
   @JoinColumn({ name: 'horario_id' })
   horario?: Horario;
 
+
+  @Column({ nullable: true, name: 'actividad_id' })
+  actividadId?: number;
+
   @OneToMany(() => Workday, (jornada) => jornada.usuario, { cascade: true })
   jornadas: Workday[];
 
@@ -125,6 +129,13 @@ export class Worker {
   @OneToOne(() => User, (user) => user.worker, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id' }) 
   user: User;
+
+  @ManyToOne(() => Activity, (activity) => activity.workers, { 
+    nullable: true, 
+    onDelete: 'SET NULL' 
+  })
+  @JoinColumn({ name: 'actividad_id' })
+  actividad: Activity;
 
   // ============================================
   // AUDITORÍA

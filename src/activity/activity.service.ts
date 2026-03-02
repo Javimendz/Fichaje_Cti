@@ -69,7 +69,7 @@ export class ActividadService {
   async findOne(id: number, empresaId: number) {
     const actividad = await this.actividadRepository.findOne({ 
       where: { id, empresaId },
-      relations: ['usuarios'] // Opcional: para ver qué trabajadores tienen este puesto
+      relations: ['workers'] 
     });
     
     if (!actividad) {

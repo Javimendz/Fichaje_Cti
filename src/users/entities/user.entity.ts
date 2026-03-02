@@ -111,7 +111,7 @@ password: string | null; // Contraseña del usuario (hashed)
   @OneToMany(() => Issue, (issue) => issue.usuario)
   incidencias: Issue[];
   
-  @ManyToOne(() => Activity, (actividad) => actividad.usuarios, { 
+  @ManyToOne(() => Activity, (activity) => activity.workers, { 
     nullable: true,         // Permite crear un usuario aunque aún no tenga puesto asignado
     onDelete: 'SET NULL'    //  Si se borra el puesto, el trabajador NO se borra, solo se queda sin puesto asignado
   })

@@ -6,6 +6,8 @@ import {
   Matches,
   IsNumber,
   MaxLength,
+  IsPositive,
+  IsInt,
 } from 'class-validator';
 import {  Type } from 'class-transformer';
 import { UserBaseDto } from './user-base.dto';
@@ -61,6 +63,8 @@ export class CreateWorkerDto extends UserBaseDto { // DTO para crear un WORKER
   })
   // Saneamiento: Elimina espacios y convierte a minúsculas para evitar problemas de formato
   password: string;
+
+  
 
 
 }

@@ -13,7 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [TypeOrmModule.forFeature([Activity])], // Importamos la entidad Activity para que esté disponible en el módulo
   controllers: [ActividadController], // Controlador para manejar las solicitudes relacionadas con las actividades
-  providers: [ActividadService],
-  exports: [ActividadService],
+  providers: [ActividadService], // Servicio para manejar la lógica de negocio relacionada con las actividades
+  exports: [ActividadService], // Exportamos el servicio para que pueda ser utilizado en otros módulos
 })
 export class ActivityModule {}

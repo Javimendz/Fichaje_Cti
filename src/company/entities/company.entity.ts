@@ -18,7 +18,8 @@ export class Company {
   @Column('text', { nullable: true })
   direccion?: string;
 
-  
+  @Column('text', { nullable: true })
+  codigoPostal?: string;
 
   @Column('text', { nullable: true })
   provincia?: string;

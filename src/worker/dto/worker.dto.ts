@@ -15,7 +15,8 @@ import {
   Max,
   IsInt,
   Validate,
-  IsBoolean
+  IsBoolean,
+  IsPositive
 } from 'class-validator';
 import { IsDni } from '../../auth/decorators/isDniConstraint';
 
@@ -154,7 +155,12 @@ export class CreateWorkerDto {
   @Min(1, { message: 'El día no puede ser menor a 1' })
   @Max(31, { message: 'El día no puede ser mayor a 31' })
   diaPertenece?: number;
-
+  
+  @IsOptional()
+  @IsInt({ message: 'El id de actividad debe ser un número entero' })
+  @IsPositive({ message: 'El id de actividad debe ser un ID válido' })
+  actividadId?: number;
+  
   @IsOptional()
   @IsNumber({}, { message: 'El ID de horario debe ser un número' })
   @IsInt({ message: 'El ID de horario debe ser un número entero' })

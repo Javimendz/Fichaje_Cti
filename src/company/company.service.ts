@@ -78,6 +78,7 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
   contactoNombre: dto.nombreContacto,
   telefonoContacto: dto.telefonoContacto,
   telefonoEmpresa: dto.telefonoEmpresa,
+  codigoPostal: dto.codigoPostal,
     isActive: true             
 });
     
@@ -94,7 +95,8 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
       empresaId: empresaGuardada.id,  // Vinculación de FK
       isVerified: true,
       isActive: true,
-    });
+
+    } as any);
     
     await queryRunner.manager.save(nuevoAdmin);
 

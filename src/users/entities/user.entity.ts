@@ -76,9 +76,15 @@ password: string | null; // Contraseña del usuario (hashed)
   })
   tokenExpiraEn: Date | null; // Fecha de expiración del token de restablecimiento de contraseña
 
+  @Column({ name: 'actividad_id', nullable: true })
+actividadId?: number; // ✅ Volver a opcional
+
+@Column({ name: 'horario_id', nullable: true })
+horarioId?: number; // ID de la actividad a la que pertenece el usuario
+
   // --- RELACIONES: EMPRESA ---
   @Column({ name: 'empresa_id', nullable: true }) // Columna física en la DB
-  empresaId: number; // ID de la empresa a la que pertenece el usuario
+  empresaId: number ; // ID de la empresa a la que pertenece el usuario
 
   @ManyToOne(() => Company, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa
   @JoinColumn({ name: 'empresa_id' }) // Llave foránea personalizada
@@ -91,6 +97,8 @@ password: string | null; // Contraseña del usuario (hashed)
 
   @OneToMany(() => Workday, (j) => j.usuario, {cascade:true}) // Relación con Jornadas
   jornadas: Workday[]; // Jornadas laborales del usuario
+
+
 
   @OneToMany(() => Ausencia, (a) => a.usuario) // Relación con Ausencias
   ausencias: Ausencia[]; // Ausencias del usuario

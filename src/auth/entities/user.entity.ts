@@ -6,6 +6,7 @@ import { Workday } from 'workday/entities/workday.entity';
 import { Horario } from 'schedule/entities/schedules.entity';
 import { Request } from 'request/entities/request.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Activity } from 'activity/entities/activity.entity';
 
 
 // El User es la entidad principal que representa a los usuarios del sistema. Incluye campos como id, email, nombre, apellidos, dni, telefono, password, rol, isVerified, isActive, empresaId, tokenExpiraEn, createdAt y updatedAt. Además, establece relaciones con otras entidades como Company (empresa), Horario (horario), Workday (jornadas), Ausencia (ausencias) y Request (solicitudes). Esta entidad es fundamental para la gestión de usuarios en el sistema, ya que almacena toda la información relevante sobre los usuarios y sus relaciones con otros módulos del sistema.
@@ -39,10 +40,14 @@ export class User {
   id: number;
 
   @Column({ type: 'text', unique: true, nullable: true })
-email: string | null;
+  email: string | null;
 
   @Column({ type: 'text', nullable: true })
   nombre: string | null;
+
+
+  @Column({ name: 'horario_id', nullable: true })
+  horarioId: number | null;
 
   @Column({ type: 'text', nullable: true })
   apellidos: string | null;
@@ -53,11 +58,14 @@ email: string | null;
   @Column({ type: 'text', unique: true })
   telefono: string;
 
-  @Column({ type: 'text', nullable: false, select: false }) 
+  @Column({ type: 'text', nullable: false, select: false })
   password: string | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.WORKER })
   rol: UserRole;
+
+  @Column({ name: 'actividad_id', nullable: true })
+  actividadId: number | null;
 
   @Column({ type: 'boolean', default: false })
   isVerified: boolean;
@@ -65,17 +73,17 @@ email: string | null;
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
- 
 
-  @Column( { name: 'empresa_id', nullable: true })
-  empresaId: number | null;
 
-  
-  @ManyToOne(() => Company, (empresa) => empresa.usuarios, { 
-    onDelete: 'CASCADE' 
+  @Column({ name: 'empresa_id', nullable: true }) // 👈 Cambiar a false
+empresaId: number;
+
+
+  @ManyToOne(() => Company, (empresa) => empresa.usuarios, {
+    onDelete: 'CASCADE'
   })
   @JoinColumn({ name: 'empresa_id' })
-  empresa?: Company | null; 
+  empresa?: Company | null;
 
   @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true })
   @JoinColumn({ name: 'horario_id' })
@@ -97,10 +105,14 @@ email: string | null;
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ 
-  name: 'token_expira_en', // Nombre exacto en la tabla SQL
-  type: 'timestamp', 
-  nullable: true 
-})
-tokenExpiraEn: Date | null;
+  @ManyToOne(() => Activity, (activity) => activity.workers, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'actividad_id' })
+  actividad: Activity | null;
+
+  @Column({
+    name: 'token_expira_en', // Nombre exacto en la tabla SQL
+    type: 'timestamp',
+    nullable: true
+  })
+  tokenExpiraEn: Date | null;
 }

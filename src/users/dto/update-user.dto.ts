@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateAdminDto } from './create-admin.dto';
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { Expose } from 'class-transformer';
+import { IsInt, IsNumber, IsOptional, IsPositive, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
 
 export class UpdateUserDto extends PartialType(CreateAdminDto) {
   
@@ -15,4 +15,15 @@ export class UpdateUserDto extends PartialType(CreateAdminDto) {
     message: 'La contraseña es demasiado débil. Debe incluir al menos una mayúscula, una minúscula y un número o símbolo'
   })
   password?: string;
+
+
+  @IsOptional()
+  @IsNumber()
+  horarioId?: number; // 👈 AÑADE ESTO
+@IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  actividadId?: number;
+  
 }

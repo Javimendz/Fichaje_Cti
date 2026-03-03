@@ -1,9 +1,9 @@
-import { 
-  Injectable, 
-  BadRequestException, 
-  InternalServerErrorException, 
-  NotFoundException, 
-  ForbiddenException, 
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+  ForbiddenException,
   UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,13 +12,13 @@ import * as bcrypt from 'bcrypt';
 
 // Entidades
 import { Worker } from './entities/worker.entity';
-import { User } from '../auth/entities/user.entity'; 
+import { User } from '../auth/entities/user.entity';
 
 // DTOs e Interfaces
-import { CreateWorkerDto } from './dto/worker.dto'; 
+import { CreateWorkerDto } from './dto/worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { UserRole } from '../auth/roles.enum';
-import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
+import type { UserPayload } from '../auth/interfaces/user-payload.interface';
 import { Horario } from 'schedule/entities/schedules.entity';
 
 
@@ -34,7 +34,7 @@ export class WorkerService {
     @InjectRepository(Worker)
     private readonly workerRepository: Repository<Worker>,
     private readonly dataSource: DataSource, // Necesario para transacciones
-  ) {}
+  ) { }
 
   /**
    * Crea un Usuario (Login) y un Worker (Datos) en una sola transacción.
@@ -45,8 +45,8 @@ export class WorkerService {
     * Nota: Si en el futuro decides permitir que un SuperAdmin cree trabajadores sin necesidad de una empresa asignada, puedes ajustar la lógica de validación para permitir que el campo empresaId sea opcional solo para SuperAdmin, mientras que para Admins seguirá siendo obligatorio.
    *
   */
-  async create(dto: CreateWorkerDto, admin: UserPayload) { 
-    
+  async create(dto: CreateWorkerDto, admin: UserPayload) {
+
     // 1. Verificación de seguridad (Multi-tenancy)
     if (!admin.empresaId) {
       throw new BadRequestException('El administrador no tiene empresa asignada');
@@ -59,7 +59,7 @@ export class WorkerService {
     try {
       const empresaId = admin.empresaId;
       const hashedPassword = bcrypt.hashSync(dto.password, 10);
-      
+
       // Normalización de datos
       const cleanEmail = dto.email ? dto.email.toLowerCase().trim() : null;
       const cleanDni = dto.dni ? dto.dni.toUpperCase().trim() : null;
@@ -76,6 +76,8 @@ export class WorkerService {
         empresaId: empresaId,
         isActive: true,
         isVerified: true,
+        actividadId: dto.actividadId ?? undefined,  // ✅ añadir
+
         horario: dto.horarioId ? { id: dto.horarioId } as Horario : null, // Relación con Horario si se proporciona
       } as DeepPartial<User>);
 
@@ -89,8 +91,9 @@ export class WorkerService {
         email: cleanEmail,
         telefono: dto.telefono,
         dni: cleanDni,
-        empresa: { id: empresaId }, // Vinculación por relación
-        
+        actividadId: dto.actividadId ?? undefined,           
+        empresaId: empresaId,           // ✅ solo columna física
+
         // Resto de datos del DTO...
         fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
         calle: dto.calle,
@@ -98,7 +101,6 @@ export class WorkerService {
         provincia: dto.provincia,
         pais: dto.pais,
         categoria: dto.categoria,
-        actividad: dto.actividad,
         diaPertenece: dto.diaPertenece,
         horarioId: dto.horarioId,
         rol: UserRole.WORKER,
@@ -168,7 +170,7 @@ export class WorkerService {
    */
   async findOne(id: number, user: UserPayload) {
     const whereCondition: any = { id };
-    
+
     // Si no es SuperAdmin, forzamos el filtro de empresa
     if (user.rol !== UserRole.SUPERADMIN) {
       if (!user.empresaId) throw new ForbiddenException('Usuario sin empresa');
@@ -195,18 +197,18 @@ export class WorkerService {
    * @return El trabajador actualizado. Si el trabajador no existe, el solicitante no tiene acceso a él, o la actualización falla por validación o permisos, se lanzará una excepción que será manejada por el WorkerController.
    * Nota: Si en el futuro decides permitir que un Admin normal también pueda actualizar trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin actualice cualquier trabajador sin necesidad de validar la empresa, asegúrate de que la lógica de validación y actualización se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
-async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
+  async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     // 1. Verificamos que el trabajador existe y pertenece a la empresa
     const worker = await this.findOne(id, user);
 
     // 2. Validaciones preventivas de duplicidad (Excluyendo al propio worker)
-    
+
     // Validar DNI
     if (dto.dni) {
       const dniLimpio = dto.dni.toUpperCase().trim();
       const dniDuplicado = await this.workerRepository.findOne({
-        where: { 
-          dni: dniLimpio, 
+        where: {
+          dni: dniLimpio,
           id: Not(id) //  "Busca este DNI pero que el ID NO sea el mío"
         }
       });
@@ -220,8 +222,8 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     if (dto.email) {
       const emailLimpio = dto.email.toLowerCase().trim();
       const emailDuplicado = await this.workerRepository.findOne({
-        where: { 
-          email: emailLimpio, 
+        where: {
+          email: emailLimpio,
           id: Not(id) //  "Busca este email pero que el ID NO sea el mío"
         }
       });
@@ -234,9 +236,9 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     // Validar Teléfono
     if (dto.telefono) {
       const telDuplicado = await this.workerRepository.findOne({
-        where: { 
-          telefono: dto.telefono, 
-          id: Not(id) 
+        where: {
+          telefono: dto.telefono,
+          id: Not(id)
         }
       });
       if (telDuplicado) {
@@ -245,13 +247,13 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     }
 
     // 3. Sincronizar con la tabla User si es necesario (Auth)
-  if (dto.email || dto.nombre || dto.password || 'horarioId' in dto) {
+    if (dto.email || dto.nombre || dto.password || 'horarioId' in dto) {
       const userUpdateData: any = {};
-      
+
       if (dto.email) userUpdateData.email = dto.email;
       if (dto.nombre) userUpdateData.nombre = dto.nombre;
       if (dto.password) userUpdateData.password = await bcrypt.hash(dto.password, 10);
-      
+
       if ('horarioId' in dto) {
         userUpdateData.horario = dto.horarioId ? { id: dto.horarioId } : null;
       }
@@ -313,7 +315,7 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
    * @return Un mensaje de éxito si el horario se asigna correctamente. Si el trabajador no existe, el horario no existe, el solicitante no tiene permisos para realizar la asignación, o la asignación falla por validación o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.
    * Nota: Si en el futuro decides permitir que un Admin normal también pueda asignar horarios sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin asigne horarios sin necesidad de validar la empresa, asegúrate de que la lógica de validación y asignación se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
- async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
+  async assignSchedule(workerId: number, horarioId: number, user: UserPayload) {
     // 1. VALIDACIÓN DE SEGURIDAD (El Admin debe tener empresa)
     if (!user.empresaId) {
       throw new UnauthorizedException('No tienes una empresa asignada para gestionar horarios');
@@ -322,8 +324,8 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     // 2. BUSCAR TRABAJADOR (Validando que pertenezca a la empresa del Admin)
     // No necesitamos cargar relaciones pesadas, solo verificar existencia y empresa
     const worker = await this.workerRepository.findOne({
-      where: { 
-        id: workerId, 
+      where: {
+        id: workerId,
         empresaId: user.empresaId // Usamos la columna física para filtrar rápido
       }
     });
@@ -334,8 +336,8 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
 
     // 3. BUSCAR HORARIO (Validando que pertenezca a la empresa del Admin)
     const horario = await this.dataSource.getRepository(Horario).findOne({
-      where: { 
-        id: horarioId, 
+      where: {
+        id: horarioId,
         empresa: { id: user.empresaId } // O empresaId si la definiste en Horario como readonly
       }
     });
@@ -348,26 +350,26 @@ async update(id: number, dto: UpdateWorkerDto, user: UserPayload) {
     // Usamos una transacción para asegurar que si falla User, no se actualice Worker (y viceversa)
     try {
       await this.dataSource.transaction(async (manager) => {
-        
+
         // A) Actualizar WORKER
         // ALERTA: Tu entidad tiene 'horarioId'. Usar esto es lo más seguro.
-        await manager.update(Worker, workerId, { 
+        await manager.update(Worker, workerId, {
           horarioId: horarioId // Actualización directa a la columna física
-        }as any);
+        } as any);
 
         // B) Actualizar USER
         // Como Worker.id === User.id (Shared Primary Key), usamos el mismo 'workerId'.
         // Nota: Esto asume que la entidad User también tiene una relación con Horario.
-        await manager.update(User, workerId, { 
-           // Si en User no tienes 'horarioId' columna, usa la relación:
-           horario: { id: horarioId } 
+        await manager.update(User, workerId, {
+          // Si en User no tienes 'horarioId' columna, usa la relación:
+          horario: { id: horarioId }
         });
       });
 
-      return { 
-        message: 'Horario asignado correctamente', 
+      return {
+        message: 'Horario asignado correctamente',
         workerId: worker.id,
-        horarioAsignado: horario.nombre 
+        horarioAsignado: horario.nombre
       };
 
     } catch (error) {

@@ -1,5 +1,6 @@
-import { IsEmail, IsOptional, IsString, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength, Max, Min, IsInt, ArrayUnique } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches, IsDateString, IsNumber, IsArray, MaxLength, MinLength, Max, Min, IsInt, ArrayUnique, IsEnum } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
+import { UserRole } from 'auth/roles.enum';
 
 export class UserBaseDto {
   @IsOptional()
@@ -146,7 +147,9 @@ export class UserBaseDto {
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   })
   @Expose()
-  actividad?: string;
+  actividad?: number;
+
+  
 
   @IsOptional()
   @IsInt({ message: 'El día debe ser un número entero' })
@@ -168,6 +171,7 @@ export class UserBaseDto {
     if (!Array.isArray(value)) return value;
     return value.map(v => typeof v === 'string' ? v.trim().toUpperCase() : v);
   })
-  @Expose()
-  rol?: string[];
+  @IsEnum(UserRole)
+@IsOptional()
+rol?: UserRole;
 }

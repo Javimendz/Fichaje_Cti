@@ -40,7 +40,7 @@ export class Worker {
   // DATOS PERSONALES
   // ============================================
   @Column({ type: 'varchar', length: 100, nullable: true })
-  nombre: string;
+  nombre: string | null;
 
   @Column({ type: 'varchar', length: 150, nullable: true })
   apellidos?: string;
@@ -94,11 +94,11 @@ export class Worker {
   // RELACIONES
   // ============================================
 
-  @Column({ nullable: false })
-  empresaId: number;
+  @Column({ nullable: false, name: 'empresaId' })
+empresaId: number;
 
   @ManyToOne(() => Company, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'empresaId' })
+  @JoinColumn({ name: 'empresaId' }) 
   empresa: Company;
 
   @Column({ nullable: true, name: 'horario_id' })

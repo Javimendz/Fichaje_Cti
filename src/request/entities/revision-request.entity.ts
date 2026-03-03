@@ -44,6 +44,7 @@ adminId: number; // ID del administrador que revisó la solicitud
 
   @CreateDateColumn() // Fecha de la decisión automática
   fechaDecision: Date; // Fecha en que se tomó la decisión sobre la solicitud
+  
 
   @Column({ type: 'enum', enum: RequestStatus })
   estadoResultante: RequestStatus;

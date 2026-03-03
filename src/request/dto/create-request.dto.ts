@@ -53,4 +53,14 @@ export class CreateRequestDto {
   })
   @Expose()
   motivo?: string;
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  nombre?: string;
+
+  @IsOptional()
+  @IsString()
+  @Expose()
+  apellidos?: string;
 }

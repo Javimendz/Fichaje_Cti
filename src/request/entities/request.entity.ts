@@ -48,7 +48,7 @@ export enum TipoSolicitud {
 
 @Entity('solicitudes') // Nombre de la tabla en la base de datos
 export class Request { // Definición de la entidad Solicitud
- 
+
   // --- IDENTIFICADOR ---
   @PrimaryGeneratedColumn() // ID único generado automáticamente
   id: number; // Identificador único de la solicitud
@@ -56,6 +56,12 @@ export class Request { // Definición de la entidad Solicitud
   // --- DATOS DE LA SOLICITUD ---
   @Column({ type: 'enum', enum: TipoSolicitud }) // Tipo de solicitud
   tipo: TipoSolicitud; // Tipo de solicitud
+
+  @Column({ type: 'text', nullable: true })
+  nombre: string;
+
+  @Column({ type: 'text', nullable: true })
+  apellidos: string;
 
   @Column({ type: 'date' }) // Fecha de inicio
   fechaInicio: Date; // Fecha de inicio de la solicitud
@@ -73,9 +79,9 @@ export class Request { // Definición de la entidad Solicitud
   fechaSolicitud: Date; // Fecha en que se realizó la solicitud
 
   // Relaciones
-@ManyToOne(() => User, (user) => user.solicitudes, { 
-  onDelete: 'CASCADE' 
-})  usuario: User; // Usuario que realiza la solicitud
+  @ManyToOne(() => User, (user) => user.solicitudes, {
+    onDelete: 'CASCADE'
+  }) usuario: User; // Usuario que realiza la solicitud
 
   @Column() // Columna para la clave foránea del usuario
   usuarioId: number; // ID del usuario que realiza la solicitud

@@ -38,6 +38,12 @@ export class Issue {
   @Column({ name: 'empresa_id' })
   empresaId: number;
 
+  @Column({ type: 'text', nullable: true })
+  nombre: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  apellidos: string | null;
+
   @Column({ default: false })
   resuelta: boolean;
 

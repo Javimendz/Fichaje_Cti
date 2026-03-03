@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
+import { DataSource, DeepPartial, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
+import { Request as SolicitudEntity } from './entities/request.entity';
 
-import { Request } from "./entities/request.entity";
 import { RevisionRequest } from "./entities/revision-request.entity";
 import { User } from "../auth/entities/user.entity";
 import { CreateRequestDto } from "./dto/create-request.dto";
@@ -33,9 +33,11 @@ import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
 @Injectable() // Marca la clase como un proveedor inyectable
 export class SolicitudesService { // Definición del servicio SolicitudesService
   constructor(
-    @InjectRepository(Request)  // Inyección del repositorio de Solicitud
-    private readonly solicitudRepo: Repository<Request>, // Repositorio para operaciones CRUD en Solicitud
+    @InjectRepository(SolicitudEntity)
+private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para operaciones CRUD en Solicitud
     private readonly dataSource: DataSource, // Inyección
+     @InjectRepository(User)                          // ✅ añadir
+  private readonly userRepo: Repository<User>, 
   ) {}
 
 
@@ -54,7 +56,10 @@ async create(dto: CreateRequestDto, user: User) {
   if (!user.empresaId) {
     throw new BadRequestException('El usuario no tiene una empresa asignada.');
   }
-
+const usuarioCompleto = await this.userRepo.findOne({ 
+    where: { id: user.id } 
+  });
+  if (!usuarioCompleto) throw new NotFoundException('Usuario no encontrado');
   // 2. Normalización de fechas (Importante para evitar errores de horas/milisegundos)
   const inicioNuevo = new Date(dto.fechaInicio);
   const finNuevo = new Date(dto.fechaFin);
@@ -68,16 +73,14 @@ async create(dto: CreateRequestDto, user: User) {
 
   // 3. Validación de Solapamiento (Overlap)
   // Usamos las variables normalizadas para asegurar una comparación de días exactos
-  const solicitudExistente = await this.solicitudRepo.findOne({
-    where: {
-      usuarioId: user.id,
-      estado: RequestStatus.APROBADA, 
-      // Comparamos el inicio de la guardada contra el fin de la nueva
-      // y el fin de la guardada contra el inicio de la nueva
-      fechaInicio: LessThanOrEqual(finNuevo),
-      fechaFin: MoreThanOrEqual(inicioNuevo),
-    },
-  });
+ const solicitudExistente = await this.solicitudRepo.findOne({
+      where: {
+        usuarioId: user.id,
+        estado: RequestStatus.APROBADA, 
+        fechaInicio: LessThanOrEqual(finNuevo),
+        fechaFin: MoreThanOrEqual(inicioNuevo),
+      },
+    });
 
   if (solicitudExistente) {
     const fI = new Date(solicitudExistente.fechaInicio).toLocaleDateString();
@@ -88,14 +91,18 @@ async create(dto: CreateRequestDto, user: User) {
   }
 
   // 4. Creación y Persistencia
-  const solicitud = this.solicitudRepo.create({
+const solicitud = this.solicitudRepo.create({
     ...dto,
-    fechaInicio: inicioNuevo, // Guardamos la fecha normalizada
-    fechaFin: finNuevo,       // Guardamos la fecha normalizada
-    usuario: user, 
-    empresa: { id: user.empresaId }, 
-    estado: RequestStatus.PENDIENTE, 
-  });
+    fechaInicio: inicioNuevo,
+    fechaFin: finNuevo,
+    usuarioId: usuarioCompleto.id,        
+  empresaId: usuarioCompleto.empresaId,
+    usuario: usuarioCompleto,
+    estado: RequestStatus.PENDIENTE,
+    nombre: usuarioCompleto.nombre,       
+    apellidos: usuarioCompleto.apellidos, 
+  } as DeepPartial<SolicitudEntity>);
+
 
   return await this.solicitudRepo.save(solicitud);
 }

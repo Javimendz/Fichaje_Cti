@@ -58,7 +58,8 @@ export class WorkdayService {
     // --- 🌍 FIX GEOFENCING: Forzamos números y damos un radio por defecto ---
     const latEmpresa = Number(usuarioDB.empresa?.latitud);
     const lngEmpresa = Number(usuarioDB.empresa?.longitud);
-    const radioPermitido = Number(usuarioDB.empresa?.radioPermitido || 100); // 100m por defecto
+    const radioConfig = Number(process.env.MAX_FICHAR_DISTANCE) || 600;
+    const radioPermitido = Number(usuarioDB.empresa?.radioPermitido || radioConfig); // 100m por defecto
 
     if (dto.latitud && dto.longitud && latEmpresa && lngEmpresa) {
       const distancia = this.calcularDistancia(

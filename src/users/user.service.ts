@@ -114,7 +114,11 @@ export class UserService {
         isVerified: true,
       });
 
-
+      console.log('DEBUG ANTES DE GUARDAR:', {
+  nombre: newUser.nombre,
+  apellidos: newUser.apellidos,
+  email: newUser.email,
+});
 
       const savedUser: User = await userRepo.save(newUser);
 

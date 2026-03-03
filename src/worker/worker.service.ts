@@ -73,6 +73,7 @@ export class WorkerService {
         dni: cleanDni,
         telefono: dto.telefono,
         rol: UserRole.WORKER,
+        apellidos: dto.apellidos,
         empresaId: empresaId,
         isActive: true,
         isVerified: true,

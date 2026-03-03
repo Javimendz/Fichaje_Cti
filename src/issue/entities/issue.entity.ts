@@ -44,8 +44,10 @@ export class Issue {
   @Column({ type: 'text', nullable: true })
   apellidos: string | null;
 
-  @Column({ default: false })
-  resuelta: boolean;
+  
+
+  @Column({ type: 'boolean', default: false })
+  estado: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

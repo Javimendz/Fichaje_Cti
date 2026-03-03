@@ -87,7 +87,9 @@ export class IssueService {
       userId,
       empresaId,
       ...dto,
-      resuelta: false,
+      nombre: dto.nombre,      
+      apellidos: dto.apellidos, 
+      estado: dto.estado ?? true,
     });
 
     return this.incidenciaRepository.save(incidencia);
@@ -220,11 +222,11 @@ export class IssueService {
     async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
       const incidencia = await this.findOne(id, empresaId);
 
-      if (incidencia.resuelta) {
+      if (incidencia.estado) {
         throw new BadRequestException('La incidencia ya está resuelta');
       }
 
-      incidencia.resuelta = true;
+      incidencia.estado = true;
 
       Object.assign(incidencia, dto);
 

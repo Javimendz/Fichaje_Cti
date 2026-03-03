@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IncidenciaTipo } from '../entities/issue.entity';
 import { Transform } from 'class-transformer';
 
@@ -31,4 +31,13 @@ export class CreateIncidenciaDto {
   @Matches(/^[a-zA-Zà-ÿÀ-ßñÑ\s]+$/, { message: 'Los apellidos solo pueden contener letras y espacios' })
   @Transform(({ value }) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value)
   apellidos?: string;
+
+  @IsOptional() // Normalmente al crear una incidencia, el estado tiene un valor por defecto
+  @IsBoolean({ message: 'El estado debe ser un valor booleano (true o false)' })
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true || value === 1 || value === '1') return true;
+    if (value === 'false' || value === false || value === 0 || value === '0') return false;
+    return value;
+  })
+  estado: boolean = true;
 }

@@ -64,7 +64,11 @@ export class CreateWorkerDto extends UserBaseDto { // DTO para crear un WORKER
   // Saneamiento: Elimina espacios y convierte a minúsculas para evitar problemas de formato
   password: string;
 
-  
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  @Type(() => Number)
+  actividadId?: number;
 
 
 }

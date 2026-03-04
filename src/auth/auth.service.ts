@@ -4,11 +4,9 @@ import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
 
 import { JwtService } from "@nestjs/jwt";
-import { AllowedPhonesService } from "allowed-phones/allowed-phones.service";
 
 import { LoginDto } from "./dto/login.dto";
 import { UserRole } from "./roles.enum";
-import { Worker } from "worker/entities/worker.entity";
 import { User } from "users/entities/user.entity";
 
 

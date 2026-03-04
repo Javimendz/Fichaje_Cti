@@ -57,6 +57,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       dni: user.dni,
       nombre: user.nombre,
       apellido: user.apellidos,
+      horarioId: user.horarioId,
       // Mapeamos el ID de la relación al nombre que espera tu controlador
       empresaId: empresaIdFinal, 
     };

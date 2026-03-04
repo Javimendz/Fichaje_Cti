@@ -79,6 +79,7 @@ async getMe(@GetUser() user: any) {
     nombre: user.nombre,
     apellido: user.apellido,
     rol: user.rol,
+    horarioId: user.horarioId,
     empresaId: user.empresaId
   };
 }

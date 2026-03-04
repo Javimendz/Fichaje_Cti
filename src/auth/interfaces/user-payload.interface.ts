@@ -9,6 +9,8 @@ export interface UserPayload {
   id: number;
   email: any;
   userId: number;
+  nombre: string;
+  apellido: string;
   dni: string;
   rol: UserRole;
   empresaId: number;

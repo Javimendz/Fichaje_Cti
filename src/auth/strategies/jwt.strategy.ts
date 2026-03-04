@@ -50,10 +50,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Este objeto es el que llega al decorador @GetUser()
     return {
+      
       id: user.id,
       email: user.email,
       rol: user.rol,
       dni: user.dni,
+      nombre: user.nombre,
+      apellido: user.apellidos,
       // Mapeamos el ID de la relación al nombre que espera tu controlador
       empresaId: empresaIdFinal, 
     };

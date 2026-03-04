@@ -17,7 +17,7 @@ export enum IncidenciaTipo {
   FALTA_JORNADA = 'FALTA_JORNADA',
   MARCA_IRREGULAR = 'MARCA_IRREGULAR',
   INCUMPLIMIENTO_NORMAS = 'INCUMPLIMIENTO_NORMAS',
-  OTRO = 'OTROS',
+  OTROS = 'OTROS',
 }
 
 @Entity('incidencias')

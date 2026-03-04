@@ -1,13 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository,  DataSource } from 'typeorm'; 
+import { Repository,  DataSource, MoreThanOrEqual } from 'typeorm'; 
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
 import {  DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 import { User } from 'auth/entities/user.entity';
-
 
 @Injectable()
 export class ScheduleService {
@@ -17,6 +16,8 @@ export class ScheduleService {
   private readonly dataSource: DataSource,  // Inyectamos DataSource para manejar transacciones
   @InjectRepository(User)
   private readonly userRepository: Repository<User>, // Repositorio para User
+   @InjectRepository(FranjaHoraria) 
+   private readonly franjaRepo: Repository<FranjaHoraria>
   
   ) {}
 
@@ -242,8 +243,7 @@ async remove(id: number, empresaId: number) {
               queryRunner.manager.create(FranjaHoraria, {
                 inicio: fDto.inicio,
                 fin: fDto.fin,
-                distribucionDia: distGuardada, // ✅ Relación correcta inyectada
-                // 🔥 CORRECCIÓN 2: Eliminada la línea problemática aquí
+                distribucionDia: distGuardada, // 
               })
             );
             await queryRunner.manager.save(franjasInstances);
@@ -263,6 +263,93 @@ async remove(id: number, empresaId: number) {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  // MÉTODO PRINCIPAL: OBTENER HORAS OBJETIVO SEMANAL
+  // ---------------------------------------------------------
+  //Calcular horas objetivo semanales 
+  async getHorasObjetivoSemanal(userId: number){
+
+    const user = await this.userRepository.findOne(
+      {
+        where: {
+          id: userId,
+        },
+        relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas'],
+
+      }
+
+    );
+
+    if(!user || !user.horario) throw new NotFoundException('El usuario no tiene un horario asignado.');
+
+    //Sumamos el campo horasDia de cada distribucion 
+    const totalHoras = user.horario.distribuciones.reduce(
+    (acc, dist) => acc + (Number(dist.horasDia) || 0), 
+    0
+  );
+
+  return {
+
+    userId, 
+    horarioNombre: user.horario.nombre,
+    totalHoras: totalHoras,
+
+  };
+
+  }
+
+
+  //Calcular horas que lleva trabajado el worker reales
+
+  async getHorasTrabajadasSemanales(userId: number){
+
+    const hoy = new Date();
+    const inicioSemana = new Date(hoy.setDate(hoy.getDate()- hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1)));
+    inicioSemana.setHours(0, 0, 0, 0);
+
+    const registros =  await this.dataSource.getRepository('jornada').find({
+      where:{
+        userId: userId,
+        fecha: MoreThanOrEqual(inicioSemana),
+      }
+
+    })
+
+    const totalTrabajado = registros.reduce(
+      (acc, registro) => acc + (Number(registro.horasTrabajadas) || 0), 
+      0
+    );
+
+    return {
+
+      userId,
+      totalHorasTrabajadas: parseFloat(totalTrabajado.toFixed(2)),
+    }
+
+  }
+
+  //Calcular porcentaje de cumplimento de la jornada
+
+  async getProgresoSemanal(userId: number){
+
+      const {totalHoras } = await this.getHorasObjetivoSemanal(userId);
+      const { totalHorasTrabajadas } = await this.getHorasTrabajadasSemanales(userId);
+
+      if(totalHoras ===0) return { porcentaje:0, mensaje: 'El usuario no tiene horas objetivo asignadas para esta semana.'}
+
+      const porcentaje = (totalHorasTrabajadas / totalHoras) * 100;
+
+      return {
+
+        userId,
+        horasObjetivo: totalHoras,
+        horasTrabajadas: totalHorasTrabajadas,
+        porcentaje: parseFloat(porcentaje.toFixed(2)),
+        completado: porcentaje >= 100
+
+      }
+
   }
 
 }

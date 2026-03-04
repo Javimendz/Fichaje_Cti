@@ -77,10 +77,10 @@ password: string | null; // Contraseña del usuario (hashed)
   tokenExpiraEn: Date | null; // Fecha de expiración del token de restablecimiento de contraseña
 
   @Column({ name: 'actividad_id', nullable: true })
-actividadId?: number; // ✅ Volver a opcional
+  actividadId?: number; // Volver a opcional
 
-@Column({ name: 'horario_id', nullable: true })
-horarioId?: number; // ID de la actividad a la que pertenece el usuario
+  @Column({ name: 'horario_id', nullable: true })
+  horarioId?: number; // ID de la actividad a la que pertenece el usuario
 
   // --- RELACIONES: EMPRESA ---
   @Column({ name: 'empresa_id', nullable: true }) // Columna física en la DB

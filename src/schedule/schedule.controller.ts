@@ -179,4 +179,45 @@ export class ScheduleController {
     // Llamamos al servicio (le pasamos 'user' completo porque el método update del servicio lo pide así)
     return this.schedulesService.update(id, dto, user);
   }
+
+
+  /**
+   * Obtiene las horas que el trabajador logueado DEBE trabajar (Objetivo)
+   * GET /schedules/stats/objetivo
+   */
+  @Get('stats/objetivo')
+  async getObjetivo(@GetUser() user: UserPayload) {
+    return await this.schedulesService.getHorasObjetivoSemanal(user.id);
+  }
+
+  /**
+   * Obtiene las horas que el trabajador lleva TRABAJADAS esta semana (Real)
+   * GET /schedules/stats/real
+   */
+  @Get('stats/real')
+  async getReal(@GetUser() user: UserPayload) {
+    return await this.schedulesService.getHorasTrabajadasSemanales(user.id);
+  }
+
+  /**
+   * Obtiene el porcentaje de cumplimiento semanal
+   * GET /schedules/stats/progreso
+   */
+  @Get('stats/progreso')
+  async getProgreso(@GetUser() user: UserPayload) {
+    return await this.schedulesService.getProgresoSemanal(user.id);
+  }
+
+  /**
+   * Endpoint para que un ADMIN consulte el progreso de cualquier trabajador
+   * GET /schedules/stats/progreso/28
+   */
+  @Get('stats/progreso/:userId')
+  async getProgresoById(
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    // Aquí podrías añadir un Guard de Roles para que solo el ADMIN entre
+    return await this.schedulesService.getProgresoSemanal(userId);
+  }
+
 }

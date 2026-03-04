@@ -31,6 +31,7 @@ export enum TipoSolicitud {
   ENFERMEDAD = 'ENFERMEDAD',
   PERMISO = 'PERMISO',
   ASUNTOS_PROPIOS = 'ASUNTOS_PROPIOS',
+  OTROS = 'OTROS'
 }
 /**
  * Solicitud Entity

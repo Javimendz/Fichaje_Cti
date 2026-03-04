@@ -8,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn 
 } from "typeorm";
-import { IsNotEmpty, Matches } from "class-validator";
 
 @Entity('franjas_horarias')
 export class FranjaHoraria {

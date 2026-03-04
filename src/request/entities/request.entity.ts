@@ -87,9 +87,11 @@ export class Request { // Definición de la entidad Solicitud
   @Column() // Columna para la clave foránea del usuario
   usuarioId: number; // ID del usuario que realiza la solicitud
 
-  @ManyToOne(() => Company) // Relación con Empresa
-  @JoinColumn({ name: 'empresa_id' }) // Columna de unión personalizada
-  empresa: Company; // Empresa asociada a la solicitud
+@ManyToOne(() => Company, (company) => company.solicitudes, { 
+    onDelete: 'CASCADE' 
+  })
+  @JoinColumn({ name: 'empresa_id' }) // Esto crea la columna física en la DB
+  empresa: Company;// Empresa asociada a la solicitud
 
   @Column({ name: 'empresa_id' }) // Columna para la clave foránea de la empresa
   empresaId: number; // ID de la empresa asociada a la solicitud

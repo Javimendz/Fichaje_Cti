@@ -7,6 +7,7 @@ import type { UserPayload } from '../auth/interfaces/user-payload.interface';
 import {  DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 import { User } from 'auth/entities/user.entity';
+import { Workday } from 'workday/entities/workday.entity';
 
 @Injectable()
 export class ScheduleService {
@@ -275,7 +276,7 @@ async remove(id: number, empresaId: number) {
         where: {
           id: userId,
         },
-        relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas'],
+        relations: ['horario', 'horario.distribuciones'],
 
       }
 
@@ -302,32 +303,34 @@ async remove(id: number, empresaId: number) {
 
   //Calcular horas que lleva trabajado el worker reales
 
-  async getHorasTrabajadasSemanales(userId: number){
+ async getHorasTrabajadasSemanales(userId: number) {
+  const hoy = new Date();
+  // Calculamos el lunes de esta semana a las 00:00:00
+  const inicioSemana = new Date(hoy);
+  inicioSemana.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
+  inicioSemana.setHours(0, 0, 0, 0);
 
-    const hoy = new Date();
-    const inicioSemana = new Date(hoy.setDate(hoy.getDate()- hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1)));
-    inicioSemana.setHours(0, 0, 0, 0);
+  const registros = await this.dataSource.getRepository(Workday).find({
+    where: {
+      usuario: { id: userId }, // ✅ Usamos 'usuario' porque así se llama en tu entidad
+      inicio: MoreThanOrEqual(inicioSemana), // ✅ Usamos 'inicio' porque no tienes columna 'fecha'
+    },
+  });
 
-    const registros =  await this.dataSource.getRepository('jornada').find({
-      where:{
-        userId: userId,
-        fecha: MoreThanOrEqual(inicioSemana),
-      }
+  // Calculamos el total sumando 'total_minutos' y convirtiendo a horas
+  const totalMinutos = registros.reduce((acc, reg) => {
+    return acc + (reg.total_minutos || 0);
+  }, 0);
 
-    })
+  const totalHoras = totalMinutos / 60;
 
-    const totalTrabajado = registros.reduce(
-      (acc, registro) => acc + (Number(registro.horasTrabajadas) || 0), 
-      0
-    );
-
-    return {
-
-      userId,
-      totalHorasTrabajadas: parseFloat(totalTrabajado.toFixed(2)),
-    }
-
-  }
+  return {
+    userId,
+    totalHorasTrabajadas: parseFloat(totalHoras.toFixed(2)),
+    totalMinutos,
+    desde: inicioSemana.toISOString().split('T')[0]
+  };
+}
 
   //Calcular porcentaje de cumplimento de la jornada
 

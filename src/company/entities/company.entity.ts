@@ -3,6 +3,7 @@ import { Attendance } from "attendance/entities/attendance.entity";
 import { User } from "auth/entities/user.entity";
 import { Horario } from "schedule/entities/schedules.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, CreateDateColumn } from "typeorm";
+import { Request } from "request/entities/request.entity";
 
 @Entity('empresas')
 export class Company {
@@ -70,6 +71,9 @@ export class Company {
   })
   horarios: Horario[];
 
+
+  @OneToMany(() => Request, (request) => request.empresa)
+  solicitudes: Request[];
   @OneToMany(() => Attendance, (attendance) => attendance.empresa)
   asistencias: Attendance[];
 }

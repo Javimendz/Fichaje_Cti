@@ -5,11 +5,12 @@ import {
   
   NotFoundException,
 } from '@nestjs/common';
-import { MoreThan, Repository } from 'typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
 import { Issue } from './entities/issue.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateIncidenciaDto } from './dto/create-issue.dto';
 import { UpdateIncidenciaDto } from './dto/update-issue.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 
 // Servicio para la gestión de incidencias
@@ -251,4 +252,29 @@ export class IssueService {
     }
 
 
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleAutoSoftDelete() {
+   // const haceCincoDias = new Date();
+    //haceCincoDias.setDate(haceCincoDias.getDate() - 5);
+
+const unMinutoAtras = new Date();
+  unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
+    // 1. Buscamos las incidencias que:
+    // - Estén resueltas (estado === true)
+    // - Su última actualización (updatedAt) fuera hace más de 5 días
+    const incidenciasAOCultar = await this.incidenciaRepository.find({
+      where: {
+        estado: true, 
+        updatedAt: LessThan(unMinutoAtras),
+      },
+    });
+
+    if (incidenciasAOCultar.length > 0) {
+      // 2. Aplicamos Soft Delete a todas
+      await this.incidenciaRepository.softRemove(incidenciasAOCultar);
+      console.log(`[Cron] Se han ocultado ${incidenciasAOCultar.length} incidencias antiguas.`);
+    }
+  }
 }
+
+

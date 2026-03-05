@@ -114,6 +114,14 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
         }
       ]
     },
@@ -215,7 +223,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzE5MjEzODMsImV4cCI6MTc3MTk2NDU4M30.F_K2dwMygPgpnmlGqHdKhOjz22dfuavwDdGZXEkONnA",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IlNVUEVSQURNSU4iLCJpYXQiOjE3NzI1MjgyMDYsImV4cCI6MTc3MjU3MTQwNn0.I9iBJNHnYMoG4O22AOA5TmEVqI9KcJl70DJ36tf6brw",
               "type": "string"
             }
           ]
@@ -235,7 +243,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "\r\n\r\n{\r\n  \"nombreEmpresa\": \"Global Tech Logistics S.A.\",\r\n  \"cif\": \"A87654321\",\r\n  \"direccion\": \"Avenida Central 100, Planta 5\",\r\n  \"poblacion\": \"Barcelona\",\r\n  \"provincia\": \"Barcelona\",\r\n  \"pais\": \"España\",\r\n  \"email\": \"ops@globaltech.com\",\r\n  \"codigoPostal\": \"08001\",\r\n  \"nombreContacto\": \"Marta Sánchez\",\r\n  \"telefonoContacto\": \"+34600111222\",\r\n  \"telefonoEmpresa\": \"+34934123457\",\r\n  \r\n  \"admin\": {\r\n    \"telefono\": \"+34600000001\",\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n  }\r\n}"
+          "raw": "\r\n\r\n{\r\n  \"nombreEmpresa\": \"Levante Industrial Solutions S.L.\",\r\n  \"cif\": \"B46221199\",\r\n  \"direccion\": \"Polígono Industrial Fuente del Jarro, Calle C, 14\",\r\n  \"poblacion\": \"Paterna\",\r\n  \"provincia\": \"Valencia\",\r\n  \"pais\": \"España\",\r\n  \"latitud\" : 40.8,\r\n  \"longitud\": 3.05, // <-- This is the variable that needs to be dynamically set\r\n  \"email\": \"info@levanteindustrial.es\",\r\n  \"codigoPostal\": \"46980\",\r\n  \"nombreContacto\": \"Ricardo Alarcón\",\r\n  \"telefonoContacto\": \"+34611222333\",\r\n  \"telefonoEmpresa\": \"+34963001122\",\r\n  \r\n  \"admin\": {\r\n    \"telefono\": \"+34611000001\",\r\n    \"email\": \"marta.admin@globaltech.com\",\r\n    \"password\": \"SecurePassword2026!\"\r\n    \r\n  }\r\n}"
         },
         "url": {
           "raw": "http://localhost:3000/api/empresa/crear-empresa",
@@ -363,7 +371,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIwODk5MDEsImV4cCI6MTc3MjEzMzEwMX0.00Pmw_8U2W4xBbBTGino4M0vwYcvKH_zUbtsPjVimGE",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzI1MjM3MjAsImV4cCI6MTc3MjU2NjkyMH0.1bppkGhO_ZuOrtz6GBAO2d0mUeb1ClYIjO_7lplmH-c",
               "type": "string"
             }
           ]
@@ -372,7 +380,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"telefono\": \"600123436\",\r\n  \"nombre\": \"PRUEBA\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"jua7ss889998@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"actividad\": \"Construcción\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \"horarioId\": 4,\r\n  \"isActive\": true,\r\n  \"empresaId\": 1\r\n}",
+          "raw": "{\r\n  \"telefono\": \"600123436\",\r\n  \"nombre\": \"PRUEBA\",\r\n  \"apellidos\": \"Pérez García\",\r\n  \"password\": \"contraseña123M\",\r\n  \"dni\": \"00000000T\",\r\n  \"email\": \"jua7ss889998@empresass.com\",\r\n  \"fechaNacimiento\": \"1992-03-10\",\r\n  \"categoria\": \"Oficial de Primera\",\r\n  \"diaPertenece\": 1,\r\n  \"calle\": \"Calle Principal\",\r\n  \"poblacion\": \"Murcia\",\r\n  \"provincia\": \"Murcia\",\r\n  \"pais\": \"España\",\r\n  \r\n  \"isActive\": true,\r\n  \"actividadId\": 1,\r\n  \"empresaId\": 1\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -756,7 +764,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzE5MjE0NDEsImV4cCI6MTc3MTk2NDY0MX0._cdxWhIE5SY-w70IDQmeH1cCoMcrrHO5J0oNPYNpibM",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI1LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NSwiaWF0IjoxNzcyNTM5NTgxLCJleHAiOjE3NzI1ODI3ODF9.LP7pz-mIiBSqLQ4G2fMHG2S7UdiyaJkJOZ58vvQY8aA",
               "type": "string"
             }
           ]
@@ -2288,7 +2296,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjM3LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjEsImlhdCI6MTc3MjEwODYxMywiZXhwIjoxNzcyMTEyMjEzfQ.WM2lXM7f8CGsJ1w2zxKXaVsLm8kI2xAC-OHV1HhPpSo",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI1LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NSwiaWF0IjoxNzcyNjE0NDU2LCJleHAiOjE3NzI2NTc2NTZ9.OoYUJcce6vi4l6H4SCViOEYlpap_dfzwsD24dWKLoX8",
               "type": "string"
             }
           ]
@@ -2297,7 +2305,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"tipo\": \"NO_ASISTENCIA\",\r\n  \r\n  \"descripcion\": \"Ayer olvidé fichar la salida al salir del cliente.\"\r\n}",
+          "raw": "{\r\n  \"tipo\": \"OTROS\",\r\n  \"estado\": false,\r\n  \"descripcion\": \"Ayer olvidé fichar la salida al salir del cliente.\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2369,7 +2377,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzI1MjgyMzEsImV4cCI6MTc3MjU3MTQzMX0.O8Hsb_lQQMtYWVAe4SfkNOuXjXVq2a3TgLMoV_R5QvE",
               "type": "string"
             }
           ]
@@ -2409,7 +2417,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzI0MzcxNTcsImV4cCI6MTc3MjQ4MDM1N30.g648-NSBGcjiR4s-FCoBsVrS5zGDSIVHvcGsR-OGFrE",
               "type": "string"
             }
           ]
@@ -2481,19 +2489,19 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzI0MzcxNTcsImV4cCI6MTc3MjQ4MDM1N30.g648-NSBGcjiR4s-FCoBsVrS5zGDSIVHvcGsR-OGFrE",
               "type": "string"
             }
           ]
         },
-        "method": "PATCH",
+        "method": "DELETE",
         "header": [],
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"tipo\": \"OPERARIO_PRODUCCION\",\r\n  \"nombre\": \"Técnico de Mantenimiento Eléctrico\",\r\n  \"descripcion\": \"Encargado de revisar los cuadros eléctricos de la planta 2.\",\r\n  \r\n  \"activa\": true\r\n}"
         },
         "url": {
-          "raw": "http://localhost:3000/api/actividades/desactivar/2",
+          "raw": "http://localhost:3000/api/actividades/delete/2",
           "protocol": "http",
           "host": [
             "localhost"
@@ -2502,7 +2510,7 @@
           "path": [
             "api",
             "actividades",
-            "desactivar",
+            "delete",
             "2"
           ]
         }
@@ -2510,22 +2518,31 @@
       "response": []
     },
     {
-      "name": "Actividad solo activas",
+      "name": "resolver incidencia",
       "request": {
         "auth": {
           "type": "bearer",
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvbCI6IkFETUlOIiwiZW1wcmVzYUlkIjoxLCJpYXQiOjE3NzIxODE0MjksImV4cCI6MTc3MjIyNDYyOX0.g6cSJbD841QK0Kecn41inocUNLb4MLLmgXxXo-Ig81I",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI1LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NSwiaWF0IjoxNzcyNTQ1MjU5LCJleHAiOjE3NzI1ODg0NTl9.D6WGWXrYLhe0QaUZElBoQMAJhBu7z5-dHhk2Uj0SKAE",
               "type": "string"
             }
           ]
         },
-        "method": "GET",
+        "method": "PUT",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"descripcion\": \"Problema con el sistema - Resuelto tras reinicio de router\",\r\n  \"resuelta\": \"true\",\r\n    \"tipo\": \"TARDANZA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "http://localhost:3000/api/actividades/catalogo?soloActivas=true",
+          "raw": "http://localhost:3000/api/incidencias/resolver/34",
           "protocol": "http",
           "host": [
             "localhost"
@@ -2533,14 +2550,191 @@
           "port": "3000",
           "path": [
             "api",
-            "actividades",
-            "catalogo"
-          ],
-          "query": [
+            "incidencias",
+            "resolver",
+            "34"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "list issue",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
             {
-              "key": "soloActivas",
-              "value": "true"
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI1LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NSwiaWF0IjoxNzcyNjE0NDU2LCJleHAiOjE3NzI2NTc2NTZ9.OoYUJcce6vi4l6H4SCViOEYlpap_dfzwsD24dWKLoX8",
+              "type": "string"
             }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/incidencias/empresa",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "incidencias",
+            "empresa"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "spring",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI4LCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjUsImlhdCI6MTc3MjYwODY3MiwiZXhwIjoxNzcyNjEyMjcyfQ.orIWgCmqUluQKMbClJY48ne59mKVwZc4_W0hWBbT7vc",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/auth/me",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "stats objetivo schedule",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjYsImlhdCI6MTc3MjYzODc1NiwiZXhwIjoxNzcyNjQyMzU2fQ.3BAgdIXUB_fim1ZHXySImcas1gaDy6Gb7Bd_WX5He9Y",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/stats/progreso",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "stats",
+            "progreso"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI5LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NiwiaWF0IjoxNzcyNzAwNDUyLCJleHAiOjE3NzI3NDM2NTJ9.mz26SDVsB3B8GQ9aA2wxCPPiG3-u8lLBBL0JRiXxEyw",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombre\": \"Horario Insuficiente\",\r\n  \"distribuciones\": [\r\n    {\r\n      \"diaSemana\": \"MARTES\",\r\n      \"horasDia\": 8,\r\n      \"franjas\": [\r\n        { \"inicio\": \"09:00\", \"fin\": \"13:00\" }, // 4h\r\n        { \"inicio\": \"16:00\", \"fin\": \"18:00\" }  // 2h (Total: 6h. Faltan 2h ❌)\r\n      ]\r\n    }\r\n  ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/schedule/crear-schedule",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "schedule",
+            "crear-schedule"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjYsImlhdCI6MTc3MjcwMDY2OSwiZXhwIjoxNzcyNzA0MjY5fQ.HIXDAKDoHDcajRix7tN4IP_zC_9c9qebVrg_PwAPS3g",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"fechaInicio\": \"2026-08-01\",\r\n  \"fechaFin\": \"2026-08-15\",\r\n  \"tipo\": \"VACACIONES\",\r\n  \"motivo\": \"Vacaciones de verano\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/crear-request",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "crear-request"
           ]
         }
       },

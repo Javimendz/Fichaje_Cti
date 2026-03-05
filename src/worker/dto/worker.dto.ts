@@ -139,15 +139,11 @@ export class CreateWorkerDto {
   @MaxLength(80, { message: 'La categoría no puede exceder los 80 caracteres' })
   categoria?: string;
 
-  @IsString()
-  @IsOptional()
-  // Permite: Letras, números, tildes, ñ, espacios y símbolos: / - . , ( )
-  @Matches(/^[a-zA-Z0-9à-ÿÀ-ßñÑ\s\/\-\.\,\(\)]+$/, {
-    message: 'La actividad contiene caracteres no permitidos',
-  })
-  @MinLength(3, { message: 'La descripción de la actividad es muy corta' })
-  @MaxLength(100, { message: 'La actividad no puede exceder los 100 caracteres' })
-  actividad?: string;
+  
+  @IsInt({ message: 'El id de actividad debe ser un número entero' })
+  @IsPositive({ message: 'El id de actividad debe ser un ID válido' })
+  @IsOptional() 
+  actividadId?: number;
 
   @IsNumber({}, { message: 'El día debe ser un valor numérico' })
   @IsInt({ message: 'El día debe ser un número entero (sin decimales)' })

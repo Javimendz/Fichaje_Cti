@@ -102,6 +102,10 @@ export class WorkerService {
         provincia: dto.provincia,
         pais: dto.pais,
         categoria: dto.categoria,
+<<<<<<< HEAD
+=======
+        actividadId: dto.actividadId,
+>>>>>>> e381a87db0a745ef0a2f2b544ac94e73e2c2a005
         diaPertenece: dto.diaPertenece,
         horarioId: dto.horarioId,
         rol: UserRole.WORKER,

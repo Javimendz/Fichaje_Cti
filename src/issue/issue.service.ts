@@ -174,7 +174,7 @@ export class IssueService {
 
   /**
    * 
-   * Actualiza la incidencia con el ID especificado para la empresa dada.
+   * Actualiza/edita la incidencia con el ID especificado para la empresa dada.
    * 
    * @param id ID de la incidencia
    * @param empresaId ID de la empresa
@@ -232,4 +232,6 @@ export class IssueService {
 
       return this.incidenciaRepository.save(incidencia);
     }
+
+
 }

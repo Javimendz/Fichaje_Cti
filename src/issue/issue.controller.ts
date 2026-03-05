@@ -118,15 +118,15 @@ export class IncidenciaController {
 
   /**
    * 
-   * Actualiza una incidencia de la empresa autenticada.
+   * Actualiza/Edita una incidencia de la empresa autenticada.
    * 
    * @param id ID de la incidencia a actualizar
    * @param dto Datos para actualizar la incidencia
    * @param user Usuario autenticado
    * @returns La incidencia actualizada
    */
-  @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Put('edit-incidencia/:id')
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateIncidenciaDto,
@@ -151,4 +151,6 @@ export class IncidenciaController {
   ) {
     return this.issueService.remove(id, user.empresaId);
   }
+
+  
 }

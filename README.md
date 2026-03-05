@@ -200,7 +200,8 @@ POST	       /api/incidencias/crear	           Reporta una nueva incidencia (Anti
 GET	         /api/incidencias/mis-incidencias	 Historial personal de incidencias reportadas por el usuario.	Token (ADMIN / WORKER)
 GET	         /api/incidencias/empresa	         Panel del admin para ver incidencias (Filtrable por pendientes).	Token (ADMIN)
 PUT	         /api/incidencias/resolver/:id	   Marca una incidencia como solucionada/resuelta.	            Token (ADMIN)
-DELETE	     /api/incidencias/:id	             Elimina un reporte de incidencia (Solo si es de su empresa).	Token (ADMIN) 
+DELETE	     /api/incidencias/delete/:id	     Elimina un reporte de incidencia (Solo si es de su empresa).	Token (ADMIN) 
+PUT	         /api/incidencias/edit-incidencia/:id	Edita una incidencia reportada (Solo si es de su empresa).Token (ADMIN / WORKER) + Body
 
 ```
 

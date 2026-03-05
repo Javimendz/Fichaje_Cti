@@ -39,5 +39,5 @@ export class CreateIncidenciaDto {
     if (value === 'false' || value === false || value === 0 || value === '0') return false;
     return value;
   })
-  estado: boolean = true;
+  estado: boolean = false;
 }

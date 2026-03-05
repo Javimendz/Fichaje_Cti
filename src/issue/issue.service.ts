@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   
+  InternalServerErrorException,
+  
   NotFoundException,
 } from '@nestjs/common';
 import { MoreThan, Repository } from 'typeorm';
@@ -182,18 +184,33 @@ export class IssueService {
    * @returns La incidencia actualizada
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
-  async update(
-    id: number,
-    empresaId: number,
-    updateDto: UpdateIncidenciaDto,
-  ) {
-    const incidencia = await this.findOne(id, empresaId);
+ async update(
+  id: number,
+  empresaId: number,
+  updateDto: Partial<CreateIncidenciaDto>, // Usamos Partial para que todo sea opcional al editar
+) {
+  const incidencia = await this.findOne(id, empresaId);
 
-    Object.assign(incidencia, updateDto);
-
-    return this.incidenciaRepository.save(incidencia);
+  // 1. Regla de negocio: Si ya está resuelta (false), no se edita
+  // Nota: Revisa si en tu lógica 'false' es resuelta o 'true' es resuelta. 
+  // Según tu código anterior: incidencia.estado === true significa resuelta.
+  if (incidencia.estado === true) {
+    throw new BadRequestException('No puedes editar una incidencia ya resuelta');
   }
 
+  // 2. Actualización selectiva (Evitamos que los valores por defecto del DTO ganen)
+  if (updateDto.tipo) incidencia.tipo = updateDto.tipo;
+  if (updateDto.descripcion) incidencia.descripcion = updateDto.descripcion;
+  if (updateDto.nombre) incidencia.nombre = updateDto.nombre;
+  if (updateDto.apellidos) incidencia.apellidos = updateDto.apellidos;
+
+  // 3. El estado SOLO se actualiza si viene explícitamente en el Body
+  if (updateDto.estado !== undefined) {
+    incidencia.estado = updateDto.estado;
+  }
+
+  return await this.incidenciaRepository.save(incidencia);
+}
   /**
    * 
    * Elimina la incidencia con el ID especificado para la empresa dada.
@@ -204,10 +221,10 @@ export class IssueService {
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
   async remove(id: number, empresaId: number) {
-    const incidencia = await this.findOne(id, empresaId);
-    return this.incidenciaRepository.remove(incidencia);
-  }
-
+  const incidencia = await this.findOne(id, empresaId);
+  // softRemove llena la columna deletedAt en lugar de hacer un DELETE SQL
+  return this.incidenciaRepository.softRemove(incidencia);
+}
   /**
    * 
    * Marca la incidencia con el ID especificado como resuelta para la empresa dada.

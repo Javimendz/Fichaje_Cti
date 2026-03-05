@@ -9,6 +9,8 @@ import { CreateRequestDto } from "./dto/create-request.dto";
 import { RevisarRequestDto, RequestStatus } from "./dto/revisar-request.dto";
 import { Ausencia } from "absence/entities/ausencia.entity";
 import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
+import { UserPayload } from "auth/interfaces/user-payload.interface";
+import { UserRole } from "auth/roles.enum";
 
 
 /**
@@ -51,8 +53,23 @@ private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para
    * @see CreateRequestDto
    * @see Request 
    */
-async create(dto: CreateRequestDto, user: User) {
+async create(dto: CreateRequestDto, user: UserPayload) {
+  
+  const solicitudesPendientes = await this.solicitudRepo.count({
+    where: {
+      usuarioId: user.id,
+      estado: RequestStatus.PENDIENTE,
+    },
+  });
+
+  if (solicitudesPendientes >= 3) {
+    throw new BadRequestException(
+      'Ya tienes 3 solicitudes pendientes. Debes esperar a que el administrador las acepte o deniegue antes de crear una nueva.'
+    );
+  }
   // 1. Validación de seguridad
+  
+  
   if (!user.empresaId) {
     throw new BadRequestException('El usuario no tiene una empresa asignada.');
   }
@@ -172,22 +189,23 @@ const solicitud = this.solicitudRepo.create({
       // PASO C: Generar Ausencia (Solo si fue APROBADA)
       // ---------------------------------------------------------
       if (dto.estado === RequestStatus.APROBADA) {
-        const inicio = new Date(solicitud.fechaInicio);
-        const fin = new Date(solicitud.fechaFin);
+        const fechaInicio = new Date(solicitud.fechaInicio);
+        const fechaFin = new Date(solicitud.fechaFin);
         
         // Normalización de fechas para el cálculo preciso de días
-        inicio.setUTCHours(0, 0, 0, 0);
-        fin.setUTCHours(0, 0, 0, 0);
+        fechaInicio.setHours(0, 0, 0, 0);
+        fechaFin.setHours(0, 0, 0, 0);
         
-        const diffTime = Math.abs(fin.getTime() - inicio.getTime());
-        const diasTotales = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const diffTime = fechaFin.getTime() - fechaInicio.getTime();
+        const diasTotales = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
         // 🛠️ SOLUCIÓN: Instanciamos manualmente para evitar el error de DeepPartial
         // y aseguramos que las fechas entren a la base de datos como strings 'YYYY-MM-DD'.
         const nuevaAusencia = new Ausencia();
-        nuevaAusencia.tipo = solicitud.tipo as any;
-        nuevaAusencia.fechaInicio = inicio.toISOString().split('T')[0];
-        nuevaAusencia.fechaFin = fin.toISOString().split('T')[0];
+        
+        nuevaAusencia.tipo = solicitud.tipo.toUpperCase() as any;
+        nuevaAusencia.fechaInicio = fechaInicio.toISOString().split('T')[0];
+        nuevaAusencia.fechaFin = fechaFin.toISOString().split('T')[0];
         nuevaAusencia.usuarioId = solicitud.usuarioId;
         nuevaAusencia.empresaId = solicitud.empresaId;
         nuevaAusencia.motivo = `Aprobado por ${admin.nombre}: ${solicitud.motivo || 'Sin descripción'}`;
@@ -231,6 +249,7 @@ const solicitud = this.solicitudRepo.create({
  * 
  */
 
+
   async findAllByEmpresa(empresaId: number, usuarioId?: number) { // Listar solicitudes por empresa y opcionalmente por usuario
     const whereCondition: any = { empresaId }; // Condición base por empresa
     if (usuarioId) whereCondition.usuarioId = usuarioId; // Agregar filtro por usuario si se proporciona
@@ -240,5 +259,68 @@ const solicitud = this.solicitudRepo.create({
       relations: ['usuario', 'revision'],  // Cargar relaciones necesarias
       order: { createdAt: 'DESC' }  // Ordenar por fecha de creación descendente
     });
+  }
+
+  // No olvides importar estos de @nestjs/common y typeorm
+// import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+
+async update(id: number, dto: any, user: any) {
+  // 1. Verificar existencia
+  const solicitud = await this.solicitudRepo.findOne({ 
+    where: { id },
+    relations: ['usuario'] 
+  });
+
+  if (!solicitud) {
+    throw new NotFoundException(`La solicitud #${id} no existe.`);
+  }
+
+  // 2. Seguridad: El Worker solo puede editar lo suyo
+  // Comprobamos contra user.id (del JWT) y solicitud.usuarioId (de la DB)
+  if (solicitud.usuarioId !== user.id) {
+    throw new ForbiddenException('No tienes permiso para editar esta solicitud.');
+  }
+
+  // 3. Regla de Oro del TFG: Bloquear edición si no está PENDIENTE
+  if (solicitud.estado !== 'PENDIENTE') {
+    throw new BadRequestException(
+      `Estado actual: ${solicitud.estado}. No se puede editar una solicitud ya procesada.`
+    );
+  }
+
+  // 4. Mapeo manual o con Object.assign para actualizar campos
+  // Solo permitimos editar ciertos campos para evitar que cambien el 'estado' o 'usuarioId'
+  if (dto.fechaInicio) solicitud.fechaInicio = new Date(dto.fechaInicio);
+  if (dto.fechaFin) solicitud.fechaFin = new Date(dto.fechaFin);
+  if (dto.motivo) solicitud.motivo = dto.motivo;
+  if (dto.tipo) solicitud.tipo = dto.tipo;
+
+  return await this.solicitudRepo.save(solicitud);
+}
+
+async findOne(id: number, user: UserPayload) {
+    // 1. Buscamos la solicitud con sus relaciones
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['usuario', 'revision']
+    });
+
+    if (!solicitud) {
+      throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
+    }
+
+    // 2. Lógica de permisos para WORKER
+    // Un trabajador solo puede ver su propia solicitud
+    if (user.rol === UserRole.WORKER && solicitud.usuarioId !== user.id) {
+      throw new ForbiddenException('No tienes permiso para ver solicitudes de otros trabajadores');
+    }
+
+    // 3. Lógica de permisos para ADMIN
+    // Un administrador solo puede ver solicitudes de su propia empresa
+    if (user.rol === UserRole.ADMIN && solicitud.empresaId !== user.empresaId) {
+      throw new ForbiddenException('Esta solicitud pertenece a otra empresa');
+    }
+
+    return solicitud;
   }
 }

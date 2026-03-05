@@ -195,6 +195,13 @@ async remove(id: number, empresaId: number) {
   async update(id: number, dto: Partial<CreateHorarioDto>, user: UserPayload) {
     if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
 
+    // VALIDACIÓN PREVIA DE REGLAS DE NEGOCIO
+    if (dto.distribuciones) {
+      for (const dist of dto.distribuciones) {
+        this.validarJornadaCompleta(dist);
+      }
+    }
+
     // 1. Verificamos que el horario existe y pertenece a la empresa
     const horarioExistente = await this.horarioRepository.findOne({
       where: { id, empresa: { id: user.empresaId } },
@@ -354,5 +361,57 @@ async remove(id: number, empresaId: number) {
       }
 
   }
+
+
+  /**
+ * Valida que la suma de las franjas horarias sea igual o mayor a las horasDia definidas.
+ * Esto permite el horario partido con descanso libre, siempre que se cumpla la jornada.
+ */
+private validarJornadaCompleta(distDto: any) {
+  if (!distDto.franjas || distDto.franjas.length === 0) return;
+
+  let minutosTotalesFranjas = 0;
+  
+  // Convertimos franjas a minutos y las ordenamos por inicio
+  const franjasEnMinutos = distDto.franjas.map(f => {
+    const [hIni, mIni] = f.inicio.split(':').map(Number);
+    const [hFin, mFin] = f.fin.split(':').map(Number);
+    return {
+      inicio: hIni * 60 + mIni,
+      fin: hFin * 60 + mFin,
+      texto: `${f.inicio}-${f.fin}`
+    };
+  }).sort((a, b) => a.inicio - b.inicio);
+
+  // Validar cada franja y detectar solapamientos
+  for (let i = 0; i < franjasEnMinutos.length; i++) {
+    const actual = franjasEnMinutos[i];
+
+    if (actual.fin <= actual.inicio) {
+      throw new BadRequestException(`La franja ${actual.texto} es inválida.`);
+    }
+
+    // 🔥 DETECCIÓN DE SOLAPAMIENTO: 
+    // Si no es la última franja, revisamos si choca con la siguiente
+    if (i < franjasEnMinutos.length - 1) {
+      const siguiente = franjasEnMinutos[i + 1];
+      if (actual.fin > siguiente.inicio) {
+        throw new BadRequestException(
+          `Solapamiento detectado en el día ${distDto.diaSemana}: La franja ${actual.texto} choca con la franja ${siguiente.texto}.`
+        );
+      }
+    }
+
+    minutosTotalesFranjas += (actual.fin - actual.inicio);
+  }
+
+  const minutosObjetivo = distDto.horasDia * 60;
+
+  if (minutosTotalesFranjas < minutosObjetivo) {
+    throw new BadRequestException(
+      `En el día ${distDto.diaSemana}, las franjas suman ${minutosTotalesFranjas / 60}h, pero el mínimo diario es ${distDto.horasDia}h.`
+    );
+  }
+}
 
 }

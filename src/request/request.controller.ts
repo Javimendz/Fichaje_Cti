@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, UseGuards } from "@nestjs/common";
 import { RevisarRequestDto } from "./dto/revisar-request.dto";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import { Roles } from "auth/decorators/roles.decorator";
@@ -7,6 +7,8 @@ import { User } from "auth/entities/user.entity";
 import { CreateRequestDto } from "./dto/create-request.dto";
 import { SolicitudesService } from "./request.service";
 import { AuthGuard } from "@nestjs/passport";
+import type { UserPayload } from "auth/interfaces/user-payload.interface";
+import { UpdateRequestDto } from "./dto/update-request.dto";
 
 /**
  * SolicitudesController
@@ -29,11 +31,10 @@ export class RequestController { // Inyección de dependencias
   constructor(private readonly solicitudesService: SolicitudesService) {} //
 
   @Post('crear-request')
-  @Roles(UserRole.ADMIN, UserRole.WORKER) // Endpoint para crear una solicitud
-  create(@Body() dto: CreateRequestDto, @GetUser() user: User) { // Obtener datos del cuerpo y usuario actual
-    return this.solicitudesService.create(dto, user); // Llamar al servicio para crear la solicitud
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
+  create(@Body() dto: CreateRequestDto, @GetUser() user: UserPayload) { 
+    return this.solicitudesService.create(dto, user);
   }
-
   /**
    *  Revisa una solicitud específica, permitiendo aprobarla o rechazarla.
    *  
@@ -82,5 +83,29 @@ export class RequestController { // Inyección de dependencias
   }
     return this.solicitudesService.findAllByEmpresa(admin.empresaId );
   }
+
+
+  @Get('find/:id')
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserPayload // Necesitamos al user para validar que no vea datos ajenos
+  ) {
+    return await this.solicitudesService.findOne(id, user);
+  }
+
+  @Patch('edit-request/:id') // Usamos PATCH para actualizaciones
+  @Roles(UserRole.WORKER)
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdateRequestDto, // Necesitas un DTO con los cambios
+    @GetUser() user: UserPayload,
+  ) {
+    return await this.solicitudesService.update(id, updateDto, user);
+  }
+
+
+  
+
 
 }

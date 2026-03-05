@@ -114,7 +114,8 @@ POST            /api/request/crear-request         Crea una nueva solicitud (Per
 PUT             /api/request/check/:id             Aprueba o rechaza una solicitud específica.          Token (ADMIN) + Body
 GET             /api/request/my-request            Lista las solicitudes del usuario autenticado.       Token (ADMIN/WORKER)
 GET             /api/request/company-request       Lista todas las solicitudes de la empresa.           Token (ADMIN)
-
+GET	            /api/request/find/:id	             Obtiene el detalle de una solicitud específica por su ID.	Token (ADMIN/WORKER)
+PATCH	          /api/request/edit-request/:id	     Permite al trabajador modificar una solicitud pendiente.	Token (WORKER) + Body
 ```
 
 ```
@@ -124,7 +125,11 @@ POST           /api/schedule/crear-schedule          Crea un nuevo horario (Plan
 GET            /api/schedule/list-schedules          Lista los horarios de la empresa con sus franjas.    Token (ADMIN/WORKER)
 GET            /api/schedule/find/:id                Busca los detalles de un horario por su ID.          Token (ADMIN/WORKER)
 DELETE         /api/schedule/delete/:id              Elimina un horario completo del sistema.             Token (ADMIN)
-
+PUT	           /api/schedule/editar/:id	             Actualiza un horario existente por su ID.	          Token (ADMIN) + Body
+GET	           /api/schedule/stats/objetivo	         Obtiene las horas que el trabajador debe trabajar.	  Token (ADMIN/WORKER)
+GET            /api/schedule/stats/real              Obtiene las horas que el trabajador lleva trabajadas.Token (ADMIN/WORKER)
+GET            /api/schedule/stats/progreso          Obtiene el % de cumplimiento semanal (Real vs Objetivo).Token (ADMIN/WORKER)
+GET            /api/schedule/stats/progreso/:userId  Consulta el progreso de cualquier trabajador por su  ID.Token (ADMIN) 
 ```
 
 ```

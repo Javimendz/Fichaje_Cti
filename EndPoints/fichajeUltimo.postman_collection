@@ -2739,6 +2739,47 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "edit Solicitud varios campos",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjYsImlhdCI6MTc3MjcxNDE4MiwiZXhwIjoxNzcyNzE3NzgyfQ._3mWtmBXqiiM8a-YI7NjwdrHuoWg5f5G9XkLCfVPQEY",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"ENFERMEDAD\",\r\n  \"fechaInicio\": \"2026-04-10\",\r\n  \"fechaFin\": \"2026-04-12\",\r\n  \"motivo\": \"aaaaaaaaaaaaaaaaaaaa\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/request/edit-request/15",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "request",
+            "edit-request",
+            "15"
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }

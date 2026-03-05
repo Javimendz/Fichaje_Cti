@@ -152,10 +152,7 @@ export class CreateWorkerDto {
   @Max(31, { message: 'El día no puede ser mayor a 31' })
   diaPertenece?: number;
   
-  @IsOptional()
-  @IsInt({ message: 'El id de actividad debe ser un número entero' })
-  @IsPositive({ message: 'El id de actividad debe ser un ID válido' })
-  actividadId?: number;
+  
   
   @IsOptional()
   @IsNumber({}, { message: 'El ID de horario debe ser un número' })

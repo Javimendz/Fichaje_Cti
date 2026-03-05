@@ -94,7 +94,7 @@ export class RequestController { // Inyección de dependencias
     return await this.solicitudesService.findOne(id, user);
   }
 
-  @Patch('edit-request/:id') // Usamos PATCH para actualizaciones
+  @Put('edit-request/:id') // Usamos PATCH para actualizaciones
   @Roles(UserRole.WORKER)
   async update(
     @Param('id', ParseIntPipe) id: number,

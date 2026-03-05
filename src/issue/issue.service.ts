@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   
+  Injectable,
+  
   InternalServerErrorException,
   
   NotFoundException,
@@ -25,6 +27,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
  * @Injectable()    
  * 
  *  */
+@Injectable()
 export class IssueService {
   constructor(
     @InjectRepository(Issue)
@@ -154,22 +157,23 @@ export class IssueService {
  * @param soloPendientes Si se desea filtrar solo por incidencias pendientes (opcional, por defecto false)
  * @returns Todas las incidencias de la empresa
  */
-  async findAllByEmpresa(
-    empresaId: number,
-    soloPendientes = false,
-  ) {
-    const where: any = { empresaId };
+  async findAllByEmpresa(empresaId: number, soloPendientes = false) {
+  const where: any = { empresaId };
 
-    if (soloPendientes) {
-      where.resuelta = false;
-    }
-
-    return this.incidenciaRepository.find({
-      where,
-      relations: ['usuario'],
-      order: { createdAt: 'DESC' },
-    });
+  if (soloPendientes) {
+    // CAMBIO: Antes decía 'resuelta', debe ser 'estado'
+    // Si estado === true es RESUELTA, entonces pendientes es estado: false
+    where.estado = false; 
   }
+
+  return this.incidenciaRepository.find({
+    where,
+    relations: ['usuario'],
+   
+    order: { createdAt: 'DESC' },
+    // TypeORM por defecto NO trae las que tienen deletedAt (Soft Deleted)
+  });
+}
 
   // ===============================
   // UPDATE / DELETE
@@ -237,26 +241,25 @@ export class IssueService {
    * @throws {BadRequestException} Si la incidencia ya está resuelta
    * 
    */
-    async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
-      const incidencia = await this.findOne(id, empresaId);
+   async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
+  const incidencia = await this.findOne(id, empresaId);
 
-      if (incidencia.estado) {
-        throw new BadRequestException('La incidencia ya está resuelta');
-      }
+  if (incidencia.estado) {
+    throw new BadRequestException('La incidencia ya está resuelta');
+  }
 
-      incidencia.estado = true;
+  incidencia.estado = true;
+  // Solo actualiza campos si realmente vienen en el DTO
+  if (dto.descripcion) incidencia.descripcion = dto.descripcion; 
 
-      Object.assign(incidencia, dto);
+  return this.incidenciaRepository.save(incidencia);
+}
 
-      return this.incidenciaRepository.save(incidencia);
-    }
-
-
-    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    @Cron(CronExpression.EVERY_MINUTE)
   async handleAutoSoftDelete() {
    // const haceCincoDias = new Date();
     //haceCincoDias.setDate(haceCincoDias.getDate() - 5);
-
+console.log('--- [CRON INCIDENCIAS] Buscando registros para ocultar... ---');
 const unMinutoAtras = new Date();
   unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
     // 1. Buscamos las incidencias que:

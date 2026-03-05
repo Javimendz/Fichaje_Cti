@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Index,
+  DeleteDateColumn,
 } from 'typeorm';
 import { User } from 'users/entities/user.entity';
 
@@ -44,7 +45,8 @@ export class Issue {
   @Column({ type: 'text', nullable: true })
   apellidos: string | null;
 
-  
+  @DeleteDateColumn()
+  deletedAt: Date;
 
   @Column({ type: 'boolean', default: false })
   estado: boolean;
@@ -61,4 +63,6 @@ export class Issue {
   })
   @JoinColumn({ name: 'user_id' })
   usuario: User;
+
+
 }

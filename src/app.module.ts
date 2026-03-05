@@ -17,7 +17,7 @@ import { WorkerModule } from './worker/worker.module';
 import { RequestModule } from './request/request.module';
 import { IssueModule } from './issue/issue.module';
 import { ActivityModule } from './activity/activity.module';
-
+import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 /**
  * 
  * TypeORM Configuration:
@@ -39,7 +39,7 @@ import { ActivityModule } from './activity/activity.module';
   
   imports: [
     ConfigModule.forRoot(),
-
+   NestScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
 
          // TypeORM Configuration:
@@ -72,14 +72,19 @@ import { ActivityModule } from './activity/activity.module';
     AuthModule, 
     AllowedPhonesModule,
     UserModule, 
-    
     AttendanceModule, 
-    TimeSlotModule,
-    ScheduleModule,
-    AbsenceModule,
-    AlarmsModule, 
-    SeedModule, CompanyModule, CodigoAccesoModule, ScheduleModule, WorkdayModule, TimeSlotModule, AbsenceModule, WorkerModule, RequestModule, IssueModule, ActivityModule
-   
+    AlarmsModule,
+    SeedModule, 
+    CompanyModule, 
+    CodigoAccesoModule, 
+    ScheduleModule, // Tu módulo
+    WorkdayModule, 
+    TimeSlotModule, 
+    AbsenceModule, 
+    WorkerModule, 
+    RequestModule, 
+    IssueModule, 
+    ActivityModule
    ],
   
 })

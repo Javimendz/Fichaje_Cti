@@ -83,7 +83,7 @@ export class WorkerService {
       } as DeepPartial<User>);
 
       const savedUser = await queryRunner.manager.save(User, newUser);
-
+      // comentario
       // 3. Crear instancia de WORKER (Perfil)
       const newWorker = queryRunner.manager.create(Worker, {
         id: savedUser.id, // Sincronización de IDs (OneToOne)

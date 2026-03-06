@@ -95,7 +95,7 @@ export class RequestController { // Inyección de dependencias
   }
 
   @Put('edit-request/:id') // Usamos PATCH para actualizaciones
-  @Roles(UserRole.WORKER)
+  @Roles(UserRole.WORKER, UserRole.ADMIN)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdateRequestDto, // Necesitas un DTO con los cambios

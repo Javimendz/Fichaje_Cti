@@ -7,22 +7,16 @@ export abstract class BaseCleanupService<T extends ICleanableEntity> {
     private readonly loggerName: string,
   ) {}
 
-  /**
-   * Lógica compartida para archivar registros
-   * @param days Días de antigüedad
-   * @param targetStatus Estado o lista de estados a procesar
-   */
-  async cleanOldRecords(days: number, targetStatus: any | any[]) {
+  async cleanOldRecords(days: number, targetStatus: any | any[], empresaId: number) {
     const limitDate = new Date();
     limitDate.setDate(limitDate.getDate() - days);
 
-    // Si pasamos un solo estado, lo convertimos en array para usar 'In' de TypeORM
     const statusCondition = Array.isArray(targetStatus) ? In(targetStatus) : targetStatus;
 
-    console.log(`--- [CRON ${this.loggerName}] Escaneando registros antiguos... ---`);
-
+    // Solo buscamos registros de la empresa específica
     const recordsToHide = await this.repository.find({
       where: {
+        empresaId, //  Filtro vital para multi-empresa
         estado: statusCondition,
         updatedAt: LessThan(limitDate),
       } as any,
@@ -30,9 +24,7 @@ export abstract class BaseCleanupService<T extends ICleanableEntity> {
 
     if (recordsToHide.length > 0) {
       await this.repository.softRemove(recordsToHide);
-      console.log(`✅ [${this.loggerName}] Se han ocultado ${recordsToHide.length} registros.`);
-    } else {
-      console.log(`ℹ️ [${this.loggerName}] Nada que archivar hoy.`);
+      console.log(` [${this.loggerName}] Empresa ID ${empresaId}: Ocultados ${recordsToHide.length} registros (antigüedad: ${days} días).`);
     }
   }
 }

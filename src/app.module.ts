@@ -38,7 +38,11 @@ import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 @Module({
   
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+
+      isGlobal: true,
+
+    }),
    NestScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
 

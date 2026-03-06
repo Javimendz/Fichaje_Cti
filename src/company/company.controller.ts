@@ -122,4 +122,13 @@ findAll(@GetUser() user: UserPayload) {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.empresasService.remove(id);
   }
+
+  @Put('settings/archive')
+@Roles(UserRole.ADMIN)
+async updateArchiveSettings(
+  @GetUser() user: UserPayload,
+  @Body() dto: UpdateCompanyDto
+) {
+  return await this.empresasService.update(user.empresaId, dto);
+}
 }

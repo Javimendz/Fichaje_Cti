@@ -15,6 +15,8 @@ import { UpdateIncidenciaDto } from './dto/update-issue.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BaseCleanupService } from 'common/base/baseCleanup.service';
 import { RequestStatus } from 'request/dto/revisar-request.dto';
+import { Company } from 'company/entities/company.entity';
+import { ConfigService } from '@nestjs/config';
 
 
 // Servicio para la gestión de incidencias
@@ -34,8 +36,9 @@ export class IssueService extends BaseCleanupService<Issue> {
   constructor(
     @InjectRepository(Issue)
     private readonly incidenciaRepository: Repository<Issue>,
-    @InjectRepository(Issue)
-    private readonly issueRepo: Repository<Issue>,
+    @InjectRepository(Issue) private readonly issueRepo: Repository<Issue>,
+    @InjectRepository(Company) private readonly companyRepo: Repository<Company>,
+    private readonly configService: ConfigService,
   ) {super(issueRepo, 'INCIDENCIAS'); }
 
   // ===============================
@@ -286,11 +289,17 @@ export class IssueService extends BaseCleanupService<Issue> {
     */
 
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleCleanup() {
-    // Las incidencias se ocultan a los 5 días si están resueltas (true)
-    await this.cleanOldRecords(5, true);
+    console.log('⏰ [CRON INCIDENCIAS] ¡Despertando!'); // 👈 Añade esto
+    const empresas = await this.companyRepo.find();
+    const defaultDays = +this.configService.get('DEFAULT_DAYS_ISSUES') || 5;
+
+    for (const empresa of empresas) {
+    // CAMBIA || POR ??
+    const dias = empresa.daysArchiveIssues ?? defaultDays; 
+    await this.cleanOldRecords(dias, true, empresa.id);
   }
+  }
+
 }
-
-

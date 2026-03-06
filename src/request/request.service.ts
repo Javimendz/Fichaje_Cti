@@ -13,6 +13,8 @@ import { UserPayload } from "auth/interfaces/user-payload.interface";
 import { UserRole } from "auth/roles.enum";
 import { BaseCleanupService } from "common/base/baseCleanup.service";
 import { Cron, CronExpression } from "@nestjs/schedule";
+import { Company } from "company/entities/company.entity";
+import { ConfigService } from "@nestjs/config";
 
 
 /**
@@ -42,9 +44,9 @@ private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para
     private readonly dataSource: DataSource, // Inyección
      @InjectRepository(User)                         
   private readonly userRepo: Repository<User>, 
-  @InjectRepository(SolicitudEntity)
-    private readonly requestRepo: Repository<SolicitudEntity>,
-  ) {super(requestRepo, 'SOLICITUDES');}
+    @InjectRepository(Company) private readonly companyRepo: Repository<Company>,
+    private readonly configService: ConfigService,
+  ) {super(solicitudRepo, 'SOLICITUDES');}
 
 
   /**
@@ -330,9 +332,14 @@ async findOne(id: number, user: UserPayload) {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleCleanup() {
-    // Aquí puedes disparar la limpieza para APROBADAS y RECHAZADAS por separado
-    // o modificar la lógica base para aceptar un array.
-    await this.cleanOldRecords(0, RequestStatus.APROBADA); //Elimina 10 dias desde que fue aprobada
-    await this.cleanOldRecords(0, RequestStatus.RECHAZADA); //Elimina en 10 dias desde que fue rechazada
+    console.log('⏰ [CRON SOLICITUDES] ¡Despertando!');
+    const empresas = await this.companyRepo.find();
+    const defaultDays = +this.configService.get('DEFAULT_DAYS_REQUESTS') || 15;
+
+    for (const empresa of empresas) {
+    // CAMBIA || POR ??
+    const dias = empresa.daysArchiveRequests ?? defaultDays; 
+    await this.cleanOldRecords(dias, [RequestStatus.APROBADA, RequestStatus.RECHAZADA], empresa.id);
+  }
   }
 }

@@ -24,7 +24,7 @@ export class Company {
 
   @Column('text', { nullable: true })
   provincia?: string;
-  
+
   @Column('text', { nullable: true })
   poblacion?: string;
 
@@ -54,20 +54,25 @@ export class Company {
   @Column({ type: 'float', default: 100 }) // Radio de 100 metros por defecto
   radioPermitido: number;
 
-  @CreateDateColumn({ name: 'created_at' }) 
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+  
+  @Column({ name: 'days_archive_issues', type: 'int', default: 5 })
+  daysArchiveIssues: number;
 
+  @Column({ name: 'days_archive_requests', type: 'int', default: 15 })
+  daysArchiveRequests: number;
   // Una empresa tiene muchos Usuarios (SuperAdmins, Admins, etc.)
-  @OneToMany(() => User, (user) => user.empresa, { 
-    cascade: true, 
+  @OneToMany(() => User, (user) => user.empresa, {
+    cascade: true,
     onDelete: 'CASCADE' // Esto le dice a la DB que cree la relación con ON DELETE CASCADE
   })
   usuarios: User[];
 
   // Una empresa tiene muchos Horarios (Turnos configurados)
-  @OneToMany(() => Horario, (horario) => horario.empresa, { 
-    cascade: true, 
-    onDelete: 'CASCADE' 
+  @OneToMany(() => Horario, (horario) => horario.empresa, {
+    cascade: true,
+    onDelete: 'CASCADE'
   })
   horarios: Horario[];
 

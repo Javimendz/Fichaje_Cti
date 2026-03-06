@@ -3,6 +3,8 @@ import { IssueService } from './issue.service';
 import { IncidenciaController } from './issue.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Issue } from './entities/issue.entity';
+import { Company } from 'company/entities/company.entity';
+import { ConfigModule } from '@nestjs/config';
 
 /**
  *  Módulo para la gestión de incidencias
@@ -11,8 +13,8 @@ import { Issue } from './entities/issue.entity';
  * como la creación, actualización, resolución y consulta de incidencias. 
  */
 @Module({
-  imports: [
-      TypeOrmModule.forFeature([Issue])
+  imports: [ConfigModule,
+      TypeOrmModule.forFeature([Issue, Company])
 
   ],
   controllers: [IncidenciaController],

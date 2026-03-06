@@ -15,7 +15,7 @@ import { User } from 'auth/entities/user.entity';
  *  * * Este módulo es fundamental para la estructura del sistema, ya que cada empresa puede tener múltiples usuarios asociados (Admins y Workers), y la gestión de estas empresas es una tarea crítica que debe ser controlada estrictamente, especialmente en lo que respecta a la creación, actualización y eliminación de empresas. El módulo delega toda la lógica de negocio y validación al CompanyService, manteniendo el controlador limpio y enfocado en manejar las solicitudes HTTP y la seguridad de acceso.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Company, User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Company, User, Company]), AuthModule],
   controllers: [CompanyController],
   providers: [CompanyService],
   exports: [CompanyService, TypeOrmModule],

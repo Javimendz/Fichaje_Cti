@@ -13,6 +13,7 @@ import { Ausencia } from '../absence/entities/ausencia.entity';
 
 // Importa el AuthModule para los Guards
 import { AuthModule } from '../auth/auth.module';
+import { Company } from 'company/entities/company.entity';
 
 /**
  * SolicitudesModule
@@ -31,7 +32,7 @@ import { AuthModule } from '../auth/auth.module';
     TypeOrmModule.forFeature([
       Request, 
       RevisionRequest, 
-      Ausencia
+      Ausencia,Company,
     ]),
     AuthModule, // Importar AuthModule para autenticación
   ],

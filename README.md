@@ -78,7 +78,7 @@ GET         /api/empresa/list-empresas          Lista todas las empresas (con au
 GET         /api/empresa/find/:id               Obtiene detalles de una empresa específica.          Token (SUPERADMIN)
 PUT         /api/empresa/update/:id             Actualiza datos de geolocalización o razón social.   Token (SUPERADMIN) + Body
 DELETE      /api/empresa/delete/:id             Elimina la empresa y sus datos vinculados.           Token (SUPERADMIN)
-PUT         /api/empresa/settings/archive     Configura días para archivar solicitudes e incidencias Token (SUPERADMIN) + Body: { daysArchiveRequests, daysArchiveIssues }
+PUT         /api/empresa/settings/archive     Configura días para archivar solicitudes e incidencias Token (SUPERADMIN) + Body: { daysArchiveRequests : DIAS, daysArchiveIssues : DIAS}
 
 ```
 

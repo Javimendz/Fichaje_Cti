@@ -11,6 +11,8 @@ import { Ausencia } from "absence/entities/ausencia.entity";
 import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
 import { UserPayload } from "auth/interfaces/user-payload.interface";
 import { UserRole } from "auth/roles.enum";
+import { BaseCleanupService } from "common/base/baseCleanup.service";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 
 /**
@@ -33,14 +35,16 @@ import { UserRole } from "auth/roles.enum";
  */
 
 @Injectable() // Marca la clase como un proveedor inyectable
-export class SolicitudesService { // Definición del servicio SolicitudesService
+export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { // Definición del servicio SolicitudesService
   constructor(
     @InjectRepository(SolicitudEntity)
 private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para operaciones CRUD en Solicitud
     private readonly dataSource: DataSource, // Inyección
-     @InjectRepository(User)                          // ✅ añadir
+     @InjectRepository(User)                         
   private readonly userRepo: Repository<User>, 
-  ) {}
+  @InjectRepository(SolicitudEntity)
+    private readonly requestRepo: Repository<SolicitudEntity>,
+  ) {super(requestRepo, 'SOLICITUDES');}
 
 
   /**
@@ -322,5 +326,13 @@ async findOne(id: number, user: UserPayload) {
     }
 
     return solicitud;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleCleanup() {
+    // Aquí puedes disparar la limpieza para APROBADAS y RECHAZADAS por separado
+    // o modificar la lógica base para aceptar un array.
+    await this.cleanOldRecords(0, RequestStatus.APROBADA); //Elimina 10 dias desde que fue aprobada
+    await this.cleanOldRecords(0, RequestStatus.RECHAZADA); //Elimina en 10 dias desde que fue rechazada
   }
 }

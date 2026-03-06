@@ -1,6 +1,6 @@
 import { User } from 'auth/entities/user.entity';
 import { Company } from 'company/entities/company.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, CreateDateColumn, JoinColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 import { RevisionRequest } from './revision-request.entity';
 import { RequestStatus } from 'request/dto/revisar-request.dto';
 
@@ -79,6 +79,8 @@ export class Request { // Definición de la entidad Solicitud
   @CreateDateColumn() // Fecha de creación automática
   fechaSolicitud: Date; // Fecha en que se realizó la solicitud
 
+  @UpdateDateColumn() updatedAt: Date;
+  @DeleteDateColumn() deletedAt: Date;
   // Relaciones
   @ManyToOne(() => User, (user) => user.solicitudes, {
     onDelete: 'CASCADE'

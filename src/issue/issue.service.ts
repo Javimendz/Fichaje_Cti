@@ -1,10 +1,10 @@
 import {
   BadRequestException,
-  
+
   Injectable,
-  
+
   InternalServerErrorException,
-  
+
   NotFoundException,
 } from '@nestjs/common';
 import { LessThan, MoreThan, Repository } from 'typeorm';
@@ -13,6 +13,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateIncidenciaDto } from './dto/create-issue.dto';
 import { UpdateIncidenciaDto } from './dto/update-issue.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { BaseCleanupService } from 'common/base/baseCleanup.service';
+import { RequestStatus } from 'request/dto/revisar-request.dto';
 
 
 // Servicio para la gestión de incidencias
@@ -28,11 +30,13 @@ import { Cron, CronExpression } from '@nestjs/schedule';
  * 
  *  */
 @Injectable()
-export class IssueService {
+export class IssueService extends BaseCleanupService<Issue> {
   constructor(
     @InjectRepository(Issue)
     private readonly incidenciaRepository: Repository<Issue>,
-  ) {}
+    @InjectRepository(Issue)
+    private readonly issueRepo: Repository<Issue>,
+  ) {super(issueRepo, 'INCIDENCIAS'); }
 
   // ===============================
   // CREAR INCIDENCIA
@@ -93,8 +97,8 @@ export class IssueService {
       userId,
       empresaId,
       ...dto,
-      nombre: dto.nombre,      
-      apellidos: dto.apellidos, 
+      nombre: dto.nombre,
+      apellidos: dto.apellidos,
       estado: dto.estado ?? true,
     });
 
@@ -149,31 +153,31 @@ export class IssueService {
     return incidencia;
   }
 
-/**
- * Devuelve todas las incidencias de la empresa especificada,
- * opcionalmente filtrando por incidencias pendientes.
- * 
- * @param empresaId ID de la empresa
- * @param soloPendientes Si se desea filtrar solo por incidencias pendientes (opcional, por defecto false)
- * @returns Todas las incidencias de la empresa
- */
+  /**
+   * Devuelve todas las incidencias de la empresa especificada,
+   * opcionalmente filtrando por incidencias pendientes.
+   * 
+   * @param empresaId ID de la empresa
+   * @param soloPendientes Si se desea filtrar solo por incidencias pendientes (opcional, por defecto false)
+   * @returns Todas las incidencias de la empresa
+   */
   async findAllByEmpresa(empresaId: number, soloPendientes = false) {
-  const where: any = { empresaId };
+    const where: any = { empresaId };
 
-  if (soloPendientes) {
-    // CAMBIO: Antes decía 'resuelta', debe ser 'estado'
-    // Si estado === true es RESUELTA, entonces pendientes es estado: false
-    where.estado = false; 
+    if (soloPendientes) {
+      // CAMBIO: Antes decía 'resuelta', debe ser 'estado'
+      // Si estado === true es RESUELTA, entonces pendientes es estado: false
+      where.estado = false;
+    }
+
+    return this.incidenciaRepository.find({
+      where,
+      relations: ['usuario'],
+
+      order: { createdAt: 'DESC' },
+      // TypeORM por defecto NO trae las que tienen deletedAt (Soft Deleted)
+    });
   }
-
-  return this.incidenciaRepository.find({
-    where,
-    relations: ['usuario'],
-   
-    order: { createdAt: 'DESC' },
-    // TypeORM por defecto NO trae las que tienen deletedAt (Soft Deleted)
-  });
-}
 
   // ===============================
   // UPDATE / DELETE
@@ -189,33 +193,33 @@ export class IssueService {
    * @returns La incidencia actualizada
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
- async update(
-  id: number,
-  empresaId: number,
-  updateDto: Partial<CreateIncidenciaDto>, // Usamos Partial para que todo sea opcional al editar
-) {
-  const incidencia = await this.findOne(id, empresaId);
+  async update(
+    id: number,
+    empresaId: number,
+    updateDto: Partial<CreateIncidenciaDto>, // Usamos Partial para que todo sea opcional al editar
+  ) {
+    const incidencia = await this.findOne(id, empresaId);
 
-  // 1. Regla de negocio: Si ya está resuelta (false), no se edita
-  // Nota: Revisa si en tu lógica 'false' es resuelta o 'true' es resuelta. 
-  // Según tu código anterior: incidencia.estado === true significa resuelta.
-  if (incidencia.estado === true) {
-    throw new BadRequestException('No puedes editar una incidencia ya resuelta');
+    // 1. Regla de negocio: Si ya está resuelta (false), no se edita
+    // Nota: Revisa si en tu lógica 'false' es resuelta o 'true' es resuelta. 
+    // Según tu código anterior: incidencia.estado === true significa resuelta.
+    if (incidencia.estado === true) {
+      throw new BadRequestException('No puedes editar una incidencia ya resuelta');
+    }
+
+    // 2. Actualización selectiva (Evitamos que los valores por defecto del DTO ganen)
+    if (updateDto.tipo) incidencia.tipo = updateDto.tipo;
+    if (updateDto.descripcion) incidencia.descripcion = updateDto.descripcion;
+    if (updateDto.nombre) incidencia.nombre = updateDto.nombre;
+    if (updateDto.apellidos) incidencia.apellidos = updateDto.apellidos;
+
+    // 3. El estado SOLO se actualiza si viene explícitamente en el Body
+    if (updateDto.estado !== undefined) {
+      incidencia.estado = updateDto.estado;
+    }
+
+    return await this.incidenciaRepository.save(incidencia);
   }
-
-  // 2. Actualización selectiva (Evitamos que los valores por defecto del DTO ganen)
-  if (updateDto.tipo) incidencia.tipo = updateDto.tipo;
-  if (updateDto.descripcion) incidencia.descripcion = updateDto.descripcion;
-  if (updateDto.nombre) incidencia.nombre = updateDto.nombre;
-  if (updateDto.apellidos) incidencia.apellidos = updateDto.apellidos;
-
-  // 3. El estado SOLO se actualiza si viene explícitamente en el Body
-  if (updateDto.estado !== undefined) {
-    incidencia.estado = updateDto.estado;
-  }
-
-  return await this.incidenciaRepository.save(incidencia);
-}
   /**
    * 
    * Elimina la incidencia con el ID especificado para la empresa dada.
@@ -226,10 +230,10 @@ export class IssueService {
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
   async remove(id: number, empresaId: number) {
-  const incidencia = await this.findOne(id, empresaId);
-  // softRemove llena la columna deletedAt en lugar de hacer un DELETE SQL
-  return this.incidenciaRepository.softRemove(incidencia);
-}
+    const incidencia = await this.findOne(id, empresaId);
+    // softRemove llena la columna deletedAt en lugar de hacer un DELETE SQL
+    return this.incidenciaRepository.softRemove(incidencia);
+  }
   /**
    * 
    * Marca la incidencia con el ID especificado como resuelta para la empresa dada.
@@ -241,33 +245,34 @@ export class IssueService {
    * @throws {BadRequestException} Si la incidencia ya está resuelta
    * 
    */
-   async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
-  const incidencia = await this.findOne(id, empresaId);
+  async resolver(id: number, empresaId: number, dto: UpdateIncidenciaDto) {
+    const incidencia = await this.findOne(id, empresaId);
 
-  if (incidencia.estado) {
-    throw new BadRequestException('La incidencia ya está resuelta');
+    if (incidencia.estado) {
+      throw new BadRequestException('La incidencia ya está resuelta');
+    }
+
+    incidencia.estado = true;
+    // Solo actualiza campos si realmente vienen en el DTO
+    if (dto.descripcion) incidencia.descripcion = dto.descripcion;
+
+    return this.incidenciaRepository.save(incidencia);
   }
 
-  incidencia.estado = true;
-  // Solo actualiza campos si realmente vienen en el DTO
-  if (dto.descripcion) incidencia.descripcion = dto.descripcion; 
-
-  return this.incidenciaRepository.save(incidencia);
-}
-
-    @Cron(CronExpression.EVERY_MINUTE)
+  /*
+  @Cron(CronExpression.EVERY_MINUTE)
   async handleAutoSoftDelete() {
     const haceCincoDias = new Date();
     haceCincoDias.setDate(haceCincoDias.getDate() - 5);
-console.log('--- [CRON INCIDENCIAS] Buscando registros para ocultar... ---');
-//const unMinutoAtras = new Date();
-  //unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
+    console.log('--- [CRON INCIDENCIAS] Buscando registros para ocultar... ---');
+    //const unMinutoAtras = new Date();
+    //unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
     // 1. Buscamos las incidencias que:
     // - Estén resueltas (estado === true)
     // - Su última actualización (updatedAt) fuera hace más de 5 días
     const incidenciasAOCultar = await this.incidenciaRepository.find({
       where: {
-        estado: true, 
+        estado: true,
         updatedAt: LessThan(haceCincoDias),
       },
     });
@@ -277,6 +282,14 @@ console.log('--- [CRON INCIDENCIAS] Buscando registros para ocultar... ---');
       await this.incidenciaRepository.softRemove(incidenciasAOCultar);
       console.log(`[Cron] Se han ocultado ${incidenciasAOCultar.length} incidencias antiguas.`);
     }
+  }
+    */
+
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleCleanup() {
+    // Las incidencias se ocultan a los 5 días si están resueltas (true)
+    await this.cleanOldRecords(5, true);
   }
 }
 

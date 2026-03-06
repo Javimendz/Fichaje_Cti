@@ -88,6 +88,7 @@ export class AlarmsService {
     usuario: { id: usuarioId },
     empresaId,
     tipo,
+    revisada: false,
     descripcion,
   });
 

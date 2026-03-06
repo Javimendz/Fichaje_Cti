@@ -257,18 +257,18 @@ export class IssueService {
 
     @Cron(CronExpression.EVERY_MINUTE)
   async handleAutoSoftDelete() {
-   // const haceCincoDias = new Date();
-    //haceCincoDias.setDate(haceCincoDias.getDate() - 5);
+    const haceCincoDias = new Date();
+    haceCincoDias.setDate(haceCincoDias.getDate() - 5);
 console.log('--- [CRON INCIDENCIAS] Buscando registros para ocultar... ---');
-const unMinutoAtras = new Date();
-  unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
+//const unMinutoAtras = new Date();
+  //unMinutoAtras.setMinutes(unMinutoAtras.getMinutes() - 1); // 👈 Restamos 1 minuto en lugar de 5 días
     // 1. Buscamos las incidencias que:
     // - Estén resueltas (estado === true)
     // - Su última actualización (updatedAt) fuera hace más de 5 días
     const incidenciasAOCultar = await this.incidenciaRepository.find({
       where: {
         estado: true, 
-        updatedAt: LessThan(unMinutoAtras),
+        updatedAt: LessThan(haceCincoDias),
       },
     });
 

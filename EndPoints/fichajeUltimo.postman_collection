@@ -2296,7 +2296,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjI1LCJyb2wiOiJBRE1JTiIsImVtcHJlc2FJZCI6NSwiaWF0IjoxNzcyNjE0NDU2LCJleHAiOjE3NzI2NTc2NTZ9.OoYUJcce6vi4l6H4SCViOEYlpap_dfzwsD24dWKLoX8",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjYsImlhdCI6MTc3MjcyNzUyNCwiZXhwIjoxNzcyNzMxMTI0fQ.GliAZNR1cbxe7tCHNiTN2BlGF41FjrMDB5BSsDpjKuA",
               "type": "string"
             }
           ]
@@ -2305,7 +2305,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"tipo\": \"OTROS\",\r\n  \"estado\": false,\r\n  \"descripcion\": \"Ayer olvidé fichar la salida al salir del cliente.\"\r\n}",
+          "raw": "{\r\n    \"tipo\": \"OTROS\",\r\n    \"descripcion\": \"Llegada 20 minutos tarde por tráfico\",\r\n    \"nombre\": \"PEPE\",\r\n    \"apellidos\": \"Pérez\",\r\n    \"estado\": false\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -2776,6 +2776,47 @@
             "request",
             "edit-request",
             "15"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJyb2wiOiJXT1JLRVIiLCJlbXByZXNhSWQiOjYsImlhdCI6MTc3MjcyMzc2OCwiZXhwIjoxNzcyNzI3MzY4fQ.uiPWBnihBAxgKU7HGtYCy-udGHkpCxR7vaxjM0duoHE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"tipo\": \"OTROS\",\r\n  \r\n  \"descripcion\": \"Ayer olvidé fichar la salida al salir del cliente.\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/incidencias/edit-incidencia/5",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "incidencias",
+            "edit-incidencia",
+            "5"
           ]
         }
       },

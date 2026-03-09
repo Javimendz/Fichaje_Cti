@@ -204,6 +204,7 @@ GET	         /api/incidencias/empresa	         Panel del admin para ver incidenc
 PUT	         /api/incidencias/resolver/:id	   Marca una incidencia como solucionada/resuelta.	            Token (ADMIN)
 DELETE	     /api/incidencias/delete/:id	     Elimina un reporte de incidencia (Solo si es de su empresa).	Token (ADMIN) 
 PUT	         /api/incidencias/edit-incidencia/:id	Edita una incidencia reportada (Solo si es de su empresa).Token (ADMIN / WORKER) + Body
+GET          /api/incidencias/ocultas           Lista incidencias ocultas (Solo Admin).	                    Token (ADMIN)
 
 ```
 

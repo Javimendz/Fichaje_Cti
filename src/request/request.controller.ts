@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { RequestStatus, RevisarRequestDto } from "./dto/revisar-request.dto";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import { Roles } from "auth/decorators/roles.decorator";
@@ -9,7 +9,6 @@ import { SolicitudesService } from "./request.service";
 import { AuthGuard } from "@nestjs/passport";
 import type { UserPayload } from "auth/interfaces/user-payload.interface";
 import { UpdateRequestDto } from "./dto/update-request.dto";
-import { In } from "typeorm";
 
 /**
  * SolicitudesController
@@ -25,15 +24,14 @@ import { In } from "typeorm";
  * @UseGuards(AuthGuard()) aplica el guard de autenticación a todas las rutas del controlador. 
  */
 @Controller('request') // prefijo de ruta
-  @Roles(UserRole.ADMIN, UserRole.WORKER)
-@
-UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
+@Roles(UserRole.ADMIN, UserRole.WORKER)
+@UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
 export class RequestController { // Inyección de dependencias
-  constructor(private readonly solicitudesService: SolicitudesService) {} //
+  constructor(private readonly solicitudesService: SolicitudesService) { } //
 
   @Post('crear-request')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
-  create(@Body() dto: CreateRequestDto, @GetUser() user: UserPayload) { 
+  create(@Body() dto: CreateRequestDto, @GetUser() user: UserPayload) {
     return this.solicitudesService.create(dto, user);
   }
   /**
@@ -71,8 +69,8 @@ export class RequestController { // Inyección de dependencias
   findAllByUser(@GetUser() user: User) { // Obtener usuario actual
 
     if (!user.empresaId) { // Validar empresa
-    throw new BadRequestException('El usuario no tiene una empresa asociada'); // Error si no tiene empresa
-  }
+      throw new BadRequestException('El usuario no tiene una empresa asociada'); // Error si no tiene empresa
+    }
 
     return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id); // Llamar al servicio para listar solicitudes del usuario
   }
@@ -80,9 +78,9 @@ export class RequestController { // Inyección de dependencias
   @Roles(UserRole.ADMIN) // Solo el admin ve todas las solicitudes de la empresa
   findAllByEmpresa(@GetUser() admin: User) {
     if (!admin.empresaId) {
-    throw new BadRequestException('El administrador no tiene una empresa asociada.');
-  }
-    return this.solicitudesService.findAllByEmpresa(admin.empresaId );
+      throw new BadRequestException('El administrador no tiene una empresa asociada.');
+    }
+    return this.solicitudesService.findAllByEmpresa(admin.empresaId);
   }
 
 
@@ -105,22 +103,15 @@ export class RequestController { // Inyección de dependencias
     return await this.solicitudesService.update(id, updateDto, user);
   }
 
-  /**
-   * Endpoint para listar solicitudes revisadas por la empresa.
-   * 
-   * @param user Usuario autenticado.
-   * @returns Lista de solicitudes revisadas por la empresa.
-   * @throws BadRequestException si el usuario no tiene una empresa asociada.
-   * @see SolicitudesService.findRevisadas  
-   *  
-   */
-  @Get('find-revisadas')
-  @Roles(UserRole.ADMIN)
-  async findRevisadas(@GetUser() user:UserPayload){
 
-    return await this.solicitudesService.findRevisadas(user.empresaId);
-  }
-  
 
+@Get('historial')
+@Roles(UserRole.ADMIN)
+async getHistorial(
+  @GetUser() user: UserPayload,
+  @Query('estado') estado?: string // 👈 Captura ?estado=...
+) {
+  return await this.solicitudesService.findByStatus(user.empresaId, estado);
+}
 
 }

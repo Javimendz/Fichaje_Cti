@@ -116,6 +116,8 @@ GET             /api/request/my-request            Lista las solicitudes del usu
 GET             /api/request/company-request       Lista todas las solicitudes de la empresa.           Token (ADMIN)
 GET	            /api/request/find/:id	             Obtiene el detalle de una solicitud específica por su ID.	Token (ADMIN/WORKER)
 PATCH	          /api/request/edit-request/:id	     Permite al trabajador modificar una solicitud pendiente.	Token (WORKER) + Body
+GET             /api/request/historial             Obtiene el historial de solicitudes de la empresa.    Token (ADMIN) + Query: ?estado=APROBADA|RECHAZADA
+GET     /api/request/historial??estado=APROBADA|RECHAZADA  Obtiene el historial de solicitudes de la empresa por estado.    Token (ADMIN) + Query: ?
 ```
 
 ```

@@ -343,15 +343,23 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
     }
   }
 
-  async findRevisadas(empresaId: number) {
-    return await this.solicitudRepo.find({
-      where: {
-        empresaId: empresaId,
-        estado: In([RequestStatus.APROBADA, RequestStatus.RECHAZADA])
-      },
-      relations: ['usuario', 'revision'], // Traemos los datos del usuario y de quién la revisó
-      order: { createdAt: 'DESC' }, // Las más recientes primero
-    });
+
+async findByStatus(empresaId: number, estado?: string) {
+  const whereCondition: any = { empresaId };
+
+  if (estado === 'APROBADA') {
+    whereCondition.estado = RequestStatus.APROBADA;
+  } else if (estado === 'RECHAZADA') {
+    whereCondition.estado = RequestStatus.RECHAZADA;
+  } else {
+    // Si no se especifica (o es 'revisadas'), traemos ambas
+    whereCondition.estado = In([RequestStatus.APROBADA, RequestStatus.RECHAZADA]);
   }
 
+  return await this.solicitudRepo.find({
+    where: whereCondition,
+    relations: ['usuario', 'revision'],
+    order: { updatedAt: 'DESC' }, // Ordenamos por cuándo se revisaron
+  });
+}
 }

@@ -116,7 +116,6 @@ async getHistorial(@GetUser() user: UserPayload) {
   }
 
   // 2. Si es ADMIN, no pasamos usuarioId para que vea el historial de TODOS los trabajadores
-  return await this.solicitudesService.findHistorial(user.empresaId);
-}
+return await this.solicitudesService.findHistorial(+user.empresaId);}
 
 }

@@ -358,6 +358,7 @@ async findHistorial(empresaId: number, usuarioId?: number) {
 
   return await this.solicitudRepo.find({
     where: whereCondition,
+    withDeleted: true,
     relations: ['usuario', 'revision'], // 'revision' nos dirá quién la aprobó/rechazó
     order: { updatedAt: 'DESC' }, // Orden cronológico de resolución
   });

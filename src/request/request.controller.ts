@@ -9,6 +9,8 @@ import { SolicitudesService } from "./request.service";
 import { AuthGuard } from "@nestjs/passport";
 import type { UserPayload } from "auth/interfaces/user-payload.interface";
 import { UpdateRequestDto } from "./dto/update-request.dto";
+import { JwtAuthGuard } from "auth/guards/jwt-auth.guard";
+import { RolesGuard } from "auth/guards/roles.guard";
 
 /**
  * SolicitudesController
@@ -104,18 +106,13 @@ export class RequestController { // Inyección de dependencias
   }
 
 
-
 @Get('historial')
-@Roles(UserRole.ADMIN, UserRole.WORKER) // Ambos pueden ver el historial
-async getHistorial(@GetUser() user: UserPayload) {
-  
-  // Lógica de negocio:
-  // 1. Si es WORKER, solo le pasamos sus propias solicitudes (usando su user.id)
-  if (user.rol === UserRole.WORKER) {
-    return await this.solicitudesService.findHistorial(user.empresaId, user.id);
-  }
-
-  // 2. Si es ADMIN, no pasamos usuarioId para que vea el historial de TODOS los trabajadores
-return await this.solicitudesService.findHistorial(+user.empresaId);}
-
+@Roles(UserRole.ADMIN, UserRole.WORKER)
+@UseGuards(JwtAuthGuard, RolesGuard)
+async getHistorial(
+  @GetUser() user: UserPayload,
+  @Query('estado') estado?: string // 👈 Lo dejamos como 'string' normal
+) {
+  return await this.solicitudesService.findHistorial(user.empresaId, estado);
+}
 }

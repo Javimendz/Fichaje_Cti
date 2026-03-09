@@ -344,23 +344,29 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
   }
 
 
-async findHistorial(empresaId: number, usuarioId?: number) {
-  const whereCondition: any = {
-    empresaId: empresaId,
-    // Solo mostramos las que ya están cerradas (Aprobadas o Rechazadas)
-    estado: In([RequestStatus.APROBADA, RequestStatus.RECHAZADA])
+async findHistorial(empresaId: number, estado?: string) {
+  // 1. Condición base: Siempre filtramos por la empresa
+  const whereCondition: any = { 
+    empresaId: Number(empresaId) 
   };
 
-  // 🛡️ SEGURIDAD: Si nos pasan un usuarioId, filtramos solo sus solicitudes
-  if (usuarioId) {
-    whereCondition.usuarioId = usuarioId;
+  // 2. Lógica exacta y estricta para el estado
+  if (estado === 'APROBADA') {
+    whereCondition.estado = RequestStatus.APROBADA;
+  } else if (estado === 'RECHAZADA') {
+    whereCondition.estado = RequestStatus.RECHAZADA;
+  } else {
+    // Si no mandan parámetro, o mandan algo que no sea APROBADA/RECHAZADA
+    // Forzamos a que devuelva el historial completo (ambos estados)
+    whereCondition.estado = In([RequestStatus.APROBADA, RequestStatus.RECHAZADA]);
   }
 
+  // 3. Hacemos la búsqueda
   return await this.solicitudRepo.find({
     where: whereCondition,
-    withDeleted: true,
-    relations: ['usuario', 'revision'], // 'revision' nos dirá quién la aprobó/rechazó
-    order: { updatedAt: 'DESC' }, // Orden cronológico de resolución
+    withDeleted: true, // Para incluir las archivadas por el Cron
+    relations: ['usuario', 'revision'],
+    order: { updatedAt: 'DESC' }
   });
 }
 }

@@ -7,7 +7,7 @@ import {
 
   NotFoundException,
 } from '@nestjs/common';
-import { LessThan, MoreThan, Repository } from 'typeorm';
+import { IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { Issue } from './entities/issue.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateIncidenciaDto } from './dto/create-issue.dto';
@@ -17,6 +17,7 @@ import { BaseCleanupService } from 'common/base/baseCleanup.service';
 import { RequestStatus } from 'request/dto/revisar-request.dto';
 import { Company } from 'company/entities/company.entity';
 import { ConfigService } from '@nestjs/config';
+import { UserPayload } from 'auth/interfaces/user-payload.interface';
 
 
 // Servicio para la gestión de incidencias
@@ -302,4 +303,16 @@ export class IssueService extends BaseCleanupService<Issue> {
   }
   }
 
+
+  async getOcultas(empresaId: number){
+
+    return await this.incidenciaRepository.find({
+
+      where: { empresaId: empresaId, deletedAt: Not(IsNull())},
+      withDeleted: true,
+      relations:['usuario'],
+      order: {deletedAt: 'DESC'},
+    })
+
+  }
 }

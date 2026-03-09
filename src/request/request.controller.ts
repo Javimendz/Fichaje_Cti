@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Put, UseGuards } from "@nestjs/common";
-import { RevisarRequestDto } from "./dto/revisar-request.dto";
+import { RequestStatus, RevisarRequestDto } from "./dto/revisar-request.dto";
 import { GetUser } from "auth/decorators/get-user.decorator";
 import { Roles } from "auth/decorators/roles.decorator";
 import { UserRole } from "auth/roles.enum";
@@ -9,6 +9,7 @@ import { SolicitudesService } from "./request.service";
 import { AuthGuard } from "@nestjs/passport";
 import type { UserPayload } from "auth/interfaces/user-payload.interface";
 import { UpdateRequestDto } from "./dto/update-request.dto";
+import { In } from "typeorm";
 
 /**
  * SolicitudesController
@@ -104,7 +105,21 @@ export class RequestController { // Inyección de dependencias
     return await this.solicitudesService.update(id, updateDto, user);
   }
 
+  /**
+   * Endpoint para listar solicitudes revisadas por la empresa.
+   * 
+   * @param user Usuario autenticado.
+   * @returns Lista de solicitudes revisadas por la empresa.
+   * @throws BadRequestException si el usuario no tiene una empresa asociada.
+   * @see SolicitudesService.findRevisadas  
+   *  
+   */
+  @Get('find-revisadas')
+  @Roles(UserRole.ADMIN)
+  async findRevisadas(@GetUser() user:UserPayload){
 
+    return await this.solicitudesService.findRevisadas(user.empresaId);
+  }
   
 
 

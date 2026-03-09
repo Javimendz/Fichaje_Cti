@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { DataSource, DeepPartial, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
+import { DataSource, DeepPartial, In, LessThanOrEqual, MoreThanOrEqual, Not, Repository } from "typeorm";
 import { Request as SolicitudEntity } from './entities/request.entity';
 
 import { RevisionRequest } from "./entities/revision-request.entity";
@@ -40,13 +40,13 @@ import { ConfigService } from "@nestjs/config";
 export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { // Definición del servicio SolicitudesService
   constructor(
     @InjectRepository(SolicitudEntity)
-private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para operaciones CRUD en Solicitud
+    private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para operaciones CRUD en Solicitud
     private readonly dataSource: DataSource, // Inyección
-     @InjectRepository(User)                         
-  private readonly userRepo: Repository<User>, 
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     @InjectRepository(Company) private readonly companyRepo: Repository<Company>,
     private readonly configService: ConfigService,
-  ) {super(solicitudRepo, 'SOLICITUDES');}
+  ) { super(solicitudRepo, 'SOLICITUDES'); }
 
 
   /**
@@ -59,91 +59,91 @@ private readonly solicitudRepo: Repository<SolicitudEntity>, // Repositorio para
    * @see CreateRequestDto
    * @see Request 
    */
-async create(dto: CreateRequestDto, user: UserPayload) {
-  
-  const solicitudesPendientes = await this.solicitudRepo.count({
-    where: {
-      usuarioId: user.id,
-      estado: RequestStatus.PENDIENTE,
-    },
-  });
+  async create(dto: CreateRequestDto, user: UserPayload) {
 
-  if (solicitudesPendientes >= 3) {
-    throw new BadRequestException(
-      'Ya tienes 3 solicitudes pendientes. Debes esperar a que el administrador las acepte o deniegue antes de crear una nueva.'
-    );
-  }
-  // 1. Validación de seguridad
-  
-  
-  if (!user.empresaId) {
-    throw new BadRequestException('El usuario no tiene una empresa asignada.');
-  }
-const usuarioCompleto = await this.userRepo.findOne({ 
-    where: { id: user.id } 
-  });
-  if (!usuarioCompleto) throw new NotFoundException('Usuario no encontrado');
-  // 2. Normalización de fechas (Importante para evitar errores de horas/milisegundos)
-  const inicioNuevo = new Date(dto.fechaInicio);
-  const finNuevo = new Date(dto.fechaFin);
-
-  inicioNuevo.setHours(0, 0, 0, 0);
-  finNuevo.setHours(23, 59, 59, 999);
-
-  if (inicioNuevo > finNuevo) {
-    throw new BadRequestException('La fecha de fin no puede ser anterior a la de inicio.');
-  }
-
-  // 3. Validación de Solapamiento (Overlap)
-  // Usamos las variables normalizadas para asegurar una comparación de días exactos
- const solicitudExistente = await this.solicitudRepo.findOne({
+    const solicitudesPendientes = await this.solicitudRepo.count({
       where: {
         usuarioId: user.id,
-        estado: RequestStatus.APROBADA, 
+        estado: RequestStatus.PENDIENTE,
+      },
+    });
+
+    if (solicitudesPendientes >= 3) {
+      throw new BadRequestException(
+        'Ya tienes 3 solicitudes pendientes. Debes esperar a que el administrador las acepte o deniegue antes de crear una nueva.'
+      );
+    }
+    // 1. Validación de seguridad
+
+
+    if (!user.empresaId) {
+      throw new BadRequestException('El usuario no tiene una empresa asignada.');
+    }
+    const usuarioCompleto = await this.userRepo.findOne({
+      where: { id: user.id }
+    });
+    if (!usuarioCompleto) throw new NotFoundException('Usuario no encontrado');
+    // 2. Normalización de fechas (Importante para evitar errores de horas/milisegundos)
+    const inicioNuevo = new Date(dto.fechaInicio);
+    const finNuevo = new Date(dto.fechaFin);
+
+    inicioNuevo.setHours(0, 0, 0, 0);
+    finNuevo.setHours(23, 59, 59, 999);
+
+    if (inicioNuevo > finNuevo) {
+      throw new BadRequestException('La fecha de fin no puede ser anterior a la de inicio.');
+    }
+
+    // 3. Validación de Solapamiento (Overlap)
+    // Usamos las variables normalizadas para asegurar una comparación de días exactos
+    const solicitudExistente = await this.solicitudRepo.findOne({
+      where: {
+        usuarioId: user.id,
+        estado: RequestStatus.APROBADA,
         fechaInicio: LessThanOrEqual(finNuevo),
         fechaFin: MoreThanOrEqual(inicioNuevo),
       },
     });
 
-  if (solicitudExistente) {
-    const fI = new Date(solicitudExistente.fechaInicio).toLocaleDateString();
-    const fF = new Date(solicitudExistente.fechaFin).toLocaleDateString();
-    throw new BadRequestException(
-      `Ya tienes una solicitud APROBADA en este periodo (${fI} al ${fF}).`
-    );
+    if (solicitudExistente) {
+      const fI = new Date(solicitudExistente.fechaInicio).toLocaleDateString();
+      const fF = new Date(solicitudExistente.fechaFin).toLocaleDateString();
+      throw new BadRequestException(
+        `Ya tienes una solicitud APROBADA en este periodo (${fI} al ${fF}).`
+      );
+    }
+
+    // 4. Creación y Persistencia
+    const solicitud = this.solicitudRepo.create({
+      ...dto,
+      fechaInicio: inicioNuevo,
+      fechaFin: finNuevo,
+      usuarioId: usuarioCompleto.id,
+      empresaId: usuarioCompleto.empresaId,
+      usuario: usuarioCompleto,
+      estado: RequestStatus.PENDIENTE,
+      nombre: usuarioCompleto.nombre,
+      apellidos: usuarioCompleto.apellidos,
+    } as DeepPartial<SolicitudEntity>);
+
+
+    return await this.solicitudRepo.save(solicitud);
   }
 
-  // 4. Creación y Persistencia
-const solicitud = this.solicitudRepo.create({
-    ...dto,
-    fechaInicio: inicioNuevo,
-    fechaFin: finNuevo,
-    usuarioId: usuarioCompleto.id,        
-  empresaId: usuarioCompleto.empresaId,
-    usuario: usuarioCompleto,
-    estado: RequestStatus.PENDIENTE,
-    nombre: usuarioCompleto.nombre,       
-    apellidos: usuarioCompleto.apellidos, 
-  } as DeepPartial<SolicitudEntity>);
-
-
-  return await this.solicitudRepo.save(solicitud);
-}
-
-/**
-   * Revisa una solicitud existente, actualizando su estado y creando una ausencia si es aprobada.
-   * * @param id ID de la solicitud a revisar. 
-   * @param dto  Datos necesarios para la revisión de la solicitud.
-   * @param admin  Usuario administrador que realiza la revisión.
-   * @returns  Información sobre el resultado de la revisión.
-   * @throws NotFoundException si la solicitud no existe.
-   * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
-   */
+  /**
+     * Revisa una solicitud existente, actualizando su estado y creando una ausencia si es aprobada.
+     * * @param id ID de la solicitud a revisar. 
+     * @param dto  Datos necesarios para la revisión de la solicitud.
+     * @param admin  Usuario administrador que realiza la revisión.
+     * @returns  Información sobre el resultado de la revisión.
+     * @throws NotFoundException si la solicitud no existe.
+     * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
+     */
   async revisar(id: number, dto: RevisarRequestDto, admin: User) {
     // 1. Buscar la solicitud cargando relaciones necesarias
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
-      relations: ['usuario', 'empresa'], 
+      relations: ['usuario', 'empresa'],
     });
 
     if (!solicitud) {
@@ -160,7 +160,7 @@ const solicitud = this.solicitudRepo.create({
 
     // 2. Validaciones de Estado
     const revisionExistente = await this.dataSource.getRepository(RevisionRequest).findOne({ where: { solicitudId: id } });
-    
+
     if (revisionExistente || solicitud.estado !== RequestStatus.PENDIENTE) {
       throw new BadRequestException(
         `Esta solicitud ya fue procesada anteriormente. Estado actual: ${solicitud.estado}`
@@ -183,8 +183,8 @@ const solicitud = this.solicitudRepo.create({
       // PASO B: Crear Registro de Revisión (Audit Log)
       // ---------------------------------------------------------
       const nuevaRevision = queryRunner.manager.create(RevisionRequest, {
-        solicitudId: solicitud.id, 
-        adminId: admin.id,         
+        solicitudId: solicitud.id,
+        adminId: admin.id,
         estadoResultante: dto.estado,
         comentarioAdmin: dto.comentarioAdmin,
       });
@@ -197,18 +197,18 @@ const solicitud = this.solicitudRepo.create({
       if (dto.estado === RequestStatus.APROBADA) {
         const fechaInicio = new Date(solicitud.fechaInicio);
         const fechaFin = new Date(solicitud.fechaFin);
-        
+
         // Normalización de fechas para el cálculo preciso de días
         fechaInicio.setHours(0, 0, 0, 0);
         fechaFin.setHours(0, 0, 0, 0);
-        
+
         const diffTime = fechaFin.getTime() - fechaInicio.getTime();
         const diasTotales = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
         // 🛠️ SOLUCIÓN: Instanciamos manualmente para evitar el error de DeepPartial
         // y aseguramos que las fechas entren a la base de datos como strings 'YYYY-MM-DD'.
         const nuevaAusencia = new Ausencia();
-        
+
         nuevaAusencia.tipo = solicitud.tipo.toUpperCase() as any;
         nuevaAusencia.fechaInicio = fechaInicio.toISOString().split('T')[0];
         nuevaAusencia.fechaFin = fechaFin.toISOString().split('T')[0];
@@ -235,25 +235,25 @@ const solicitud = this.solicitudRepo.create({
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error('Error en transacción de revisión:', error);
-      
-      if (error.code === '23505') { 
-         throw new BadRequestException('Esta solicitud ya tiene una revisión registrada.');
+
+      if (error.code === '23505') {
+        throw new BadRequestException('Esta solicitud ya tiene una revisión registrada.');
       }
-      
+
       throw new BadRequestException(`No se pudo procesar la revisión: ${error.message}`);
     } finally {
       await queryRunner.release();
     }
   }
-/**
- *  Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.
- *  
- * @param empresaId ID de la empresa cuyas solicitudes se desean listar.
- * @param usuarioId (Opcional) ID del usuario para filtrar las solicitudes.
- * @returns Lista de solicitudes que coinciden con los criterios.
- * @see Request
- * 
- */
+  /**
+   *  Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.
+   *  
+   * @param empresaId ID de la empresa cuyas solicitudes se desean listar.
+   * @param usuarioId (Opcional) ID del usuario para filtrar las solicitudes.
+   * @returns Lista de solicitudes que coinciden con los criterios.
+   * @see Request
+   * 
+   */
 
 
   async findAllByEmpresa(empresaId: number, usuarioId?: number) { // Listar solicitudes por empresa y opcionalmente por usuario
@@ -268,43 +268,43 @@ const solicitud = this.solicitudRepo.create({
   }
 
   // No olvides importar estos de @nestjs/common y typeorm
-// import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+  // import { ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 
-async update(id: number, dto: any, user: any) {
-  // 1. Verificar existencia
-  const solicitud = await this.solicitudRepo.findOne({ 
-    where: { id },
-    relations: ['usuario'] 
-  });
+  async update(id: number, dto: any, user: any) {
+    // 1. Verificar existencia
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['usuario']
+    });
 
-  if (!solicitud) {
-    throw new NotFoundException(`La solicitud #${id} no existe.`);
+    if (!solicitud) {
+      throw new NotFoundException(`La solicitud #${id} no existe.`);
+    }
+
+    // 2. Seguridad: El Worker solo puede editar lo suyo
+    // Comprobamos contra user.id (del JWT) y solicitud.usuarioId (de la DB)
+    if (solicitud.usuarioId !== user.id) {
+      throw new ForbiddenException('No tienes permiso para editar esta solicitud.');
+    }
+
+    // 3. Regla de Oro del TFG: Bloquear edición si no está PENDIENTE
+    if (solicitud.estado !== 'PENDIENTE') {
+      throw new BadRequestException(
+        `Estado actual: ${solicitud.estado}. No se puede editar una solicitud ya procesada.`
+      );
+    }
+
+    // 4. Mapeo manual o con Object.assign para actualizar campos
+    // Solo permitimos editar ciertos campos para evitar que cambien el 'estado' o 'usuarioId'
+    if (dto.fechaInicio) solicitud.fechaInicio = new Date(dto.fechaInicio);
+    if (dto.fechaFin) solicitud.fechaFin = new Date(dto.fechaFin);
+    if (dto.motivo) solicitud.motivo = dto.motivo;
+    if (dto.tipo) solicitud.tipo = dto.tipo;
+
+    return await this.solicitudRepo.save(solicitud);
   }
 
-  // 2. Seguridad: El Worker solo puede editar lo suyo
-  // Comprobamos contra user.id (del JWT) y solicitud.usuarioId (de la DB)
-  if (solicitud.usuarioId !== user.id) {
-    throw new ForbiddenException('No tienes permiso para editar esta solicitud.');
-  }
-
-  // 3. Regla de Oro del TFG: Bloquear edición si no está PENDIENTE
-  if (solicitud.estado !== 'PENDIENTE') {
-    throw new BadRequestException(
-      `Estado actual: ${solicitud.estado}. No se puede editar una solicitud ya procesada.`
-    );
-  }
-
-  // 4. Mapeo manual o con Object.assign para actualizar campos
-  // Solo permitimos editar ciertos campos para evitar que cambien el 'estado' o 'usuarioId'
-  if (dto.fechaInicio) solicitud.fechaInicio = new Date(dto.fechaInicio);
-  if (dto.fechaFin) solicitud.fechaFin = new Date(dto.fechaFin);
-  if (dto.motivo) solicitud.motivo = dto.motivo;
-  if (dto.tipo) solicitud.tipo = dto.tipo;
-
-  return await this.solicitudRepo.save(solicitud);
-}
-
-async findOne(id: number, user: UserPayload) {
+  async findOne(id: number, user: UserPayload) {
     // 1. Buscamos la solicitud con sus relaciones
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
@@ -337,9 +337,21 @@ async findOne(id: number, user: UserPayload) {
     const defaultDays = +this.configService.get('DEFAULT_DAYS_REQUESTS') || 15;
 
     for (const empresa of empresas) {
-    // CAMBIA || POR ??
-    const dias = empresa.daysArchiveRequests ?? defaultDays; 
-    await this.cleanOldRecords(dias, [RequestStatus.APROBADA, RequestStatus.RECHAZADA], empresa.id);
+      // CAMBIA || POR ??
+      const dias = empresa.daysArchiveRequests ?? defaultDays;
+      await this.cleanOldRecords(dias, [RequestStatus.APROBADA, RequestStatus.RECHAZADA], empresa.id);
+    }
   }
+
+  async findRevisadas(empresaId: number) {
+    return await this.solicitudRepo.find({
+      where: {
+        empresaId: empresaId,
+        estado: In([RequestStatus.APROBADA, RequestStatus.RECHAZADA])
+      },
+      relations: ['usuario', 'revision'], // Traemos los datos del usuario y de quién la revisó
+      order: { createdAt: 'DESC' }, // Las más recientes primero
+    });
   }
+
 }

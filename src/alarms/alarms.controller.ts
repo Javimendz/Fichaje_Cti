@@ -43,7 +43,7 @@ export class AlarmController {
    */
 
   @Get('pendientes')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
   async getMyAlarms(@GetUser() user: UserPayload) {
     return this.alarmService.findAllByCompany(user.empresaId);
   }
@@ -56,7 +56,7 @@ export class AlarmController {
    * @returns Alarma marcada como leída
    */
   @Put('revisar/:id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
   async readAlarm(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
     return this.alarmService.markAsRead(id, user.empresaId);
   }
@@ -72,7 +72,7 @@ export class AlarmController {
    * @returns Alarma marcada como resuelta
    */
 @Put('resolver/:id')
-@Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
 async resolve(
   @Param('id', ParseIntPipe) id: number, 
   @Body('nota') nota: string,        

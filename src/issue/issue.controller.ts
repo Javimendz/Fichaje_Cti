@@ -152,5 +152,18 @@ export class IncidenciaController {
     return this.issueService.remove(id, user.empresaId);
   }
 
+  /**
+   * 
+   * Obtiene todas las incidencias ocultas de la empresa autenticada.
+   * 
+   * @param user Usuario autenticado
+   * @returns Lista de incidencias ocultas de la empresa
+   * 
+   */
+  @Get('ocultas')
+  @Roles(UserRole.ADMIN)
+  async getOcultas(@GetUser() user: UserPayload) {
+    return await this.issueService.getOcultas(user.empresaId);
+  }
   
 }

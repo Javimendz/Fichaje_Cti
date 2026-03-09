@@ -106,12 +106,17 @@ export class RequestController { // Inyección de dependencias
 
 
 @Get('historial')
-@Roles(UserRole.ADMIN)
-async getHistorial(
-  @GetUser() user: UserPayload,
-  @Query('estado') estado?: string // 👈 Captura ?estado=...
-) {
-  return await this.solicitudesService.findByStatus(user.empresaId, estado);
+@Roles(UserRole.ADMIN, UserRole.WORKER) // Ambos pueden ver el historial
+async getHistorial(@GetUser() user: UserPayload) {
+  
+  // Lógica de negocio:
+  // 1. Si es WORKER, solo le pasamos sus propias solicitudes (usando su user.id)
+  if (user.rol === UserRole.WORKER) {
+    return await this.solicitudesService.findHistorial(user.empresaId, user.id);
+  }
+
+  // 2. Si es ADMIN, no pasamos usuarioId para que vea el historial de TODOS los trabajadores
+  return await this.solicitudesService.findHistorial(user.empresaId);
 }
 
 }

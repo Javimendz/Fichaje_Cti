@@ -34,7 +34,7 @@ import { Ausencia } from 'absence/entities/ausencia.entity';
 @Module({
 imports: [
     TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]),
-    ScheduleModule.forRoot(),
+   
     forwardRef(() => WorkdayModule), 
   ],
   controllers: [AlarmController],

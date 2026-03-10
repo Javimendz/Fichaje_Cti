@@ -21,6 +21,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { AlarmsGateway } from "./gateway/alarms.gateway";
 
 import dayjs from 'dayjs';
+import { UserRole } from "auth/roles.enum";
 
 // 
 @Injectable()
@@ -70,8 +71,7 @@ export class AlarmsService {
  * @example
  * const alarm = await this.triggerAlarm(1, 5, AlarmType.WARNING, 'Unauthorized access attempt');
  */
- async triggerAlarm(usuarioId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
-  //  Validar si ya existe una alarma idéntica muy reciente para evitar spam
+async triggerAlarm(usuarioId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
   const haceCincoMinutos = new Date(Date.now() - 5 * 60000);
   
   const duplicada = await this.alarmRepository.findOne({
@@ -82,24 +82,36 @@ export class AlarmsService {
     }
   });
 
-  if (duplicada) return duplicada; // Si ya existe una reciente, no creamos otra
+  if (duplicada) return duplicada;
 
   const alarma = this.alarmRepository.create({
     usuario: { id: usuarioId },
     empresaId,
     tipo,
-    revisada: false,
     descripcion,
   });
 
   const savedAlarm = await this.alarmRepository.save(alarma);
-
   this.alarmsGateway.sendAlarmToAdmin(empresaId, savedAlarm);
-
   return savedAlarm;
-
 }
 
+
+async findPendingForAdmin(empresaId: number) {
+  return await this.alarmRepository.find({
+    where: { empresaId, leidaAdmin: false },
+    relations: ['usuario'],
+    order: { createdAt: 'DESC' }
+  });
+}
+
+
+async findPendingForWorker(userId: number) {
+  return await this.alarmRepository.find({
+    where: { usuario: { id: userId }, leidaWorker: false },
+    order: { createdAt: 'DESC' }
+  });
+}
 
 /**
  * Verifica si existe una alarma del tipo especificado para el usuario en el día actual.
@@ -126,14 +138,17 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
    * @param empresaId - Identificador único de la empresa
    * @returns Promesa que se resuelve con un array de alarmas ordenadas por fecha de creación descendente
    */
-  async findAllByCompany(empresaId: number) {
-    return await this.alarmRepository.find({
-      where: { empresaId, revisada: false },
-      relations: ['usuario'],
-      order: { createdAt: 'DESC' }
-    });
-  }
-
+ async findAllByCompany(empresaId: number) {
+  return await this.alarmRepository.find({
+    // 🚩 CAMBIO: Usamos leidaAdmin para el flujo del jefe/admin
+    where: { 
+      empresaId, 
+      leidaAdmin: false 
+    },
+    relations: ['usuario'],
+    order: { createdAt: 'DESC' }
+  });
+}
   /**
    * Marca una alarma como revisada en la base de datos.
    *
@@ -141,10 +156,22 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
    * @param empresaId - El identificador de la empresa asociada a la alarma.
    * @returns Una promesa que resuelve con el resultado de la operación de actualización.
    */
-  async markAsRead(id: number, empresaId: number) {
-    return await this.alarmRepository.update({ id, empresaId }, { revisada: true });
-  }
+    async markAsRead(id: number, userId: number, role: UserRole) {
+  const alarma = await this.alarmRepository.findOne({ 
+    where: { id },
+    relations: ['usuario'] 
+  });
 
+  if (!alarma) throw new NotFoundException('Alarma no encontrada');
+
+  if (role === UserRole.ADMIN) {
+    // El admin marca su lectura
+    return await this.alarmRepository.update(id, { leidaAdmin: true });
+  } else if (role === UserRole.WORKER && alarma.usuario.id === userId) {
+    // El worker marca la suya solo si es SU alarma
+    return await this.alarmRepository.update(id, { leidaWorker: true });
+  }
+}
 
 /**
  * Resuelve las alarmas previas de un usuario marcándolas como revisadas.
@@ -160,18 +187,18 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
  * await this.resolverAlarmasPrevias(1, [AlarmType.FALTA_FICHAJE]);
  */
 async resolverAlarmasPrevias(usuarioId: number, tipos: AlarmType[]) {
-  // Usamos dayjs para asegurar la zona horaria correcta
   const hoy = dayjs().tz('Europe/Madrid').startOf('day').toDate();
 
   return await this.alarmRepository.update(
     {
       usuario: { id: usuarioId },
       tipo: In(tipos),
-      revisada: false,
+      leidaAdmin: false, 
       createdAt: MoreThan(hoy) 
     },
     { 
-      revisada: true, 
+      leidaAdmin: true, 
+      leidaWorker: true, // Marcamos ambas como leídas porque el problema se resolvió
       descripcion: "CONSOLIDADA: El trabajador finalmente fichó." 
     }
   );
@@ -187,7 +214,8 @@ async countPendingToday(empresaId: number): Promise<number> {
   const inicioDia = dayjs().tz('Europe/Madrid').startOf('day').toDate();
 
   return await this.alarmRepository.count({
-    where: { empresaId, revisada: false, createdAt: MoreThanOrEqual(inicioDia) }
+    // 🚩 CAMBIO: Filtramos por lo que el Admin no ha leído
+    where: { empresaId, leidaAdmin: false, createdAt: MoreThanOrEqual(inicioDia) }
   });
 }
 
@@ -199,12 +227,15 @@ async countPendingToday(empresaId: number): Promise<number> {
  */
 async findPending(empresaId: number) {
     return await this.alarmRepository.find({
-      where: { empresaId, revisada: false },
+      // 🚩 CAMBIO: Cambiamos 'revisada' por 'leidaAdmin'
+      where: { 
+        empresaId, 
+        leidaAdmin: false 
+      },
       relations: ['usuario'],
       order: { createdAt: 'DESC' }
     });
   }
-
 /**
  * Resuelve una alarma marcándola como revisada y añadiendo una nota del administrador.
  * 
@@ -226,16 +257,13 @@ async findPending(empresaId: number) {
 // Resolver una alarma con una nota del administrador
 
 async resolve(id: number, nota: string, empresaId: number) {
-  // Validamos que la alarma exista Y sea de la empresa del Admin que lo solicita
   const alarma = await this.alarmRepository.findOne({ 
     where: { id, empresaId } 
   });
   
-  if (!alarma) {
-    throw new NotFoundException('Alarma no encontrada en su empresa');
-  }
+  if (!alarma) throw new NotFoundException('Alarma no encontrada');
   
-  alarma.revisada = true;
+  alarma.leidaAdmin = true; // 🚩 Corregido
   alarma.descripcion += ` | NOTA ADMIN: ${nota}`;
   
   return await this.alarmRepository.save(alarma);

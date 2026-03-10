@@ -20,7 +20,7 @@ import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'auth/guards/roles.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { UserRole } from 'auth/roles.enum';
-import type { UserPayload } from 'auth/interfaces/user-payload.interface'; // 👈 Import type
+import type { UserPayload } from 'auth/interfaces/user-payload.interface'; 
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 
 @Controller('schedule')

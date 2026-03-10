@@ -47,8 +47,11 @@ export class Alarm {
   @Column({ type: 'text' })
   descripcion: string;
 
-  @Column({ default: false })
-  revisada: boolean;
+  @Column({ default: false, name: 'leida_admin' })
+  leidaAdmin: boolean;
+
+  @Column({ default: false, name: 'leida_worker' })
+  leidaWorker: boolean;
 
   @Column({ name: 'empresa_id' })
   empresaId: number;

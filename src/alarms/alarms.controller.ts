@@ -8,8 +8,8 @@ import { GetUser } from "auth/decorators/get-user.decorator";
 import type { UserPayload } from "auth/interfaces/user-payload.interface";
 
 
- 
-  
+
+
 // AlarmController
 // Controlador para manejar operaciones relacionadas con alarmas  
 //
@@ -32,7 +32,7 @@ import type { UserPayload } from "auth/interfaces/user-payload.interface";
 @Controller('alarmas')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AlarmController {
-  constructor(private readonly alarmService: AlarmsService) {}
+  constructor(private readonly alarmService: AlarmsService) { }
 
   // Obtener todas las alarmas pendientes de una empresa
   /**
@@ -45,7 +45,10 @@ export class AlarmController {
   @Get('pendientes')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async getMyAlarms(@GetUser() user: UserPayload) {
-    return this.alarmService.findAllByCompany(user.empresaId);
+    if (user.rol === UserRole.ADMIN) {
+      return this.alarmService.findPendingForAdmin(user.empresaId);
+    }
+    return this.alarmService.findPendingForWorker(user.id);
   }
   // Marcar una alarma como leída
   /**
@@ -58,7 +61,7 @@ export class AlarmController {
   @Put('revisar/:id')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async readAlarm(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
-    return this.alarmService.markAsRead(id, user.empresaId);
+    return this.alarmService.markAsRead(id, user.id, user.rol);
   }
 
 
@@ -71,14 +74,14 @@ export class AlarmController {
    * @param user - Payload del usuario autenticado
    * @returns Alarma marcada como resuelta
    */
-@Put('resolver/:id')
-  @Roles(UserRole.ADMIN, UserRole.WORKER)
-async resolve(
-  @Param('id', ParseIntPipe) id: number, 
-  @Body('nota') nota: string,        
-  @GetUser() user: UserPayload          
-) {
-  // Ahora pasamos los 3 argumentos: ID de alarma, la nota y el ID de la empresa del Admin
-  return this.alarmService.resolve(id, nota, user.empresaId);
-}
+  @Put('resolver/:id')
+  @Roles(UserRole.ADMIN)
+  async resolve(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('nota') nota: string,
+    @GetUser() user: UserPayload
+  ) {
+    // Ahora pasamos los 3 argumentos: ID de alarma, la nota y el ID de la empresa del Admin
+    return this.alarmService.resolve(id, nota, user.empresaId);
+  }
 }

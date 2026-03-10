@@ -118,6 +118,7 @@ GET	            /api/request/find/:id	             Obtiene el detalle de una sol
 PATCH	          /api/request/edit-request/:id	     Permite al trabajador modificar una solicitud pendiente.	Token (WORKER) + Body
 GET             /api/request/historial             Obtiene el historial de solicitudes de la empresa.    Token (ADMIN) + Query: ?estado=APROBADA|RECHAZADA
 GET     /api/request/historial??estado=APROBADA|RECHAZADA  Obtiene el historial de solicitudes de la empresa por estado.    Token (ADMIN) + Query: ?
+GET             /api/request/my-request             Obtiene todas las solicitudes del trabajador autenticado.    Token (ADMIN/WORKER)
 ```
 
 ```
@@ -205,6 +206,7 @@ PUT	         /api/incidencias/resolver/:id	   Marca una incidencia como solucion
 DELETE	     /api/incidencias/delete/:id	     Elimina un reporte de incidencia (Solo si es de su empresa).	Token (ADMIN) 
 PUT	         /api/incidencias/edit-incidencia/:id	Edita una incidencia reportada (Solo si es de su empresa).Token (ADMIN / WORKER) + Body
 GET          /api/incidencias/ocultas           Lista incidencias ocultas (Solo Admin).	                    Token (ADMIN)
+GET          /api/incidencias/tramitadas       Obtiene todas las incidencias tramitadas (resueltas) de la empresa.    Token (ADMIN)
 
 ```
 

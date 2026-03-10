@@ -171,12 +171,14 @@ export class IncidenciaController {
    * @returns Lista de incidencias ocultas de la empresa
    * 
    */
-  @Get('ocultas')
+ /**
+   * Obtiene todas las incidencias archivadas que nunca fueron resueltas.
+   */
+  @Get('pendientes')
   @Roles(UserRole.ADMIN)
-  async getOcultas(@GetUser() user: UserPayload) {
-    return await this.issueService.getOcultas(user.empresaId);
+  async getPendientesArchivadas(@GetUser() user: UserPayload) {
+    return await this.issueService.getPendientesArchivadas(user.empresaId);
   }
-
 
   // ===============================
   // TRABAJADOR - VISTAS FILTRADAS

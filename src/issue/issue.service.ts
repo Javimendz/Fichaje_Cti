@@ -165,23 +165,21 @@ export class IssueService extends BaseCleanupService<Issue> {
    * @param soloPendientes Si se desea filtrar solo por incidencias pendientes (opcional, por defecto false)
    * @returns Todas las incidencias de la empresa
    */
-  async findAllByEmpresa(empresaId: number, soloPendientes = false) {
-    const where: any = { empresaId };
+async findAllByEmpresa(empresaId: number, soloPendientes = false) {
+  const where: any = { empresaId };
 
-    if (soloPendientes) {
-      // CAMBIO: Antes decía 'resuelta', debe ser 'estado'
-      // Si estado === true es RESUELTA, entonces pendientes es estado: false
-      where.estado = false;
-    }
-
-    return this.incidenciaRepository.find({
-      where,
-      relations: ['usuario'],
-
-      order: { createdAt: 'DESC' },
-      // TypeORM por defecto NO trae las que tienen deletedAt (Soft Deleted)
-    });
+  if (soloPendientes) {
+    where.estado = false; // Solo pendientes
+  } else {
+    where.estado = true;  // Solo resueltas (Tramitadas)
   }
+
+  return this.incidenciaRepository.find({
+    where,
+    relations: ['usuario'],
+    order: { createdAt: 'DESC' },
+  });
+}
 
   // ===============================
   // UPDATE / DELETE

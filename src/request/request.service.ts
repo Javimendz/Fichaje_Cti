@@ -150,7 +150,6 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
       throw new NotFoundException(`No se encontró la solicitud con ID ${id}`);
     }
 
-    // 🛡️ Seguridad: Multi-empresa y Conflicto de Intereses
     if (solicitud.empresaId !== admin.empresaId) {
       throw new ForbiddenException('No tienes permiso para revisar solicitudes de otra empresa.');
     }
@@ -366,5 +365,31 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
       relations: ['usuario', 'revision'],
       order: { updatedAt: 'DESC' } // Lo más reciente arriba
     });
-  } s
+  } 
+
+  /**
+   * Obtiene las solicitudes de un trabajador filtradas por estado.
+   * Útil para los apartados "Pendientes", "Aceptadas" y "Rechazadas" del Worker.
+   */
+  async findByWorker(user: UserPayload, estado?: RequestStatus) {
+    const whereCondition: any = {
+      usuarioId: user.id,
+    };
+
+    // Si se pasa un estado específico, lo filtramos
+    if (estado) {
+      whereCondition.estado = estado;
+    }
+
+    return await this.solicitudRepo.find({
+      where: whereCondition,
+      // IMPORTANTE: Si el estado no es PENDIENTE, 
+      // tenemos que usar withDeleted: true porque 'revisar' hace un softRemove.
+      withDeleted: estado !== RequestStatus.PENDIENTE,
+      relations: ['revision', 'revision.admin'], // Cargamos la revisión para que vea los comentarios del admin
+      order: {
+        updatedAt: 'DESC', // Para que las últimas procesadas salgan primero
+      },
+    });
+  }
 }

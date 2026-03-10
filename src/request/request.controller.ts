@@ -66,16 +66,7 @@ export class RequestController { // Inyección de dependencias
    * @throws BadRequestException si el usuario no tiene una empresa asociada.
    * @see SolicitudesService.findAllByEmpresa 
    */
-  @Get('my-request') // Endpoint para listar solicitudes del usuario
-  @Roles(UserRole.ADMIN, UserRole.WORKER)
-  findAllByUser(@GetUser() user: User) { // Obtener usuario actual
-
-    if (!user.empresaId) { // Validar empresa
-      throw new BadRequestException('El usuario no tiene una empresa asociada'); // Error si no tiene empresa
-    }
-
-    return this.solicitudesService.findAllByEmpresa(user.empresaId, user.id); // Llamar al servicio para listar solicitudes del usuario
-  }
+ 
   @Get('company-request')
   @Roles(UserRole.ADMIN) // Solo el admin ve todas las solicitudes de la empresa
   findAllByEmpresa(@GetUser() admin: User) {
@@ -115,4 +106,16 @@ async getHistorial(
 ) {
   return await this.solicitudesService.findHistorial(user.empresaId, estado);
 }
+
+
+  @Get('my-request')
+  @Roles(UserRole.WORKER)
+  findAllMyRequests(
+    @GetUser() user: UserPayload,
+    @Query('estado') estado?: RequestStatus,
+  ) {
+    return this.solicitudesService.findByWorker(user, estado);
+  }
+
+
 }

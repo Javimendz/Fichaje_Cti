@@ -165,5 +165,16 @@ export class IncidenciaController {
   async getOcultas(@GetUser() user: UserPayload) {
     return await this.issueService.getOcultas(user.empresaId);
   }
+
+  /**
+ * * Obtiene todas las incidencias tramitadas (resueltas) de la empresa.
+ * * @param user Usuario autenticado
+ * @returns Lista de incidencias con estado resuelto
+ */
+@Get('tramitadas')
+@Roles(UserRole.ADMIN)
+async getTramitadas(@GetUser() user: UserPayload) {
+  return await this.issueService.findAllTramitadasByEmpresa(user.empresaId);
+}
   
 }

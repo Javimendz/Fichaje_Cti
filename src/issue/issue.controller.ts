@@ -172,7 +172,7 @@ export class IncidenciaController {
  * @returns Lista de incidencias con estado resuelto
  */
 @Get('tramitadas')
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.WORKER)
 async getTramitadas(@GetUser() user: UserPayload) {
   return await this.issueService.findAllTramitadasByEmpresa(user.empresaId);
 }

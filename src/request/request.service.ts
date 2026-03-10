@@ -140,7 +140,7 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
      * @throws BadRequestException si la solicitud ya fue procesada o si ocurre un error durante la transacción.
      */
   async revisar(id: number, dto: RevisarRequestDto, admin: User) {
-    // 1. Buscar la solicitud cargando relaciones necesarias
+    // 1. Buscar la solicitud cargando relaciones necesarias (usuario y empresa)
     const solicitud = await this.solicitudRepo.findOne({
       where: { id },
       relations: ['usuario', 'empresa'],
@@ -150,19 +150,35 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
       throw new NotFoundException(`No se encontró la solicitud con ID ${id}`);
     }
 
-    // [Tus validaciones de seguridad se mantienen igual...]
+    // 🛡️ Seguridad: Multi-empresa y Conflicto de Intereses
+    if (solicitud.empresaId !== admin.empresaId) {
+      throw new ForbiddenException('No tienes permiso para revisar solicitudes de otra empresa.');
+    }
+    if (solicitud.usuarioId === admin.id) {
+      throw new ForbiddenException('No puedes revisar tu propia solicitud.');
+    }
 
-    // 2. Iniciar Transacción
+    // 2. Validar que no haya sido procesada
+    const revisionExistente = await this.dataSource.getRepository(RevisionRequest).findOne({ where: { solicitudId: id } });
+    if (revisionExistente || solicitud.estado !== RequestStatus.PENDIENTE) {
+      throw new BadRequestException(`Esta solicitud ya fue procesada anteriormente.`);
+    }
+
+    // 3. Iniciar Transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      // ---------------------------------------------------------
       // PASO A: Actualizar Estado de la Solicitud
+      // ---------------------------------------------------------
       solicitud.estado = dto.estado;
       await queryRunner.manager.save(solicitud);
 
+      // ---------------------------------------------------------
       // PASO B: Crear Registro de Revisión (Audit Log)
+      // ---------------------------------------------------------
       const nuevaRevision = queryRunner.manager.create(RevisionRequest, {
         solicitudId: solicitud.id,
         adminId: admin.id,
@@ -171,16 +187,42 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
       });
       await queryRunner.manager.save(nuevaRevision);
 
+      // ---------------------------------------------------------
       // PASO C: Generar Ausencia (Solo si fue APROBADA)
-      if (dto.estado === RequestStatus.APROBADA) {
-        // [Toda tu lógica de creación de Ausencia se mantiene igual...]
-        const nuevaAusencia = new Ausencia();
-        // ... (resto de campos)
-        await queryRunner.manager.save(nuevaAusencia);
-      }
+      // ---------------------------------------------------------
+     if (dto.estado === RequestStatus.APROBADA) {
+  const nuevaAusencia = new Ausencia();
 
-      // 🚩 PASO D: SOFT DELETE INMEDIATO (Ocultación instantánea)
-      // Usamos el manager de la transacción para asegurar que todo ocurre a la vez
+  // 1. Evitamos el NULL en 'tipo' normalizando el valor
+  const tipoLimpio = solicitud.tipo ? solicitud.tipo.toUpperCase() : 'VACACIONES';
+  nuevaAusencia.tipo = tipoLimpio as any;
+
+  // 2. Asignamos SOLO los IDs (ya que tu entidad no tiene las propiedades de relación 'usuario' y 'empresa')
+  nuevaAusencia.usuarioId = solicitud.usuarioId;
+  nuevaAusencia.empresaId = solicitud.empresaId;
+
+  // 3. Fechas (Formato YYYY-MM-DD)
+  const fechaInicio = new Date(solicitud.fechaInicio);
+  const fechaFin = new Date(solicitud.fechaFin);
+  nuevaAusencia.fechaInicio = fechaInicio.toISOString().split('T')[0];
+  nuevaAusencia.fechaFin = fechaFin.toISOString().split('T')[0];
+
+  // 4. Otros campos
+  nuevaAusencia.motivo = `Solicitud aprobada: ${solicitud.motivo || 'Sin descripción'}`;
+  nuevaAusencia.estado = AusenciaEstado.APROBADA;
+
+  // 5. Cálculo de días
+  const diffTime = fechaFin.getTime() - fechaInicio.getTime();
+  nuevaAusencia.diasTotales = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  nuevaAusencia.diasConsumidos = 0;
+
+  await queryRunner.manager.save(nuevaAusencia);
+}
+
+      // ---------------------------------------------------------
+      // 🚩 PASO D: ARCHIVADO INMEDIATO (Soft Delete)
+      // Esto hace que desaparezca de la bandeja pero se mantenga en historial
+      // ---------------------------------------------------------
       await queryRunner.manager.softRemove(solicitud);
 
       // 4. Confirmar Cambios
@@ -190,15 +232,19 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
         ok: true,
         message: `Solicitud ${dto.estado.toLowerCase()} y archivada correctamente`,
         solicitudId: solicitud.id,
+        ausenciaGenerada: dto.estado === RequestStatus.APROBADA
       };
 
     } catch (error) {
+      // Si algo falla, deshacemos TODO
       await queryRunner.rollbackTransaction();
+      console.error('Error en transacción de revisión:', error);
       throw new BadRequestException(`No se pudo procesar la revisión: ${error.message}`);
     } finally {
+      // Liberamos el queryRunner
       await queryRunner.release();
     }
-}
+  }
   /**
    *  Lista todas las solicitudes asociadas a una empresa, con opción de filtrar por usuario.
    *  
@@ -298,27 +344,27 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
   }
 
 
-async findHistorial(empresaId: number, estado?: string) {
-  //  Condición base: Siempre filtramos por la empresa
-  const whereCondition: any = { 
-    empresaId: Number(empresaId) 
-  };
+  async findHistorial(empresaId: number, estado?: string) {
+    //  Condición base: Siempre filtramos por la empresa
+    const whereCondition: any = {
+      empresaId: Number(empresaId)
+    };
 
-  //  Lógica para OCULTAR PENDIENTES
-  if (estado === 'APROBADA') {
-    whereCondition.estado = RequestStatus.APROBADA;
-  } else if (estado === 'RECHAZADA') {
-    whereCondition.estado = RequestStatus.RECHAZADA;
-  } else {
-    whereCondition.estado = In([RequestStatus.APROBADA, RequestStatus.RECHAZADA]);
-  }
+    //  Lógica para OCULTAR PENDIENTES
+    if (estado === 'APROBADA') {
+      whereCondition.estado = RequestStatus.APROBADA;
+    } else if (estado === 'RECHAZADA') {
+      whereCondition.estado = RequestStatus.RECHAZADA;
+    } else {
+      whereCondition.estado = In([RequestStatus.APROBADA, RequestStatus.RECHAZADA]);
+    }
 
-  // Ejecución de la búsqueda
-  return await this.solicitudRepo.find({
-    where: whereCondition,
-    withDeleted: true, // Incluye las archivadas por el Cron
-    relations: ['usuario', 'revision'],
-    order: { updatedAt: 'DESC' } // Lo más reciente arriba
-  });
-}s
+    // Ejecución de la búsqueda
+    return await this.solicitudRepo.find({
+      where: whereCondition,
+      withDeleted: true, // Incluye las archivadas por el Cron
+      relations: ['usuario', 'revision'],
+      order: { updatedAt: 'DESC' } // Lo más reciente arriba
+    });
+  } s
 }

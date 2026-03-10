@@ -29,7 +29,6 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
  * Este controlador proporciona las rutas necesarias para la gestión de incidencias,
  * como la creación, actualización, resolución y consulta de incidencias. 
  */
-@Injectable()
 @Controller('incidencias')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IncidenciaController {
@@ -72,6 +71,15 @@ export class IncidenciaController {
     return this.issueService.findAllByUsuario(user.id);
   }
 
+  /**
+   * Obtiene las incidencias resueltas (tramitadas) del usuario autenticado.
+   */
+  @Get('mis-tramitadas')
+  @Roles(UserRole.WORKER, UserRole.ADMIN)
+  findMyTramitadas(@GetUser() user: UserPayload) {
+    return this.issueService.findAllTramitadasByUsuario(user.id);
+  }
+
   // ===============================
   // ADMIN
   // ===============================
@@ -84,17 +92,20 @@ export class IncidenciaController {
    * @param pendientes Si se desea filtrar solo por incidencias pendientes
    * @returns Lista de incidencias de la empresa
    */
-  @Get('empresa')
+ @Get('empresa')
   @Roles(UserRole.ADMIN)
   findAllForAdmin(
     @GetUser() user: UserPayload,
     @Query('pendientes') pendientes?: string,
   ) {
-    const soloPendientes = pendientes === 'true';
+    let filtroPendientes: boolean | undefined = undefined;
+    
+    if (pendientes === 'true') filtroPendientes = true;
+    else if (pendientes === 'false') filtroPendientes = false;
 
     return this.issueService.findAllByEmpresa(
       user.empresaId,
-      soloPendientes,
+      filtroPendientes, // Ahora sí puede pasar undefined
     );
   }
 
@@ -130,9 +141,9 @@ export class IncidenciaController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateIncidenciaDto,
-    @GetUser() user: UserPayload,
+    @GetUser() user: UserPayload, // Pasamos el user entero
   ) {
-    return this.issueService.update(id, user.empresaId, dto);
+    return this.issueService.update(id, user, dto);
   }
 
   /**
@@ -161,9 +172,24 @@ export class IncidenciaController {
    * 
    */
   @Get('ocultas')
-  @Roles(UserRole.ADMIN, UserRole.WORKER)
+  @Roles(UserRole.ADMIN)
   async getOcultas(@GetUser() user: UserPayload) {
     return await this.issueService.getOcultas(user.empresaId);
   }
 
+
+  // ===============================
+  // TRABAJADOR - VISTAS FILTRADAS
+  // ===============================
+
+  /**
+   * Obtiene las incidencias PENDIENTES (no revisadas) del usuario autenticado.
+   */
+  @Get('mis-pendientes')
+  @Roles(UserRole.WORKER, UserRole.ADMIN)
+  findMyPendientes(@GetUser() user: UserPayload) {
+    return this.issueService.findAllPendientesByUsuario(user.id);
+  }
+
+ 
 }

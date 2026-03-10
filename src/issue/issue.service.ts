@@ -1,22 +1,24 @@
 import {
   BadRequestException,
 
+  ForbiddenException,
+
   Injectable,
 
   InternalServerErrorException,
 
   NotFoundException,
 } from '@nestjs/common';
-import { IsNull, LessThan, MoreThan, Not, Repository } from 'typeorm';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { Issue } from './entities/issue.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateIncidenciaDto } from './dto/create-issue.dto';
 import { UpdateIncidenciaDto } from './dto/update-issue.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BaseCleanupService } from 'common/base/baseCleanup.service';
-import { RequestStatus } from 'request/dto/revisar-request.dto';
 import { Company } from 'company/entities/company.entity';
 import { ConfigService } from '@nestjs/config';
+import { UserRole } from 'auth/roles.enum';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
 
 
@@ -35,8 +37,6 @@ import { UserPayload } from 'auth/interfaces/user-payload.interface';
 @Injectable()
 export class IssueService extends BaseCleanupService<Issue> {
   constructor(
-    @InjectRepository(Issue)
-    private readonly incidenciaRepository: Repository<Issue>,
     @InjectRepository(Issue) private readonly issueRepo: Repository<Issue>,
     @InjectRepository(Company) private readonly companyRepo: Repository<Company>,
     private readonly configService: ConfigService,
@@ -63,7 +63,7 @@ export class IssueService extends BaseCleanupService<Issue> {
     const haceQuinceMinutos = new Date(Date.now() - 15 * 60 * 1000);
 
     // Evitar spam cada 15 min
-    const ultimaIncidencia = await this.incidenciaRepository.findOne({
+    const ultimaIncidencia = await this.issueRepo.findOne({
       where: {
         userId,
         empresaId,
@@ -78,11 +78,13 @@ export class IssueService extends BaseCleanupService<Issue> {
       );
     }
 
+
+
     // Evitar duplicado mismo tipo en el mismo día
     const inicioHoy = new Date();
     inicioHoy.setHours(0, 0, 0, 0);
 
-    const incidenciaHoy = await this.incidenciaRepository.findOne({
+    const incidenciaHoy = await this.issueRepo.findOne({
       where: {
         userId,
         empresaId,
@@ -97,16 +99,16 @@ export class IssueService extends BaseCleanupService<Issue> {
       );
     }
 
-    const incidencia = this.incidenciaRepository.create({
+    const incidencia = this.issueRepo.create({
       userId,
       empresaId,
       ...dto,
       nombre: dto.nombre,
       apellidos: dto.apellidos,
-      estado: dto.estado ?? true,
+      estado: dto.estado ?? false,
     });
 
-    return this.incidenciaRepository.save(incidencia);
+    return this.issueRepo.save(incidencia);
   }
 
   // ===============================
@@ -119,7 +121,7 @@ export class IssueService extends BaseCleanupService<Issue> {
    */
 
   findAll() {
-    return this.incidenciaRepository.find({
+    return this.issueRepo.find({
       order: { createdAt: 'DESC' },
     });
   }
@@ -131,7 +133,7 @@ export class IssueService extends BaseCleanupService<Issue> {
    * @returns Todas las incidencias del usuario
    */
   findAllByUsuario(userId: number) {
-    return this.incidenciaRepository.find({
+    return this.issueRepo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
@@ -146,7 +148,7 @@ export class IssueService extends BaseCleanupService<Issue> {
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
   async findOne(id: number, empresaId: number) {
-    const incidencia = await this.incidenciaRepository.findOne({
+    const incidencia = await this.issueRepo.findOne({
       where: { id, empresaId },
     });
 
@@ -165,19 +167,46 @@ export class IssueService extends BaseCleanupService<Issue> {
    * @param soloPendientes Si se desea filtrar solo por incidencias pendientes (opcional, por defecto false)
    * @returns Todas las incidencias de la empresa
    */
-async findAllByEmpresa(empresaId: number, soloPendientes = false) {
+async findAllByEmpresa(empresaId: number, soloPendientes?: boolean) {
   const where: any = { empresaId };
 
-  if (soloPendientes) {
-    where.estado = false; // Solo pendientes
-  } else {
-    where.estado = true;  // Solo resueltas (Tramitadas)
+  // Solo filtramos si el parámetro viene definido (true o false)
+  if (soloPendientes !== undefined) {
+    where.estado = !soloPendientes; // Si soloPendientes es true, buscamos estado: false
   }
+  // Si no viene el parámetro, devolverá todas (pendientes y resueltas)
+  return this.issueRepo.find({ where, relations: ['usuario'], order: { createdAt: 'DESC' } });
+}
 
-  return this.incidenciaRepository.find({
-    where,
-    relations: ['usuario'],
+
+// =====================================
+// PENDIENTES PARA EL TRABAJADOR
+// =====================================
+/**
+ * Devuelve las incidencias de un usuario que aún no han sido revisadas (estado: false).
+ */
+async findAllPendientesByUsuario(userId: number) {
+  return this.issueRepo.find({
+    where: { 
+      userId, 
+      estado: false // No revisadas
+    },
     order: { createdAt: 'DESC' },
+  });
+}
+// ===============================
+// TRAMITADAS PARA EL TRABAJADOR
+// ===============================
+/**
+ * Devuelve todas las incidencias de un usuario que ya han sido marcadas como resueltas.
+ */
+async findAllTramitadasByUsuario(userId: number) {
+  return this.issueRepo.find({
+    where: { 
+      userId, 
+      estado: true 
+    },
+    order: { updatedAt: 'DESC' }, // Lo más reciente primero
   });
 }
 
@@ -195,32 +224,48 @@ async findAllByEmpresa(empresaId: number, soloPendientes = false) {
    * @returns La incidencia actualizada
    * @throws {NotFoundException} Si la incidencia no se encuentra
    */
+  /**
+   * * Actualiza/edita la incidencia con el ID especificado.
+   * Aplica reglas de seguridad para evitar que un trabajador edite incidencias ajenas.
+   * * @param id ID de la incidencia
+   * @param user Usuario autenticado (payload del JWT)
+   * @param updateDto Datos de actualización de la incidencia
+   * @returns La incidencia actualizada
+   * @throws {NotFoundException} Si la incidencia no se encuentra
+   * @throws {ForbiddenException} Si un trabajador intenta editar una incidencia de otro
+   * @throws {BadRequestException} Si la incidencia ya está resuelta
+   */
   async update(
     id: number,
-    empresaId: number,
-    updateDto: Partial<CreateIncidenciaDto>, // Usamos Partial para que todo sea opcional al editar
+    user: UserPayload,
+    updateDto: Partial<CreateIncidenciaDto>,
   ) {
-    const incidencia = await this.findOne(id, empresaId);
+    // 1. Buscamos la incidencia asegurando que pertenece a la empresa del usuario
+    const incidencia = await this.findOne(id, user.empresaId);
 
-    // 1. Regla de negocio: Si ya está resuelta (false), no se edita
-    // Nota: Revisa si en tu lógica 'false' es resuelta o 'true' es resuelta. 
-    // Según tu código anterior: incidencia.estado === true significa resuelta.
-    if (incidencia.estado === true) {
-      throw new BadRequestException('No puedes editar una incidencia ya resuelta');
+    // 2. 🔒 REGLA DE SEGURIDAD: Si el usuario es WORKER, comprobamos que sea el autor
+    // Si la id del creador de la incidencia no coincide con la del usuario logueado, bloqueamos.
+    if (user.rol === UserRole.WORKER && incidencia.userId !== user.id) {
+      throw new ForbiddenException('No tienes permiso para editar las incidencias de otros compañeros.');
     }
 
-    // 2. Actualización selectiva (Evitamos que los valores por defecto del DTO ganen)
+    // 3. 💼 REGLA DE NEGOCIO: Si ya está resuelta (true), no se edita
+    if (incidencia.estado === true) {
+      throw new BadRequestException('No puedes editar una incidencia que ya ha sido resuelta.');
+    }
+
+    // 4. Actualización selectiva (Evitamos que los valores por defecto del DTO ganen)
     if (updateDto.tipo) incidencia.tipo = updateDto.tipo;
     if (updateDto.descripcion) incidencia.descripcion = updateDto.descripcion;
     if (updateDto.nombre) incidencia.nombre = updateDto.nombre;
     if (updateDto.apellidos) incidencia.apellidos = updateDto.apellidos;
 
-    // 3. El estado SOLO se actualiza si viene explícitamente en el Body
+    // 5. El estado SOLO se actualiza si viene explícitamente en el Body
     if (updateDto.estado !== undefined) {
       incidencia.estado = updateDto.estado;
     }
 
-    return await this.incidenciaRepository.save(incidencia);
+    return await this.issueRepo.save(incidencia);
   }
   /**
    * 
@@ -234,7 +279,7 @@ async findAllByEmpresa(empresaId: number, soloPendientes = false) {
   async remove(id: number, empresaId: number) {
     const incidencia = await this.findOne(id, empresaId);
     // softRemove llena la columna deletedAt en lugar de hacer un DELETE SQL
-    return this.incidenciaRepository.softRemove(incidencia);
+    return this.issueRepo.softRemove(incidencia);
   }
   /**
    * 
@@ -256,9 +301,9 @@ async findAllByEmpresa(empresaId: number, soloPendientes = false) {
 
     incidencia.estado = true;
     // Solo actualiza campos si realmente vienen en el DTO
-    if (dto.descripcion) incidencia.descripcion = dto.descripcion;
+    //if (dto.descripcion) incidencia.descripcion = dto.descripcion;
 
-    return this.incidenciaRepository.save(incidencia);
+    return this.issueRepo.save(incidencia);
   }
 
   /*
@@ -304,7 +349,7 @@ async findAllByEmpresa(empresaId: number, soloPendientes = false) {
 
   async getOcultas(empresaId: number){
 
-    return await this.incidenciaRepository.find({
+    return await this.issueRepo.find({
 
       where: { empresaId: empresaId, deletedAt: Not(IsNull())},
       withDeleted: true,

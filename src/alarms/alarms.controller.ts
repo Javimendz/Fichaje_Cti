@@ -61,7 +61,7 @@ export class AlarmController {
   @Put('revisar/:id')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async readAlarm(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
-    return this.alarmService.markAsRead(id, user.id, user.rol);
+    return this.alarmService.markAsRead(id, user.id, user.rol, user.empresaId);
   }
 
 

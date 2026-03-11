@@ -26,8 +26,12 @@ import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, 
   descripcion: string;
 
   @Expose()
-  @IsBoolean({ message: 'El estado de revisión debe ser booleano' })
-  revisada: boolean;
+  @IsBoolean( )
+  leidaAdmin: boolean;
+  
+  @Expose()
+  @IsBoolean( )
+  leidaWorker: boolean;
 
   @Expose()
   @IsNumber({}, { message: 'El ID de empresa debe ser un número' })

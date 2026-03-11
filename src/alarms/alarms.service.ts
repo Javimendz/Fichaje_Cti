@@ -17,7 +17,7 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Alarm, AlarmType } from "./entities/alarm.entity";
 import { In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { AlarmsGateway } from "./gateway/alarms.gateway";
 
 import dayjs from 'dayjs';
@@ -150,34 +150,45 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
   });
 }
   /**
-   * Marca una alarma como revisada en la base de datos.
+   * Marca una alarma como leída en la base de datos.
    *
    * @param id - El identificador único de la alarma.
-   * @param empresaId - El identificador de la empresa asociada a la alarma.
+   * @param userId - El ID del usuario que realiza la acción.
+   * @param role - El rol del usuario (ADMIN o WORKER).
+   * @param empresaId - El ID de la empresa del usuario (para validación de seguridad).
    * @returns Una promesa que resuelve con el resultado de la operación de actualización.
+   * @throws NotFoundException si la alarma no existe.
+   * @throws ForbiddenException si el usuario no tiene permisos para marcar esta alarma.
    */
-    async markAsRead(id: number, userId: number, role: UserRole) {
+    async markAsRead(id: number, userId: number, role: UserRole, empresaId?: number) {
   const alarma = await this.alarmRepository.findOne({ 
     where: { id },
-    relations: ['usuario'] 
+    relations: ['usuario', 'empresa'] 
   });
 
   if (!alarma) throw new NotFoundException('Alarma no encontrada');
 
+  // 🔐 Validación de seguridad: solo puede marcar alarmas de su propia empresa
+  if (empresaId && alarma.empresaId !== empresaId) {
+    throw new ForbiddenException('No tienes permisos para marcar esta alarma');
+  }
+
   if (role === UserRole.ADMIN) {
-    // El admin marca su lectura
+    // El admin marca su lectura (solo si pertenece a la misma empresa)
     return await this.alarmRepository.update(id, { leidaAdmin: true });
   } else if (role === UserRole.WORKER && alarma.usuario.id === userId) {
     // El worker marca la suya solo si es SU alarma
     return await this.alarmRepository.update(id, { leidaWorker: true });
+  } else {
+    throw new ForbiddenException('No tienes permisos para marcar esta alarma');
   }
 }
 
 /**
- * Resuelve las alarmas previas de un usuario marcándolas como revisadas.
+ * Resuelve las alarmas previas de un usuario marcándolas como leídas para el admin.
  * 
- * Busca todas las alarmas no revisadas del usuario creadas hoy (después de las 00:00 en zona horaria Europe/Madrid)
- * que coincidan con los tipos especificados y las marca como revisadas con una descripción de consolidación.
+ * Busca todas las alarmas no leídas por el admin del usuario creadas hoy 
+ * que coincidan con los tipos especificados y las marca como leídas por el admin.
  * 
  * @param usuarioId - El ID del usuario propietario de las alarmas
  * @param tipos - Array de tipos de alarma a resolver
@@ -198,7 +209,6 @@ async resolverAlarmasPrevias(usuarioId: number, tipos: AlarmType[]) {
     },
     { 
       leidaAdmin: true, 
-      leidaWorker: true, // Marcamos ambas como leídas porque el problema se resolvió
       descripcion: "CONSOLIDADA: El trabajador finalmente fichó." 
     }
   );

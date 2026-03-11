@@ -1,9 +1,13 @@
 import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateAlarmDto {
-  @IsBoolean({ message: 'El estado de revisada debe ser un booleano' })
+  @IsBoolean({ message: 'El estado leída admin debe ser booleano' })
   @IsOptional()
-  revisada?: boolean;
+  leidaAdmin?: boolean;
+
+  @IsBoolean({ message: 'El estado leída worker debe ser booleano' })
+  @IsOptional()
+  leidaWorker?: boolean;
 
   @IsString()
   @IsOptional()

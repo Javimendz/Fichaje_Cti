@@ -31,7 +31,8 @@ export enum AlarmType {
 // - id: Identificador único de la alarma.
 // - tipo: Tipo de alarma, representado por el enum AlarmType.
 // - descripcion: Descripción detallada de la alarma, incluyendo información relevante sobre el evento.
-// - revisada: Indica si la alarma ha sido revisada por el usuario.
+// - leidaAdmin: Indica si la alarma ha sido leída por el administrador.
+// - leidaWorker: Indica si la alarma ha sido leída por el trabajador.
 // - empresaId: Identificador de la empresa a la que pertenece la alarma.
 // - createdAt: Fecha y hora en que se creó la alarma.
 // - usuario: Usuario que generó la alarma.

@@ -352,15 +352,14 @@ async findAllTramitadasByUsuario(userId: number) {
    */
   async getPendientesArchivadas(empresaId: number) {
     return await this.issueRepo.find({
-      where: { 
-        empresaId: empresaId, 
-        estado: false, // Condición clave: Solo las NO revisadas/pendientes
-        deletedAt: Not(IsNull()) // Que hayan sido borradas por el Cron
-      },
-      withDeleted: true,
-      relations: ['usuario'],
-      order: { deletedAt: 'DESC' },
-    });
+    where: { 
+      empresaId: empresaId, 
+      estado: false, // Solo las no revisadas
+    },
+    withDeleted: true, // Esto traerá las que el Cron borró Y las que no
+    relations: ['usuario'],
+    order: { createdAt: 'DESC' },
+  });
   }
 
  

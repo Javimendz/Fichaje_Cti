@@ -3,14 +3,13 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
   Query,
   Put,
   ParseIntPipe,
-  Injectable,
+  
 } from '@nestjs/common';
 
 import { IssueService } from './issue.service';

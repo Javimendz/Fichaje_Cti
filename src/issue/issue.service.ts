@@ -347,16 +347,20 @@ async findAllTramitadasByUsuario(userId: number) {
   }
 
 
-  async getOcultas(empresaId: number){
-
+ /**
+   * Obtiene las incidencias archivadas (ocultas) que se quedaron PENDIENTES (sin resolver).
+   */
+  async getPendientesArchivadas(empresaId: number) {
     return await this.issueRepo.find({
-
-      where: { empresaId: empresaId, deletedAt: Not(IsNull())},
+      where: { 
+        empresaId: empresaId, 
+        estado: false, // Condición clave: Solo las NO revisadas/pendientes
+        deletedAt: Not(IsNull()) // Que hayan sido borradas por el Cron
+      },
       withDeleted: true,
-      relations:['usuario'],
-      order: {deletedAt: 'DESC'},
-    })
-
+      relations: ['usuario'],
+      order: { deletedAt: 'DESC' },
+    });
   }
 
  

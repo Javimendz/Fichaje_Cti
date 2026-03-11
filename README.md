@@ -132,6 +132,7 @@ GET	           /api/schedule/stats/objetivo	         Obtiene las horas que el tr
 GET            /api/schedule/stats/real              Obtiene las horas que el trabajador lleva trabajadas.Token (ADMIN/WORKER)
 GET            /api/schedule/stats/progreso          Obtiene el % de cumplimiento semanal (Real vs Objetivo).Token (ADMIN/WORKER)
 GET            /api/schedule/stats/progreso/:userId  Consulta el progreso de cualquier trabajador por su  ID.Token (ADMIN) 
+GET            /api/schedule/test-rotacion           Simula y calcula a qué semana de rotación pertenece. Token (ADMIN) + Querys: ?fechaInicio=2026-03-09&fechaPrueba=2026-03-23&ciclo=2
 ```
 
 ```

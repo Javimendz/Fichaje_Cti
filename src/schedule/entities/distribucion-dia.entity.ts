@@ -55,6 +55,9 @@ export class DistribucionDia {
   @Column('float', { default: 0 })
   horasDia: number; // Columna para almacenar el total de horas asignadas a este día
 
+  @Column({ type: 'int', default: 1 })
+  semanaRotacion: number;
+
   // Relación con el horario padre (N:1)
 
   // PADRE

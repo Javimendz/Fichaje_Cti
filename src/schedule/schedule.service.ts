@@ -4,10 +4,10 @@ import { Repository,  DataSource, MoreThanOrEqual } from 'typeorm';
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
-import {  DistribucionDia } from './entities/distribucion-dia.entity';
 import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 import { User } from 'auth/entities/user.entity';
 import { Workday } from 'workday/entities/workday.entity';
+import { DistribucionDia } from './entities/distribucion-dia.entity';
 
 @Injectable()
 export class ScheduleService {
@@ -28,97 +28,87 @@ export class ScheduleService {
   /// --------------------------------------------------------- 
 
 /**
- *  Crea un nuevo horario con sus distribuciones y franjas horarias asociadas en una transacción atómica.
- *  Si ocurre algún error durante el proceso, se revierte toda la transacción para mantener la integridad de los datos.
- * @param dto - Datos para crear el horario, incluyendo distribuciones y franjas
- * @param user - Información del usuario que realiza la acción, se utiliza para asignar la empresa al horario
- * @returns El horario completo creado, incluyendo sus distribuciones y franjas, ordenados correctamente
- * @throws BadRequestException si el usuario no tiene empresa asignada o si ocurre un error durante la creación
- *  
- */
-async create(dto: CreateHorarioDto, user: UserPayload) {
-  if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
+   * Crea un nuevo horario con sus distribuciones y franjas horarias asociadas.
+   * Utiliza el gestor de transacciones automático de TypeORM para asegurar la integridad de los datos sin errores de QueryRunner.
+   * @param dto - Datos para crear el horario, incluyendo distribuciones y franjas
+   * @param user - Información del usuario que realiza la acción
+   */
+  async create(dto: CreateHorarioDto, user: UserPayload) {
+    if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
 
-  const queryRunner = this.dataSource.createQueryRunner(); // Creamos un QueryRunner para manejar la transacción manualmente
-  await queryRunner.connect(); // Conectamos el QueryRunner a la base de datos
-  await queryRunner.startTransaction(); // Iniciamos la transacción
-
-  try {
-    // ---------------------------------------------------------
-    // PASO 1: GUARDAR EL PADRE (HORARIO)
-    // ---------------------------------------------------------
-    const nuevoHorario = queryRunner.manager.create(Horario, {
-      nombre: dto.nombre,
-      tipo: dto.tipo,
-      fechaInicio: new Date(dto.fechaInicio),
-      fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : null,
-      isActive: true,
-      empresa: { id: user.empresaId } as any, // Relación padre
-    });
-
-    const horarioGuardado = await queryRunner.manager.save(nuevoHorario);
-    console.log('Horario creado con ID:', horarioGuardado.id);
-
-    // ---------------------------------------------------------
-    // PASO 2: GUARDAR LOS HIJOS (DISTRIBUCIONES)
-    // ---------------------------------------------------------
-    if (dto.distribuciones && dto.distribuciones.length > 0) {
-      for (const distDto of dto.distribuciones) {
-        const nuevaDist = queryRunner.manager.create(DistribucionDia, {
-          diaSemana: distDto.diaSemana as any,
-          horasDia: distDto.horasDia,
-          horario: horarioGuardado, //  FK asignada automáticamente
+    try {
+      // 🔥 MAGIA AQUÍ: Usamos el transactionManager automático. Si algo falla, él solo hace Rollback.
+      return await this.dataSource.transaction(async (transactionManager) => {
+        
+        // ---------------------------------------------------------
+        // PASO 1: GUARDAR EL PADRE (HORARIO)
+        // ---------------------------------------------------------
+        const nuevoHorario = transactionManager.create(Horario, {
+          nombre: dto.nombre,
+          tipo: dto.tipo,
+          esRotativo: dto.esRotativo ?? false,           // 👈 Lógica de rotación
+          semanasRotacion: dto.semanasRotacion ?? 1,     // 👈 Lógica de rotación
+          isActive: true,
+          empresa: { id: user.empresaId } as any, 
         });
 
-        const distGuardada = await queryRunner.manager.save(nuevaDist);
+        const horarioGuardado = await transactionManager.save(nuevoHorario);
+        console.log('✅ Horario creado con ID:', horarioGuardado.id);
 
         // ---------------------------------------------------------
-        // PASO 3: GUARDAR LOS NIETOS (FRANJAS)
+        // PASO 2: GUARDAR LOS HIJOS (DISTRIBUCIONES)
         // ---------------------------------------------------------
-        if (distDto.franjas && distDto.franjas.length > 0) {
-          const franjasInstances = distDto.franjas.map(fDto =>
-            queryRunner.manager.create(FranjaHoraria, {
-              inicio: fDto.inicio,
-              fin: fDto.fin,
-              distribucionDia: distGuardada,   // relación padre
-              distribucionDiaId: distGuardada.id, // FK explícita
-            })
-          );
+        if (dto.distribuciones && dto.distribuciones.length > 0) {
+          for (const distDto of dto.distribuciones) {
+            const nuevaDist = transactionManager.create(DistribucionDia, {
+              diaSemana: distDto.diaSemana as any,
+              horasDia: distDto.horasDia,
+              semanaRotacion: distDto.semanaRotacion ?? 1, // 👈 Semana del ciclo
+              horario: horarioGuardado, 
+            });
 
-          await queryRunner.manager.save(franjasInstances);
+            const distGuardada = await transactionManager.save(nuevaDist);
+
+            // ---------------------------------------------------------
+            // PASO 3: GUARDAR LOS NIETOS (FRANJAS)
+            // ---------------------------------------------------------
+            if (distDto.franjas && distDto.franjas.length > 0) {
+              const franjasInstances = distDto.franjas.map(fDto =>
+                transactionManager.create(FranjaHoraria, {
+                  inicio: fDto.inicio,
+                  fin: fDto.fin,
+                  distribucionDia: distGuardada,
+                  distribucionDiaId: distGuardada.id,
+                })
+              );
+
+              await transactionManager.save(franjasInstances);
+            }
+          }
         }
-      }
+
+        // ---------------------------------------------------------
+        // PASO 4: RETORNO FINAL ORDENADO (Usando el transactionManager)
+        // ---------------------------------------------------------
+        const horarioCompleto = await transactionManager
+          .createQueryBuilder(Horario, 'horario')
+          .leftJoinAndSelect('horario.distribuciones', 'distribucion')
+          .leftJoinAndSelect('distribucion.franjas', 'franja')
+          .where('horario.id = :id', { id: horarioGuardado.id })
+          .orderBy('distribucion.semanaRotacion', 'ASC') // Primero ordenamos por semana de rotación
+          .addOrderBy('distribucion.id', 'ASC')          // Luego por ID del día
+          .addOrderBy('franja.id', 'ASC')                // Finalmente por ID de la franja
+          .getOne();
+
+        return horarioCompleto;
+      }); // <-- FIN DE LA TRANSACCIÓN AUTOMÁTICA
+
+    } catch (err) {
+      // Si la base de datos se queja de algo (ej. falta una columna), caerá aquí directamente y lo veremos claro.
+      console.error('🔥 ERROR REAL EN BASE DE DATOS:', err);
+      throw new BadRequestException(`No se pudo crear el horario: ${err.message}`);
     }
-
-    // ---------------------------------------------------------
-    // CONFIRMAMOS LA TRANSACCIÓN
-    // ---------------------------------------------------------
-    await queryRunner.commitTransaction();
-
-    // ---------------------------------------------------------
-    // RETORNO FINAL: usamos QueryBuilder para ordenar correctamente
-    // ---------------------------------------------------------
-    // ---------------------------------------------------------
-    const horarioCompleto = await queryRunner.manager
-      .createQueryBuilder(Horario, 'horario')
-      .leftJoinAndSelect('horario.distribuciones', 'distribucion')
-      .leftJoinAndSelect('distribucion.franjas', 'franja')
-      .where('horario.id = :id', { id: horarioGuardado.id })
-      .orderBy('distribucion.id', 'ASC')
-      .addOrderBy('franja.id', 'ASC')
-      .getOne();
-
-    return horarioCompleto;
-
-  } catch (err) {
-    console.error('Error en transacción:', err);
-    await queryRunner.rollbackTransaction();
-    throw new BadRequestException(`No se pudo crear el horario: ${err.message}`);
-  } finally {
-    await queryRunner.release();
   }
-}
-
 // ---------------------------------------------------------
 /// MÉTODOS SECUNDARIOS: OBTENER Y ELIMINAR HORARIOS
 // ---------------------------------------------------------    
@@ -193,85 +183,86 @@ async remove(id: number, empresaId: number) {
   // MÉTODO SECUNDARIO: ACTUALIZAR HORARIO Y SUS FRANJAS
   // ---------------------------------------------------------
   async update(id: number, dto: Partial<CreateHorarioDto>, user: UserPayload) {
-    if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
+  if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
 
-    // VALIDACIÓN PREVIA DE REGLAS DE NEGOCIO
-    if (dto.distribuciones) {
-      for (const dist of dto.distribuciones) {
-        this.validarJornadaCompleta(dist);
-      }
-    }
-
-    // 1. Verificamos que el horario existe y pertenece a la empresa
-    const horarioExistente = await this.horarioRepository.findOne({
-      where: { id, empresa: { id: user.empresaId } },
-      relations: ['distribuciones', 'distribuciones.franjas'], // Cargamos las viejas
-    });
-
-    if (!horarioExistente) {
-      throw new NotFoundException(`Horario con ID ${id} no encontrado en tu empresa`);
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      // 2. Actualizamos los campos básicos del Horario (Padre)
-      if (dto.nombre) horarioExistente.nombre = dto.nombre;
-      if (dto.tipo) horarioExistente.tipo = dto.tipo;
-      if (dto.fechaInicio) horarioExistente.fechaInicio = new Date(dto.fechaInicio);
-      if (dto.fechaFin !== undefined) horarioExistente.fechaFin = dto.fechaFin ? new Date(dto.fechaFin) : null;
-
-      await queryRunner.manager.save(horarioExistente);
-
-      // 3. Reemplazo de distribuciones y franjas (Solo si se envían en el DTO)
-      if (dto.distribuciones) {
-        
-        // A. Borrado manual de hijos y nietos antiguos
-        for (const dist of horarioExistente.distribuciones) {
-          // 🔥 CORRECCIÓN 1: Usamos la relación en lugar de la columna física para borrar
-          await queryRunner.manager.delete(FranjaHoraria, { distribucionDia: { id: dist.id } });
-          // Borramos la distribución (hijo)
-          await queryRunner.manager.delete(DistribucionDia, { id: dist.id });
-        }
-
-        // B. Creación de las nuevas distribuciones y franjas
-        for (const distDto of dto.distribuciones) {
-          const nuevaDist = queryRunner.manager.create(DistribucionDia, {
-            diaSemana: distDto.diaSemana as any,
-            horasDia: distDto.horasDia,
-            horario: horarioExistente, 
-          });
-
-          const distGuardada = await queryRunner.manager.save(nuevaDist);
-
-          if (distDto.franjas && distDto.franjas.length > 0) {
-            const franjasInstances = distDto.franjas.map(fDto =>
-              queryRunner.manager.create(FranjaHoraria, {
-                inicio: fDto.inicio,
-                fin: fDto.fin,
-                distribucionDia: distGuardada, // 
-              })
-            );
-            await queryRunner.manager.save(franjasInstances);
-          }
-        }
-      }
-
-      await queryRunner.commitTransaction();
-
-      // 4. Retornamos el horario actualizado limpio
-      return await this.findOne(id, user.empresaId); // Añadido el await por seguridad
-
-    } catch (err) {
-      console.error('Error al actualizar horario:', err);
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(`No se pudo actualizar el horario: ${err.message}`);
-    } finally {
-      await queryRunner.release();
+  // VALIDACIÓN PREVIA DE REGLAS DE NEGOCIO
+  if (dto.distribuciones) {
+    for (const dist of dto.distribuciones) {
+      this.validarJornadaCompleta(dist);
     }
   }
+
+  // 1. Verificamos que el horario existe y pertenece a la empresa
+  const horarioExistente = await this.horarioRepository.findOne({
+    where: { id, empresa: { id: user.empresaId } },
+    relations: ['distribuciones', 'distribuciones.franjas'], // Cargamos las viejas
+  });
+
+  if (!horarioExistente) {
+    throw new NotFoundException(`Horario con ID ${id} no encontrado en tu empresa`);
+  }
+
+  const queryRunner = this.dataSource.createQueryRunner();
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    // 2. Actualizamos los campos básicos del Horario (Padre)
+    if (dto.nombre) horarioExistente.nombre = dto.nombre;
+    if (dto.tipo) horarioExistente.tipo = dto.tipo;
+    if (dto.esRotativo !== undefined) horarioExistente.esRotativo = dto.esRotativo;
+    if (dto.semanasRotacion !== undefined) horarioExistente.semanasRotacion = dto.semanasRotacion;
+
+    await queryRunner.manager.save(horarioExistente);
+
+    // 3. Reemplazo de distribuciones y franjas (Solo si se envían en el DTO)
+    if (dto.distribuciones) {
+      
+      // A. Borrado manual de hijos y nietos antiguos
+      for (const dist of horarioExistente.distribuciones) {
+        // 🔥 Usamos la relación en lugar de la columna física para borrar
+        await queryRunner.manager.delete(FranjaHoraria, { distribucionDia: { id: dist.id } });
+        // Borramos la distribución (hijo)
+        await queryRunner.manager.delete(DistribucionDia, { id: dist.id });
+      }
+
+      // B. Creación de las nuevas distribuciones y franjas
+      for (const distDto of dto.distribuciones) {
+        const nuevaDist = queryRunner.manager.create(DistribucionDia, {
+          diaSemana: distDto.diaSemana as any,
+          horasDia: distDto.horasDia,
+          semanaRotacion: distDto.semanaRotacion ?? 1, // Semana a la que pertenece
+          horario: horarioExistente, 
+        });
+
+        const distGuardada = await queryRunner.manager.save(nuevaDist);
+
+        if (distDto.franjas && distDto.franjas.length > 0) {
+          const franjasInstances = distDto.franjas.map(fDto =>
+            queryRunner.manager.create(FranjaHoraria, {
+              inicio: fDto.inicio,
+              fin: fDto.fin,
+              distribucionDia: distGuardada, // 
+            })
+          );
+          await queryRunner.manager.save(franjasInstances);
+        }
+      }
+    }
+
+    await queryRunner.commitTransaction();
+
+    // 4. Retornamos el horario actualizado limpio
+    return await this.findOne(id, user.empresaId); 
+
+  } catch (err) {
+    console.error('Error al actualizar horario:', err);
+    await queryRunner.rollbackTransaction();
+    throw new InternalServerErrorException(`No se pudo actualizar el horario: ${err.message}`);
+  } finally {
+    await queryRunner.release();
+  }
+}
 
   // MÉTODO PRINCIPAL: OBTENER HORAS OBJETIVO SEMANAL
   // ---------------------------------------------------------
@@ -412,6 +403,39 @@ private validarJornadaCompleta(distDto: any) {
       `En el día ${distDto.diaSemana}, las franjas suman ${minutosTotalesFranjas / 60}h, pero el mínimo diario es ${distDto.horasDia}h.`
     );
   }
-}
 
 }
+
+
+
+  /**
+   * ⏱️ SIMULADOR DE ROTACIÓN (Fórmula Matemática)
+   * Calcula en qué semana del ciclo nos encontramos basándose en una fecha de inicio y la fecha actual/objetivo.
+   * @param fechaInicioCiclo - La fecha exacta en la que el trabajador empezó este horario (Ej: un lunes).
+   * @param fechaObjetivo - La fecha que queremos consultar (Ej: el día de hoy).
+   * @param totalSemanasRotacion - El número total de semanas que tiene el ciclo (Ej: 2 para rotación mañana/tarde).
+   * @returns El número de la semana actual (1, 2, 3...) dentro de la rotación.
+   */
+  calcularSemanaRotacion(fechaInicioCiclo: Date, fechaObjetivo: Date, totalSemanasRotacion: number): number {
+    // 1. Calculamos cuántos milisegundos tiene una semana exacta (7 días)
+    const msPorSemana = 1000 * 60 * 60 * 24 * 7;
+    
+    // 2. Calculamos la diferencia total en milisegundos entre hoy y el día que empezó
+    const diferenciaMs = fechaObjetivo.getTime() - fechaInicioCiclo.getTime();
+    
+    // 3. Convertimos esa diferencia a semanas enteras pasadas.
+    // Math.floor redondea hacia abajo (ej. si llevas 1.5 semanas, has completado 1 semana entera).
+    // Math.max(0, ...) evita que salgan números negativos si envían una fecha anterior al inicio.
+    const semanasPasadas = Math.max(0, Math.floor(diferenciaMs / msPorSemana));
+
+    // 4. La magia del operador módulo (%): divide y se queda con el resto.
+    // Si han pasado 3 semanas y el ciclo es de 2 semanas: 3 % 2 = 1.
+    // Le sumamos + 1 porque en nuestra base de datos las semanas empiezan en 1 (Semana 1, Semana 2), no en 0.
+    const semanaActual = (semanasPasadas % totalSemanasRotacion) + 1;
+
+    return semanaActual;
+  
+
+  }
+}
+

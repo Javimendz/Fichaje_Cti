@@ -1,4 +1,4 @@
-  import { IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, ArrayMinSize, Min, Max, IsEnum } from 'class-validator'; // 👈 Añade IsNumber
+  import { IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, ArrayMinSize, Min, Max, IsEnum, IsInt } from 'class-validator'; // 👈 Añade IsNumber
   import { Expose, Transform, Type } from 'class-transformer';
   import { CreateTimeSlotDto } from 'timeSlot/dto/create-timeSlot.dto';
 import { DiaSemana } from 'schedule/entities/distribucion-dia.entity';
@@ -43,6 +43,11 @@ import { DiaSemana } from 'schedule/entities/distribucion-dia.entity';
   @Expose()
   horasDia: number;
 
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  semanaRotacion?: number;
    @IsOptional() // Opcional si el día puede no tener franjas (ej: festivos)
   @IsArray({ message: 'Las franjas deben enviarse como una lista' })
   @ArrayMinSize(1, { message: 'Si defines franjas, debes incluir al menos una' })

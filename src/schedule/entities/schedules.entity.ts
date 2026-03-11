@@ -43,12 +43,13 @@ export class Horario {
   @Column({ type: 'boolean', default: true }) // Horario activo por defecto
   isActive: boolean; // Indica si el horario está activo
 
-  // --- CONFIGURACIÓN TEMPORAL ---
-  @Column({ name: 'fecha_inicio', type: 'date' }) // Fecha de inicio
-  fechaInicio: Date; // Fecha de inicio de vigencia del horario
+  @Column({ type: 'boolean', default: false })
+  esRotativo: boolean;
 
-  @Column({ name: 'fecha_fin', type: 'date', nullable: true }) // Fecha de fin
-  fechaFin: Date | null; // Fecha de fin de vigencia del horario
+  @Column({ type: 'int', default: 1 })
+  semanasRotacion: number;
+
+  
 
   // --- RELACIONES ---
   // ============================================

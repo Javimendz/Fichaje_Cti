@@ -9,7 +9,10 @@ import {
   IsEnum, 
   MaxLength,
   MinLength,
-  IsOptional
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min
 } from "class-validator";
 import { DistribucionDiaDto } from "./DistribucionDiaDto";
 
@@ -71,26 +74,10 @@ export class CreateHorarioDto {
   @Expose()
   nombre: string; // El nombre del horario, obligatorio, con validación de longitud y saneamiento de espacios
 
-  @IsNotEmpty({ message: 'La fecha de inicio es obligatoria' })
-  @IsDateString({}, { 
-    message: 'La fecha de inicio debe tener un formato de fecha válido (AAAA-MM-DD)' 
-  })
-  // Saneamiento: Elimina espacios accidentales que podrían romper el parseo en el backend
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @Expose()
-  fechaInicio: string; // La fecha de inicio del horario, obligatoria, con validación de formato de fecha y saneamiento de espacios
+  // La fecha de inicio del horario, obligatoria, con validación de formato de fecha y saneamiento de espacios
 
 
-  @IsNotEmpty({ message: 'La fecha de fin es obligatoria' })
-  @IsDateString({}, { 
-    message: 'La fecha de fin debe tener un formato de fecha válido (AAAA-MM-DD)' 
-  })
-  // Saneamiento: Asegura que no haya espacios laterales que invaliden el string
-  @IsOptional()
-  @IsDateString({}, { message: 'La fecha de fin debe ser una fecha válida (ej: 2026-08-15)' })
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
-  @Expose()
-  fechaFin?: string; // La fecha de fin del horario, opcional, con validación de formato de fecha y saneamiento de espacios
+ // La fecha de fin del horario, opcional, con validación de formato de fecha y saneamiento de espacios
 
   @IsNotEmpty({ message: 'El tipo de horario es obligatorio' })
   @IsEnum(HorarioTipo, { 
@@ -99,6 +86,14 @@ export class CreateHorarioDto {
   @Expose()
   tipo: HorarioTipo; // El tipo de horario, obligatorio, debe ser uno de los valores definidos en el enum HorarioTipo
 
+  @IsBoolean()
+  @IsOptional()
+  esRotativo?: boolean;
+  
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  semanasRotacion?: number;
 
   @IsArray({ message: 'Las distribuciones deben enviarse en formato de lista (array)' })
   @ArrayMinSize(1, { message: 'El horario debe tener al menos una distribución de día configurada' })

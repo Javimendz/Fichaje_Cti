@@ -11,7 +11,8 @@ import {
   Logger,
   UseInterceptors,
   ClassSerializerInterceptor,
-  Put
+  Put,
+  Query
 } from '@nestjs/common';
 import { ScheduleService } from './schedule.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
@@ -43,6 +44,36 @@ export class ScheduleController {
     this.logger.log(`[Audit] Admin ${user.email} creando horario.`);
     return this.schedulesService.create(dto, user);
   }
+
+
+  /**
+   *  ENDPOINT DE PRUEBA: Máquina del Tiempo para Rotaciones
+   * GET /api/schedule/test-rotacion?fechaInicio=2026-03-09&fechaPrueba=2026-03-23&ciclo=2
+   */
+  @Get('test-rotacion')
+  @Roles(UserRole.ADMIN)
+  probarRotacion(
+    @Query('fechaInicio') fechaInicio: string,
+    @Query('fechaPrueba') fechaPrueba: string,
+    @Query('ciclo') ciclo: string,
+  ) {
+    const inicio = new Date(fechaInicio); // Ej: Lunes 9 de Marzo (Semana 1)
+    const prueba = new Date(fechaPrueba); // Ej: La fecha a la que queremos viajar
+    const semanasCiclo = parseInt(ciclo, 10); // Ej: 2 (Rotación de 2 semanas)
+
+    const semanaQueToca = this.schedulesService.calcularSemanaRotacion(inicio, prueba, semanasCiclo);
+
+    return {
+      mensaje: 'Viaje en el tiempo completado ⏱️',
+      datos: {
+        inicioDelCiclo: inicio.toISOString().split('T')[0],
+        fechaViaje: prueba.toISOString().split('T')[0],
+        cicloTotal: `${semanasCiclo} semanas`,
+      },
+      resultado: `Para la fecha ${prueba.toISOString().split('T')[0]}, el trabajador está en la SEMANA ${semanaQueToca} de su rotación.`,
+    };
+  }
+
 
   /**
    *  Busca todos los horarios activos de la empresa del usuario autenticado, incluyendo sus distribuciones y franjas. Solo los admins y workers pueden acceder a esta información.

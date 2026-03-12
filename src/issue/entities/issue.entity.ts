@@ -12,27 +12,18 @@ import {
 import { User } from 'users/entities/user.entity';
 
 export enum IncidenciaTipo {
-  // --- RELACIONADAS CON EL HORARIO ---
-  TARDANZA = 'TARDANZA',                 // Llegada después de la hora
-  SALIDA_ANTICIPADA = 'SALIDA_ANTICIPADA', // Salida antes de la hora
-  HORAS_EXTRAS_NO_AUTORIZADAS = 'HORAS_EXTRAS_NO_AUTORIZADAS',
+  // --- RELACIONADAS CON EL REGISTRO (ERRORES DE USUARIO) ---
+  OLVIDO_ENTRADA = 'OLVIDO_ENTRADA',       // Olvidó marcar al llegar
+  OLVIDO_SALIDA = 'OLVIDO_SALIDA',         // Olvidó marcar al irse
+  FICHAJE_DUPLICADO = 'FICHAJE_DUPLICADO',     // Marcó dos veces seguidas por error
+  ENTRADA_TARDIA = 'ENTRADA_TARDIA',       // Llegó tarde (sin permiso previo)
+  SALIDA_ANTICIPADA = 'SALIDA_ANTICIPADA', // Se fue antes (sin permiso previo)
 
-  // --- RELACIONADAS CON EL MARCAJE (ERRORES) ---
-  OLVIDO_ENTRADA = 'OLVIDO_ENTRADA',     // El empleado vino pero no marcó
-  OLVIDO_SALIDA = 'OLVIDO_SALIDA',       // Se fue y dejó el turno abierto
-  MARCA_DUPLICADA = 'MARCA_DUPLICADA',   // Marcó dos veces por error
-  ERROR_GPS = 'ERROR_GPS',               // No se pudo validar la ubicación
-
-  // --- AUSENCIAS Y PERMISOS ---
-  AUSENCIA = 'AUSENCIA', // No vino, no avisó
-  PERMISO_PARTICULAR = 'PERMISO_PARTICULAR',     // Trámites personales
-  VACACIONES = 'VACACIONES',
-  BAJA_MEDICA = 'BAJA_MEDICA',
-
-  // --- FALLOS TÉCNICOS ---
-  FALLO_DISPOSITIVO = 'FALLO_DISPOSITIVO', // Tablet/Móvil roto o sin batería
-  SIN_INTERNET = 'SIN_INTERNET',           // El lugar de trabajo no tenía conexión
-  ERROR_APP = 'ERROR_APP',                 // La aplicación se cerró o dio error
+  // --- FALLOS TÉCNICOS (ERRORES DEL SISTEMA) ---
+  ERROR_GPS = 'ERROR_GPS',                 // La App no detectó la ubicación
+  FALLO_DISPOSITIVO = 'FALLO_DISPOSITIVO', // Móvil sin batería o roto
+  SIN_INTERNET = 'SIN_INTERNET',           // No hubo conexión para subir el fichaje
+  ERROR_APP = 'ERROR_APP',                 // La aplicación se bloqueó
 
   // --- OTROS ---
   OTROS = 'OTROS'

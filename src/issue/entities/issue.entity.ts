@@ -12,15 +12,31 @@ import {
 import { User } from 'users/entities/user.entity';
 
 export enum IncidenciaTipo {
-  NO_ASISTENCIA = 'NO_ASISTENCIA',
-  TARDANZA = 'TARDANZA',
-  SALIDA_ANTICIPADA = 'SALIDA_ANTICIPADA',
-  FALTA_JORNADA = 'FALTA_JORNADA',
-  MARCA_IRREGULAR = 'MARCA_IRREGULAR',
-  INCUMPLIMIENTO_NORMAS = 'INCUMPLIMIENTO_NORMAS',
-  OTROS = 'OTROS',
-}
+  // --- RELACIONADAS CON EL HORARIO ---
+  TARDANZA = 'TARDANZA',                 // Llegada después de la hora
+  SALIDA_ANTICIPADA = 'SALIDA_ANTICIPADA', // Salida antes de la hora
+  HORAS_EXTRAS_NO_AUTORIZADAS = 'HORAS_EXTRAS_NO_AUTORIZADAS',
 
+  // --- RELACIONADAS CON EL MARCAJE (ERRORES) ---
+  OLVIDO_ENTRADA = 'OLVIDO_ENTRADA',     // El empleado vino pero no marcó
+  OLVIDO_SALIDA = 'OLVIDO_SALIDA',       // Se fue y dejó el turno abierto
+  MARCA_DUPLICADA = 'MARCA_DUPLICADA',   // Marcó dos veces por error
+  ERROR_GPS = 'ERROR_GPS',               // No se pudo validar la ubicación
+
+  // --- AUSENCIAS Y PERMISOS ---
+  AUSENCIA = 'AUSENCIA', // No vino, no avisó
+  PERMISO_PARTICULAR = 'PERMISO_PARTICULAR',     // Trámites personales
+  VACACIONES = 'VACACIONES',
+  BAJA_MEDICA = 'BAJA_MEDICA',
+
+  // --- FALLOS TÉCNICOS ---
+  FALLO_DISPOSITIVO = 'FALLO_DISPOSITIVO', // Tablet/Móvil roto o sin batería
+  SIN_INTERNET = 'SIN_INTERNET',           // El lugar de trabajo no tenía conexión
+  ERROR_APP = 'ERROR_APP',                 // La aplicación se cerró o dio error
+
+  // --- OTROS ---
+  OTROS = 'OTROS'
+}
 @Entity('incidencias')
 @Index(['userId', 'createdAt'])
 export class Issue {

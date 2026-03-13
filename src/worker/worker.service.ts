@@ -358,12 +358,15 @@ export class WorkerService {
           horarioId: horarioId // Actualización directa a la columna física
         } as any);
 
+        const fechaAncla = new Date();
+        fechaAncla.setHours(0, 0, 0, 0);
         // B) Actualizar USER
         // Como Worker.id === User.id (Shared Primary Key), usamos el mismo 'workerId'.
         // Nota: Esto asume que la entidad User también tiene una relación con Horario.
         await manager.update(User, workerId, {
           // Si en User no tienes 'horarioId' columna, usa la relación:
-          horario: { id: horarioId }
+          horario: { id: horarioId },
+          fechaInicioHorario: fechaAncla
         });
       });
 

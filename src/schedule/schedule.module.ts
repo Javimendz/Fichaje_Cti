@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 // Importar el servicio y controlador del módulo
 import { ScheduleService } from './schedule.service';
+
 import { ScheduleController } from './schedule.controller';
 // Importar las entidades necesarias
 import { Horario } from './entities/schedules.entity';

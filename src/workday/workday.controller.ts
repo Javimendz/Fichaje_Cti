@@ -1,307 +1,129 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, MoreThanOrEqual } from 'typeorm'; 
-import { Horario } from './entities/schedules.entity';
-import { CreateHorarioDto } from './dto/create-schedule.dto';
-import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
-import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
-import { User } from 'auth/entities/user.entity';
-import { Workday } from 'workday/entities/workday.entity';
-import { DistribucionDia } from './entities/distribucion-dia.entity';
+import { 
+  Controller, 
+  Post, 
+  Get, 
+  Body, 
+  Patch, 
+  UseGuards, 
+  Query, 
+  BadRequestException, 
+  Inject
+} from '@nestjs/common';
+import { WorkdayService } from './workday.service';
+import { CheckInDto } from './dto/check-in.dto';
 
-@Injectable()
-export class ScheduleService {
+// Auth Imports
+import { GetUser } from 'auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import type { UserPayload } from 'auth/interfaces/user-payload.interface'; 
+import { UserRole } from 'auth/roles.enum';
+import { Roles } from 'auth/decorators/roles.decorator';
+
+@Controller('jornada')
+@UseGuards(JwtAuthGuard)
+export class WorkdayController {
   constructor(
-    @InjectRepository(Horario) private readonly horarioRepository: Repository<Horario>,
-    private readonly dataSource: DataSource,
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(FranjaHoraria) private readonly franjaRepo: Repository<FranjaHoraria>
+    private readonly workdayService: WorkdayService,
   ) {}
 
-  // ---------------------------------------------------------
-  // MÉTODOS CRUD PRINCIPALES
-  // --------------------------------------------------------- 
-  async create(dto: CreateHorarioDto, user: UserPayload) {
-    if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
+  /**
+   * Inicia una nueva jornada laboral.
+   * POST /jornada/check-in
+   * El método checkIn recibe un DTO con la latitud y longitud del usuario al momento de hacer check-in, junto con la información del usuario autenticado obtenida a través del decorador @GetUser. La lógica de negocio para validar el check-in (como verificar si ya hay una jornada activa, validar la ubicación, etc.) se delega completamente al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   * @param checkInDto DTO que contiene la latitud y longitud del usuario al hacer check-in.
+   * @param user Usuario autenticado que realiza el check-in, obtenido a través del decorador @GetUser. Este objeto contiene información como el ID del usuario, su email, rol, etc., que puede ser utilizada por el WorkdayService para validar y registrar la jornada laboral correctamente.
+   * @return La jornada laboral creada o un mensaje de error si el check-in no es válido (por ejemplo, si ya hay una jornada activa).
+   * * Este endpoint es fundamental para el sistema de fichaje, ya que marca el inicio de la jornada laboral de un usuario. La información de ubicación puede ser utilizada para validar que el usuario está en un lugar permitido para trabajar, y la información del usuario se utiliza para asociar la jornada laboral con el usuario correcto en la base de datos.
+   * 
+   */
 
-    try {
-      return await this.dataSource.transaction(async (transactionManager) => {
-        const nuevoHorario = transactionManager.create(Horario, {
-          nombre: dto.nombre,
-          tipo: dto.tipo,
-          esRotativo: dto.esRotativo ?? false,
-          semanasRotacion: dto.semanasRotacion ?? 1,
-          isActive: true,
-          empresa: { id: user.empresaId } as any, 
-        });
+ @Post('check-in')
+  async checkIn(@Body() checkInDto: CheckInDto, @GetUser() user: UserPayload) {
+    return await this.workdayService.checkIn(checkInDto, user);  }
 
-        const horarioGuardado = await transactionManager.save(nuevoHorario);
-
-        if (dto.distribuciones && dto.distribuciones.length > 0) {
-          for (const distDto of dto.distribuciones) {
-            this.validarJornadaCompleta(distDto); // Validación antes de guardar
-
-            const nuevaDist = transactionManager.create(DistribucionDia, {
-              diaSemana: distDto.diaSemana as any,
-              horasDia: distDto.horasDia,
-              semanaRotacion: distDto.semanaRotacion ?? 1,
-              horario: horarioGuardado, 
-            });
-
-            const distGuardada = await transactionManager.save(nuevaDist);
-
-            if (distDto.franjas && distDto.franjas.length > 0) {
-              const franjasInstances = distDto.franjas.map(fDto =>
-                transactionManager.create(FranjaHoraria, {
-                  inicio: fDto.inicio,
-                  fin: fDto.fin,
-                  distribucionDia: distGuardada,
-                })
-              );
-              await transactionManager.save(franjasInstances);
-            }
-          }
-        }
-
-        return await transactionManager
-          .createQueryBuilder(Horario, 'horario')
-          .leftJoinAndSelect('horario.distribuciones', 'distribucion')
-          .leftJoinAndSelect('distribucion.franjas', 'franja')
-          .where('horario.id = :id', { id: horarioGuardado.id })
-          .orderBy('distribucion.semanaRotacion', 'ASC')
-          .addOrderBy('distribucion.id', 'ASC')
-          .addOrderBy('franja.id', 'ASC')
-          .getOne();
-      });
-    } catch (err) {
-      console.error('🔥 ERROR REAL EN BASE DE DATOS:', err);
-      throw new BadRequestException(`No se pudo crear el horario: ${err.message}`);
-    }
+  /**
+   * Finaliza la jornada laboral activa.
+   * PATCH /jornada/check-out
+   * El método checkOut recibe un DTO con la latitud y longitud del usuario al momento de hacer check-out, junto con la información del usuario autenticado obtenida a través del decorador @GetUser. La lógica de negocio para validar el check-out (como verificar si hay una jornada activa, validar la ubicación, calcular la duración de la jornada, etc.) se delega completamente al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   * @param checkOutDto DTO que contiene la latitud y longitud del usuario al hacer check-out.
+   * @param user Usuario autenticado que realiza el check-out, obtenido a través del decorador @GetUser. Este objeto contiene información como el ID del usuario, su email, rol, etc., que puede ser utilizada por el WorkdayService para validar y registrar la finalización de la jornada laboral correctamente.
+   * @return La jornada laboral actualizada con la hora de finalización o un mensaje de error si el check-out no es válido (por ejemplo, si no hay una jornada activa).
+   * * Este endpoint es esencial para el sistema de fichaje, ya que marca el final de la jornada laboral de un usuario. La información de ubicación puede ser utilizada para validar que el usuario está en un lugar permitido para finalizar su jornada, y la información del usuario se utiliza para asociar correctamente la finalización de la jornada laboral con el usuario en la base de datos.
+   */
+ @Patch('check-out') 
+  async checkOut(@Body() checkOutDto: CheckInDto, @GetUser() user: UserPayload) {
+    return await this.workdayService.checkOut(checkOutDto, user);
   }
-
-  async findAllByEmpresa(empresaId: number) {
-    return await this.horarioRepository.find({
-      where: { empresa: { id: empresaId }, isActive: true },
-      relations: ['distribuciones', 'distribuciones.franjas'],
-      order: { createdAt: 'DESC' }
-    });
-  }
-
-  async findOne(id: number, empresaId: number) {
-    const horario = await this.horarioRepository.findOne({
-      where: { id, empresa: { id: empresaId } },
-      relations: ['distribuciones', 'distribuciones.franjas']
-    });
-
-    if (!horario) throw new NotFoundException(`Horario no encontrado o no tienes acceso`);
-    return horario;
-  }
-
-  async remove(id: number, empresaId: number) {
-    await this.userRepository.update({ horario: { id: id } }, { horario: null });
-    const result = await this.horarioRepository.delete({ id, empresaId });
-    if (result.affected === 0) throw new NotFoundException(`No se encontró el horario con ID ${id}`);
-    return { mensaje: 'Horario eliminado y usuarios desvinculados.' };
-  }
-
-  async update(id: number, dto: Partial<CreateHorarioDto>, user: UserPayload) {
-    if (!user.empresaId) throw new BadRequestException('Usuario sin empresa');
-
-    if (dto.distribuciones) {
-      for (const dist of dto.distribuciones) {
-        this.validarJornadaCompleta(dist);
-      }
-    }
-
-    const horarioExistente = await this.horarioRepository.findOne({
-      where: { id, empresa: { id: user.empresaId } },
-      relations: ['distribuciones', 'distribuciones.franjas'],
-    });
-
-    if (!horarioExistente) throw new NotFoundException(`Horario con ID ${id} no encontrado en tu empresa`);
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      if (dto.nombre) horarioExistente.nombre = dto.nombre;
-      if (dto.tipo) horarioExistente.tipo = dto.tipo;
-      if (dto.esRotativo !== undefined) horarioExistente.esRotativo = dto.esRotativo;
-      if (dto.semanasRotacion !== undefined) horarioExistente.semanasRotacion = dto.semanasRotacion;
-
-      await queryRunner.manager.save(horarioExistente);
-
-      if (dto.distribuciones) {
-        for (const dist of horarioExistente.distribuciones) {
-          await queryRunner.manager.delete(FranjaHoraria, { distribucionDia: { id: dist.id } });
-          await queryRunner.manager.delete(DistribucionDia, { id: dist.id });
-        }
-
-        for (const distDto of dto.distribuciones) {
-          const nuevaDist = queryRunner.manager.create(DistribucionDia, {
-            diaSemana: distDto.diaSemana as any,
-            horasDia: distDto.horasDia,
-            semanaRotacion: distDto.semanaRotacion ?? 1,
-            horario: horarioExistente, 
-          });
-
-          const distGuardada = await queryRunner.manager.save(nuevaDist);
-
-          if (distDto.franjas && distDto.franjas.length > 0) {
-            const franjasInstances = distDto.franjas.map(fDto =>
-              queryRunner.manager.create(FranjaHoraria, {
-                inicio: fDto.inicio,
-                fin: fDto.fin,
-                distribucionDia: distGuardada,
-              })
-            );
-            await queryRunner.manager.save(franjasInstances);
-          }
-        }
-      }
-
-      await queryRunner.commitTransaction();
-      return await this.findOne(id, user.empresaId); 
-
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException(`No se pudo actualizar el horario: ${err.message}`);
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  // ---------------------------------------------------------
-  // MÉTODOS DE CÁLCULO Y ROTACIÓN (ESTADÍSTICAS)
-  // --------------------------------------------------------- 
-
-  async getHorasObjetivoSemanal(userId: number) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['horario', 'horario.distribuciones'],
-    });
-
-    if (!user || !user.horario) throw new NotFoundException('El usuario no tiene un horario asignado.');
-
-    // 🔥 FIX ROTACIÓN: Usamos el ancla de tiempo para saber en qué semana estamos
-    const inicioCiclo = user.fechaInicioHorario || user.createdAt;
-    const hoy = new Date();
-
-    const semanaActual = this.calcularSemanaRotacion(inicioCiclo, hoy, user.horario.semanasRotacion);
-
-    // Solo sumamos las horas de la semana activa en el ciclo
-    const totalHoras = user.horario.distribuciones
-      .filter(dist => dist.semanaRotacion === semanaActual) 
-      .reduce((acc, dist) => acc + (Number(dist.horasDia) || 0), 0);
-
-    return { userId, horarioNombre: user.horario.nombre, semanaActual, totalHoras };
-  }
-
-  async getHorasTrabajadasSemanales(userId: number) {
-    const hoy = new Date();
-    const inicioSemana = new Date(hoy);
-    inicioSemana.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
-    inicioSemana.setHours(0, 0, 0, 0);
-
-    const registros = await this.dataSource.getRepository(Workday).find({
-      where: { usuario: { id: userId }, inicio: MoreThanOrEqual(inicioSemana) },
-    });
-
-    const totalMinutos = registros.reduce((acc, reg) => acc + (reg.total_minutos || 0), 0);
-    const totalHoras = totalMinutos / 60;
-
-    return {
-      userId,
-      totalHorasTrabajadas: parseFloat(totalHoras.toFixed(2)),
-      totalMinutos,
-      desde: inicioSemana.toISOString().split('T')[0]
-    };
-  }
-
-  async getProgresoSemanal(userId: number) {
-    const { totalHoras } = await this.getHorasObjetivoSemanal(userId);
-    const { totalHorasTrabajadas } = await this.getHorasTrabajadasSemanales(userId);
-
-    if (totalHoras === 0) return { porcentaje: 0, mensaje: 'Sin horas objetivo asignadas para esta semana.' };
-
-    const porcentaje = (totalHorasTrabajadas / totalHoras) * 100;
-
-    return {
-      userId,
-      horasObjetivo: totalHoras,
-      horasTrabajadas: totalHorasTrabajadas,
-      porcentaje: parseFloat(porcentaje.toFixed(2)),
-      completado: porcentaje >= 100
-    };
-  }
-
-  // ---------------------------------------------------------
-  // MÉTODOS AUXILIARES Y MATEMÁTICOS
-  // --------------------------------------------------------- 
-
-  // 🔥 NUEVO: Método centralizado para obtener el turno exacto de un día
-  async getTurnoHoy(userId: number, fecha: Date = new Date()) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['horario', 'horario.distribuciones', 'horario.distribuciones.franjas'],
-    });
-
-    if (!user || !user.horario) return null;
-
-    const semanaActual = this.calcularSemanaRotacion(
-      user.fechaInicioHorario || user.createdAt,
-      fecha,
-      user.horario.semanasRotacion
-    );
-
-    const nombreDia = this.obtenerNombreDia(fecha);
-
-    return user.horario.distribuciones.find(
-      d => d.diaSemana === nombreDia && d.semanaRotacion === semanaActual
-    );
-  }
-
-  public obtenerNombreDia(fecha: Date): string {
-    const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
-    return dias[fecha.getDay()];
-  }
-
-  private validarJornadaCompleta(distDto: any) {
-    if (!distDto.franjas || distDto.franjas.length === 0) return;
-
-    let minutosTotalesFranjas = 0;
+  /**
+   * Consulta el estado actual (¿Estoy trabajando?).
+   * GET /jornada/status
+   * El método getStatus utiliza la información del usuario autenticado obtenida a través del decorador @GetUser para consultar el estado actual de la jornada laboral del usuario. La lógica de negocio para determinar si el usuario tiene una jornada activa y obtener los detalles de esa jornada se delega completamente al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   * @param user Usuario autenticado que realiza la consulta, obtenido a través del decorador @GetUser. Este objeto contiene información como el ID del usuario, su email, rol, etc., que puede ser utilizada por el WorkdayService para validar y obtener el estado de la jornada laboral correctamente.
+   * @return Un objeto que indica si el usuario está trabajando actualmente (isWorking) y los detalles de la jornada laboral activa (jornada) si existe, o null si no hay una jornada activa.
+   * * Este endpoint es útil para que los usuarios puedan verificar rápidamente si tienen una jornada laboral activa, lo que puede ser especialmente útil para aplicaciones móviles o interfaces de usuario donde los usuarios necesitan confirmar su estado de fichaje de manera rápida y sencilla.
+   * 
+   */
+  @Get('status')
+  async getStatus(@GetUser() user: UserPayload) {
+    // Nota: 'user.id' debe existir en tu UserPayload. Si tu payload usa 'userId', cámbialo aquí.
+    const activeWorkday = await this.workdayService.findActiveWorkday(user.id);
     
-    const franjasEnMinutos = distDto.franjas.map(f => {
-      const [hIni, mIni] = f.inicio.split(':').map(Number);
-      const [hFin, mFin] = f.fin.split(':').map(Number);
-      return { inicio: hIni * 60 + mIni, fin: hFin * 60 + mFin, texto: `${f.inicio}-${f.fin}` };
-    }).sort((a, b) => a.inicio - b.inicio);
-
-    for (let i = 0; i < franjasEnMinutos.length; i++) {
-      const actual = franjasEnMinutos[i];
-
-      if (actual.fin <= actual.inicio) throw new BadRequestException(`La franja ${actual.texto} es inválida.`);
-
-      if (i < franjasEnMinutos.length - 1) {
-        const siguiente = franjasEnMinutos[i + 1];
-        if (actual.fin > siguiente.inicio) {
-          throw new BadRequestException(`Solapamiento detectado en el día ${distDto.diaSemana}: La franja ${actual.texto} choca con la franja ${siguiente.texto}.`);
-        }
-      }
-      minutosTotalesFranjas += (actual.fin - actual.inicio);
-    }
-
-    const minutosObjetivo = distDto.horasDia * 60;
-    if (minutosTotalesFranjas < minutosObjetivo) {
-      throw new BadRequestException(`En el día ${distDto.diaSemana}, las franjas suman ${minutosTotalesFranjas / 60}h, pero el mínimo diario es ${distDto.horasDia}h.`);
-    }
+    return {
+      isWorking: !!activeWorkday, 
+      jornada: activeWorkday || null
+    };
   }
 
-  calcularSemanaRotacion(fechaInicioCiclo: Date, fechaObjetivo: Date, totalSemanasRotacion: number): number {
-    const msPorSemana = 1000 * 60 * 60 * 24 * 7;
-    const diferenciaMs = fechaObjetivo.getTime() - fechaInicioCiclo.getTime();
-    const semanasPasadas = Math.max(0, Math.floor(diferenciaMs / msPorSemana));
-    return (semanasPasadas % totalSemanasRotacion) + 1;
+  /**
+   * Obtiene el historial completo del usuario.
+   * GET /jornada/historial
+   * El método getMyHistory utiliza la información del usuario autenticado obtenida a través del decorador @GetUser para consultar el historial completo de jornadas laborales del usuario. La lógica de negocio para obtener y formatear el historial de jornadas se delega completamente al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   * @param user Usuario autenticado que realiza la consulta, obtenido a través del decorador @GetUser. Este objeto contiene información como el ID del usuario, su email, rol, etc., que puede ser utilizada por el WorkdayService para validar y obtener el historial de jornadas laborales correctamente.
+   * @return Un array con el historial completo de jornadas laborales del usuario, incluyendo detalles como fechas de inicio y fin, duración, ubicación, etc. Si el usuario no tiene jornadas registradas, se devolverá un array vacío.
+   * * Este endpoint es fundamental para que los usuarios puedan revisar su historial de fichajes, lo que puede ser útil para verificar horas trabajadas, corregir errores de fichaje, o simplemente para llevar un registro personal de sus jornadas laborales. Además, este historial puede ser utilizado por los administradores para supervisar y gestionar las jornadas laborales de los empleados.
+   * 
+   */
+  @Get('historial')
+  async getMyHistory(@GetUser() user: UserPayload) {
+    return this.workdayService.getHistory(user.id);
   }
+
+  /**
+   * Obtiene jornadas en un rango de fechas.
+   * GET /jornada/rango?desde=2023-01-01&hasta=2023-01-31
+   * El método getByRange recibe un rango de fechas a través de los parámetros de consulta 'desde' y 'hasta', junto con la información del usuario autenticado obtenida a través del decorador @GetUser. La lógica de negocio para validar las fechas, consultar las jornadas dentro del rango, y formatear la respuesta se delega completamente al WorkdayService, manteniendo el controlador limpio y enfocado en manejar la solicitud HTTP y la seguridad de acceso.
+   * @param user Usuario autenticado que realiza la consulta, obtenido a través del decorador @GetUser. Este objeto contiene información como el ID del usuario, su email, rol, etc., que puede ser utilizada por el WorkdayService para validar y obtener las jornadas dentro del rango de fechas correctamente.
+   * @param desde Fecha de inicio del rango en formato YYYY-MM-DD, recibida a través de los parámetros de consulta. Se valida que sea una fecha válida antes de procesar la solicitud.
+   * @param hasta Fecha de fin del rango en formato YYYY-MM-DD, recibida a través de los parámetros de consulta. Se valida que sea una fecha válida antes de procesar la solicitud.
+   * @return Un array con las jornadas laborales del usuario que se encuentran dentro del rango de fechas especificado, incluyendo detalles como fechas de inicio y fin, duración, ubicación, etc. Si no hay jornadas dentro del rango, se devolverá un array vacío. Si las fechas no son válidas, se lanzará una excepción BadRequestException.
+   * * Este endpoint es útil para que los usuarios puedan consultar sus jornadas laborales dentro de un período específico, lo que puede ser útil para revisar horas trabajadas en un mes, preparar reportes, o simplemente para llevar un registro organizado de sus jornadas laborales. Además, este endpoint puede ser utilizado por los administradores para supervisar y gestionar las jornadas laborales de los empleados dentro de períodos específicos.
+   * 
+   */
+  @Get('rango')
+  async getByRange(
+    @GetUser() user: UserPayload,
+    @Query('desde') desde: string,
+    @Query('hasta') hasta: string,
+  ) {
+    const startDate = new Date(desde);
+    const endDate = new Date(hasta);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new BadRequestException('Las fechas no son válidas (Formato esperado: YYYY-MM-DD)');
+    }
+
+    return this.workdayService.findAllByRange(
+      user.id, 
+      startDate, 
+      endDate
+    );
+  }
+
+  @Get('dashboard/resumen')
+  @Roles(UserRole.ADMIN) 
+  async getDashboard(@GetUser() user: UserPayload) {
+    return await this.workdayService.getTodayStats(user.empresaId);
+  }
+
+  
 }

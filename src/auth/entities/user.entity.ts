@@ -73,10 +73,11 @@ export class User {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-
+  @Column({ type: 'timestamp', nullable: true, name: 'fecha_inicio_horario' })
+  fechaInicioHorario: Date;
 
   @Column({ name: 'empresa_id', nullable: true }) // 👈 Cambiar a false
-empresaId: number;
+  empresaId: number;
 
 
   @ManyToOne(() => Company, (empresa) => empresa.usuarios, {

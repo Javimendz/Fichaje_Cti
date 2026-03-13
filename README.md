@@ -128,11 +128,12 @@ GET            /api/schedule/list-schedules          Lista los horarios de la em
 GET            /api/schedule/find/:id                Busca los detalles de un horario por su ID.          Token (ADMIN/WORKER)
 DELETE         /api/schedule/delete/:id              Elimina un horario completo del sistema.             Token (ADMIN)
 PUT	           /api/schedule/editar/:id	             Actualiza un horario existente por su ID.	          Token (ADMIN) + Body
-GET	           /api/schedule/stats/objetivo	         Obtiene las horas que el trabajador debe trabajar.	  Token (ADMIN/WORKER)
+GET            /api/schedule/stats/objetivo          Horas objetivo filtradas por la semana actual.  Token (ADMIN/WORKER)
 GET            /api/schedule/stats/real              Obtiene las horas que el trabajador lleva trabajadas.Token (ADMIN/WORKER)
 GET            /api/schedule/stats/progreso          Obtiene el % de cumplimiento semanal (Real vs Objetivo).Token (ADMIN/WORKER)
 GET            /api/schedule/stats/progreso/:userId  Consulta el progreso de cualquier trabajador por su  ID.Token (ADMIN) 
 GET            /api/schedule/test-rotacion           Simula y calcula a qué semana de rotación pertenece. Token (ADMIN) + Querys: ?fechaInicio=2026-03-09&fechaPrueba=2026-03-23&ciclo=2
+GET            /api/schedule/turno-hoy                Devuelve el turno exacto de HOY calculando la rotación.       Token (Cualquiera)
 ```
 
 ```

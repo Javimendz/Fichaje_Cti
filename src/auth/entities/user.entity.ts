@@ -74,7 +74,7 @@ export class User {
   isActive: boolean;
 
   @Column({ type: 'timestamp', nullable: true, name: 'fecha_inicio_horario' })
-  fechaInicioHorario: Date;
+  fechaInicioHorario: Date | null;
 
   @Column({ name: 'empresa_id', nullable: true }) // 👈 Cambiar a false
   empresaId: number;

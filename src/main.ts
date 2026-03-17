@@ -42,5 +42,10 @@ async function bootstrap() {
   console.log('--- CONFIGURACIÓN INICIADA ---');
   console.log(` Servidor corriendo en puerto: ${port}`);
   console.log(` CORS habilitado para: ${corsOrigin}`);
+  console.log('--- DEBUG DE VARIABLES ---');
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
+console.log('TIPO DE PASSWORD:', typeof process.env.DB_PASSWORD);
+console.log('--------------------------');
 }
 bootstrap();

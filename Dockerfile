@@ -1,27 +1,24 @@
-# 1. Imagen base
 FROM node:lts-alpine
-
-# 2. Directorio de trabajo
+ENV NODE_ENV=production
 WORKDIR /usr/src/app
 
-# 3. Copiamos SOLO los archivos de Yarn primero (optimiza la caché)
+# Copiamos los archivos de dependencias
 COPY package.json yarn.lock ./
 
-# 4. Instalamos TODAS las dependencias (necesitamos el CLI de Nest para compilar)
+# Instalamos TODAS las dependencias (quitamos el --production para que instale Nest/TypeScript)
 RUN yarn install --frozen-lockfile
 
-# 5. Copiamos todo el código fuente
+# Copiamos todo el código fuente
 COPY . .
 
-# 6. Compilamos el proyecto (esto creará la carpeta /dist con el JS puro)
+# Compilamos el código para que se cree la carpeta "dist"
 RUN yarn build
 
-# 7. Exponemos el puerto que usa tu app
-EXPOSE 3000
+EXPOSE 3001
 
-# 8. Ajustamos permisos por seguridad (como tenías en tu archivo original)
+# Ajustamos permisos
 RUN chown -R node /usr/src/app
 USER node
 
-# 9. Ejecutamos el archivo compilado directamente con Node (¡sin usar Nest CLI!)
+# Ejecutamos el archivo compilado
 CMD ["node", "dist/main.js"]

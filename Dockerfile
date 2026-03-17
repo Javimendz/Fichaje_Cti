@@ -17,7 +17,7 @@ COPY . .
 RUN yarn build
 
 # 7. Exponemos el puerto que usa tu app
-EXPOSE 3001
+EXPOSE 3000
 
 # 8. Ajustamos permisos por seguridad (como tenías en tu archivo original)
 RUN chown -R node /usr/src/app

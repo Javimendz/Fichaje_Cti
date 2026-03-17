@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  backend:
+    image: javierm735/fichaje-backend:latest # Baja la imagen de la nube
+    container_name: fichaje-backend-prod
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      NODE_ENV: production
+      # ... resto de tus variables de producción
+    networks:
+      - fichaje-network
+    depends_on:
+      - postgres-wait
+
+  postgres-wait:
+    image: postgres:14.3
+    container_name: postgres-wait
+    command: >
+      sh -c "while ! nc -z postgres_db 5432; do sleep 2; done; exit 0;"
+    networks:
+      - fichaje-network
+
+networks:
+  fichaje-network:
+    external: true

@@ -275,7 +275,7 @@ export class WorkerService {
         user.horarioId = dto.horarioId;
         user.horario = dto.horarioId ? { id: dto.horarioId } as any : null;
 
-        // 🔥 FIX ROTACIÓN: Si le asignamos un horario nuevo, reseteamos el ancla de rotación
+        //  Si le asignamos un horario nuevo, reseteamos el ancla de rotación
         if (dto.horarioId) {
           const fechaAncla = new Date();
           fechaAncla.setHours(0, 0, 0, 0);

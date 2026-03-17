@@ -36,60 +36,60 @@ import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
  */
 
 @Module({
-  
+
   imports: [
     ConfigModule.forRoot({
 
       isGlobal: true,
 
     }),
-   NestScheduleModule.forRoot(),
+    NestScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
 
-         // TypeORM Configuration:
-         // - type: 'postgres' - Especifica el tipo de base de datos como PostgreSQL.
-         // - host, port, database, username, password: Configura los detalles de conexión a la base de datos utilizando variables de entorno.
-         // - autoLoadEntities: true - Permite que TypeORM cargue automáticamente las entidades registradas en los módulos.
-         // - synchronize: true - Sincroniza el esquema de la base de datos con las entidades cada vez que se inicia la aplicación (útil para desarrollo).
-         // - dropSchema: true - Elimina y recrea el esquema de la base de datos en cada inicio de la aplicación (útil para pruebas y desarrollo).
-         // - extra: { timezone: 'UTC' } - Configura la zona horaria del driver de la base de datos a UTC para consistencia en el manejo de fechas y horas.
-         // - entities: [__dirname + '/**/*.entity{.ts,.js}'] - Especifica la ruta donde se encuentran las entidades para que TypeORM las cargue.
-         // con process.env.* se accede a las variables de entorno definidas en el sistema o en un archivo .env.
-         // @see https://typeorm.io/data-source-options
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port:  5432,
-        database: process.env.DB_NAME,
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        autoLoadEntities: true,
-        synchronize: true,
-        dropSchema: false, // Cambiado a false para evitar pérdida de datos en producción
-        extra: {
-           timezone: 'UTC', 
-        },
-       entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      // TypeORM Configuration:
+      // - type: 'postgres' - Especifica el tipo de base de datos como PostgreSQL.
+      // - host, port, database, username, password: Configura los detalles de conexión a la base de datos utilizando variables de entorno.
+      // - autoLoadEntities: true - Permite que TypeORM cargue automáticamente las entidades registradas en los módulos.
+      // - synchronize: true - Sincroniza el esquema de la base de datos con las entidades cada vez que se inicia la aplicación (útil para desarrollo).
+      // - dropSchema: true - Elimina y recrea el esquema de la base de datos en cada inicio de la aplicación (útil para pruebas y desarrollo).
+      // - extra: { timezone: 'UTC' } - Configura la zona horaria del driver de la base de datos a UTC para consistencia en el manejo de fechas y horas.
+      // - entities: [__dirname + '/**/*.entity{.ts,.js}'] - Especifica la ruta donde se encuentran las entidades para que TypeORM las cargue.
+      // con process.env.* se accede a las variables de entorno definidas en el sistema o en un archivo .env.
+      // @see https://typeorm.io/data-source-options
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432'),  // Parsear a número
+      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      autoLoadEntities: true,
+      synchronize: process.env.NODE_ENV === 'development',  // Solo en desarrollo
+      dropSchema: false,
+      extra: {
+        timezone: 'UTC',
+      },
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
 
 
 
     }),
-    AuthModule, 
+    AuthModule,
     AllowedPhonesModule,
-    UserModule, 
-    AttendanceModule, 
+    UserModule,
+    AttendanceModule,
     AlarmsModule,
-    SeedModule, 
-    CompanyModule, 
-    CodigoAccesoModule, 
+    SeedModule,
+    CompanyModule,
+    CodigoAccesoModule,
     ScheduleModule, // Tu módulo
-    WorkdayModule, 
-    TimeSlotModule, 
-    AbsenceModule, 
-    WorkerModule, 
-    RequestModule, 
-    IssueModule, 
+    WorkdayModule,
+    TimeSlotModule,
+    AbsenceModule,
+    WorkerModule,
+    RequestModule,
+    IssueModule,
     ActivityModule
-   ],
-  
+  ],
+
 })
-export class AppModule {}
+export class AppModule { }

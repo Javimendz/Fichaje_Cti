@@ -12,7 +12,6 @@ export class Activity {
    * Puede ser OTRO, OPERADOR, MECANICO, ELECTRONICO, etc.
    * 
    */
-  @Column({ type: 'enum', enum: TipoPuesto, default: TipoPuesto.OTROS })
   tipo: TipoPuesto;
 
   // Opcional: Un nombre más específico si lo desean (Ej: "Operario de la Máquina 3")

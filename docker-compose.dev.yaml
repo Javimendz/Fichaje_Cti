@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  backend:
+    build: . # Construye desde tu código local
+    container_name: fichaje-backend-dev
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      NODE_ENV: development
+      # ... resto de tus variables locales
+    volumes:
+      - .:/usr/src/app # Sincroniza tu código para hot-reload
+      - /usr/src/app/node_modules # Evita conflictos de librerías
+    networks:
+      - fichaje-network
+
+networks:
+  fichaje-network:
+    external: true

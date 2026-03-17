@@ -1,24 +1,26 @@
 FROM node:lts-alpine
-ENV NODE_ENV=production
 WORKDIR /usr/src/app
 
-# Copiamos los archivos de dependencias
+# 1. Copiamos los archivos de dependencias
 COPY package.json yarn.lock ./
 
-# Instalamos TODAS las dependencias (quitamos el --production para que instale Nest/TypeScript)
+# 2. Como todavía no estamos en "producción", Yarn instalará TODO (incluido NestJS)
 RUN yarn install --frozen-lockfile
 
-# Copiamos todo el código fuente
+# 3. Copiamos todo el código fuente
 COPY . .
 
-# Compilamos el código para que se cree la carpeta "dist"
+# 4. Compilamos el código. ¡Ahora sí encontrará Nest!
 RUN yarn build
 
-EXPOSE 3001
+# 5. AHORA, una vez compilado, le decimos a Node que pase a modo producción
+ENV NODE_ENV=production
 
-# Ajustamos permisos
+EXPOSE 3000
+
+# 6. Ajustamos permisos por seguridad
 RUN chown -R node /usr/src/app
 USER node
 
-# Ejecutamos el archivo compilado
+# 7. Ejecutamos el archivo compilado nativo
 CMD ["node", "dist/main.js"]

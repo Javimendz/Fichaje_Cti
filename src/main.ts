@@ -9,12 +9,12 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  
+  const corsOrigin = process.env.CORS_ORIGIN?.replace(/['"]/g, '').trim() || 'http://cworker1.cticontrol.com:3567';
 
   // 3. Configurar CORS para el puerto 3567
   // Configuración de CORS para permitir solicitudes desde el frontend en http://localhost:3567. Se especifican los métodos HTTP permitidos, los encabezados que se pueden enviar, y se habilitan las credenciales (cookies) para permitir la autenticación basada en cookies entre el frontend y el backend.
   app.enableCors({
-  origin: 'http://localhost:3567',
+  origin:  corsOrigin,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: 'Content-Type, Authorization', 
   credentials: true,
@@ -36,13 +36,11 @@ async function bootstrap() {
 
   // 6. Iniciar el servidor
   // El puerto se toma de la variable de entorno PORT, o se usa 3000 por defecto si no está definida. Esto permite flexibilidad para configurar el puerto en diferentes entornos (desarrollo, producción, etc.) sin tener que cambiar el código.
-  const port = process.env.PORT ?? 3000;
+  const port = process.env.APP_PORT || 3000;
   await app.listen(port);
   
-  // Logs de configuración
-  // Estos logs se mostrarán al iniciar el servidor, confirmando que la configuración se ha cargado correctamente y proporcionando información útil para el desarrollo y la depuración.
   console.log('--- CONFIGURACIÓN INICIADA ---');
-  console.log(` Servidor en: http://localhost:${port}/api`);
-  console.log(` CORS permitido para: http://localhost:3567`);
+  console.log(` Servidor corriendo en puerto: ${port}`);
+  console.log(` CORS habilitado para: ${corsOrigin}`);
 }
 bootstrap();

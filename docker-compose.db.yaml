@@ -1,0 +1,21 @@
+
+services:
+  db:
+    image: postgres:14.3
+    container_name: postgresDB_Fichaje
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      # Nombres oficiales de la imagen de Postgres
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - fichaje-network
+
+networks:
+  fichaje-network:
+    external: true

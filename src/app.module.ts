@@ -63,7 +63,7 @@ import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: process.env.NODE_ENV !== 'production',
         dropSchema: false, // Cambiado a false para evitar pérdida de datos en producción
         extra: {
            timezone: 'UTC', 

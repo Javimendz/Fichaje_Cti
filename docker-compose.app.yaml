@@ -1,13 +1,16 @@
+
 services:
-  backend:
-    build: . # O la imagen que uses
-    container_name: fichaje-backend
+
+  db:
+    image: postgres:14.3
     restart: always
-    ports:
-      - "3000:3000"
+    ports: 
+      - "5432:5432"
     environment:
-      DB_HOST: db # <--- IMPORTANTE: Debe ser el nombre del servicio en el otro archivo
-      DB_PORT: 5432
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRESS_DB: ${DB_NAME}
+      POSTGRESS_USERNAME: ${DB_USERNAME}
+      POSTGRESS_HOST: ${DB_HOST}
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -15,9 +18,9 @@ services:
       MAX_FICHAR_DISTANCE: ${MAX_FICHAR_DISTANCE}
       DEFAULT_DAYS_ISSUES: ${DEFAULT_DAYS_ISSUES}
       DEFAULT_DAYS_REQUESTS: ${DEFAULT_DAYS_REQUESTS}
-    networks:
-      - fichaje-network
-
-networks:
-  fichaje-network:
-    external: true
+    container_name: postgresDB_Fichaje
+    env_file:
+      - .env
+    volumes:
+      # - /postgres:/var/lib/postgresql/data
+        - ./postgres-data:/var/lib/postgresql/data

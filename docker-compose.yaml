@@ -1,42 +1,26 @@
 
 services:
-  # --- BASE DE DATOS ---
+
   db:
     image: postgres:14.3
-    container_name: postgres_db_prod
     restart: always
+    ports: 
+      - "5432:5432"
     environment:
-      POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks:
-      - fichaje-network
-
-  # --- BACKEND ---
-  backend:
-    image: javierm735/fichaje-backend:latest
-    container_name: fichaje-backend-prod
-    restart: always
-    ports:
-      - "3000:3000"
+      POSTGRESS_DB: ${DB_NAME}
+      POSTGRESS_USERNAME: ${DB_USERNAME}
+      POSTGRESS_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SEED_SECRET_KEY: ${SEED_SECRET_KEY}
+      MAX_FICHAR_DISTANCE: ${MAX_FICHAR_DISTANCE}
+      DEFAULT_DAYS_ISSUES: ${DEFAULT_DAYS_ISSUES}
+      DEFAULT_DAYS_REQUESTS: ${DEFAULT_DAYS_REQUESTS}
+    container_name: postgresDB_Fichaje
     env_file:
-      - .env.production
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - fichaje-network
-
-networks:
-  fichaje-network:
-    driver: bridge
-
-volumes:
-  postgres_data_prod:
+      - .env
+    volumes:
+      # - /postgres:/var/lib/postgresql/data
+        - ./postgres-data:/var/lib/postgresql/data

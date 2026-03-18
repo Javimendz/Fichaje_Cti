@@ -4,7 +4,7 @@
 
 # FICHAJE-CTI - Sistema de Gestión de Presencia y Recursos
 
-## 🚀 Instalación y Configuración
+## Instalación y Configuración
 
 1. **Clonar proyecto** e instalar dependencias:
    ```bash

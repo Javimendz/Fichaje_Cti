@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  
+
+  # --- BACKEND PRODUCCIÓN ---
+  backend:
+    image: javierm735/fichaje-backend-1:latest
+    container_name: fichaje_backend_prod
+    restart: always
+    environment:
+      # Conexión a base de datos
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      
+      # Configuración de producción
+      NODE_ENV: production
+      APP_PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      TZ: ${TZ:-Europe/Madrid}
+      
+      # JWT (producción)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-1h}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      
+      # Seguridad y lógica
+      SEED_SECRET_KEY: ${SEED_SECRET_KEY}
+      MAX_FICHAR_DISTANCE: ${MAX_FICHAR_DISTANCE:-600}
+      DEFAULT_DAYS_ISSUES: ${DEFAULT_DAYS_ISSUES:-5}
+      DEFAULT_DAYS_REQUESTS: ${DEFAULT_DAYS_REQUESTS:-15}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fichaje-prod-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # --- NGINX (opcional, para balanceo de carga) ---
+  nginx:
+    image: nginx:alpine
+    container_name: fichaje_nginx_prod
+    restart: always
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - fichaje-prod-network
+    profiles:
+      - nginx
+
+  # --- pgAdmin (solo para desarrollo/mantenimiento) ---
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fichaje_pgadmin_prod
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_prod_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fichaje-prod-network
+    profiles:
+      - admin
+
+networks:
+  fichaje-prod-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_prod_data:
+    driver: local
+  pgadmin_prod_data:
+    driver: local

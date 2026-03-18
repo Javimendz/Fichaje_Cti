@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # --- BACKEND (conectado a BBDD externa) ---
+  backend:
+    image: javierm735/fichaje-backend-1:latest
+    container_name: fichaje-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.backend  #Archivo de entorno del backend
+    environment:
+      # Asegurar conexión a la base de datos
+      DB_HOST: postgres_bbdd
+    networks:
+      - bbdd_bbdd-network
+    depends_on:
+      - postgres-wait
+
+  # --- Servicio de espera para asegurar que la BD está lista ---
+  postgres-wait:
+    image: postgres:14.3
+    container_name: postgres-wait
+    command: >
+      sh -c "
+      echo 'Esperando a que PostgreSQL esté disponible en postgres_bbdd:5432...';
+      while ! nc -z postgres_bbdd 5432; do
+        echo 'PostgreSQL no disponible, esperando...';
+        sleep 2;
+      done;
+      echo 'PostgreSQL está disponible!';
+      exit 0;
+      "
+    networks:
+      - bbdd_bbdd-network
+
+networks:
+  bbdd_bbdd-network:
+    external: true  # Usa la red creada por docker-compose de BBDD

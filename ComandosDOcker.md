@@ -175,14 +175,17 @@ bash
 # Paso 3: Iniciar PostgreSQL
 
     bash
-    - docker run -d \
-    --name postgres_db_prod \
+     docker run -d \
+    --name fichaje-bd-prod \
     --restart always \
     -e POSTGRES_USER=postgres \
     -e POSTGRES_PASSWORD=mypass \
     -e POSTGRES_DB=fichaje_cti \
     -v postgres_data_prod:/var/lib/postgresql/data \
     --network fichaje-network postgres:14.3
+
+
+    docker run --name test-fichaje-bd -e POSTGRES_PASSWORD=mypass -e POSTGRES_DB=testdb -p 5433:5432 -d javierm735/fichaje-bd-1
 
 # Paso 4: Esperar a que PostgreSQL esté listo
 bash
@@ -193,11 +196,11 @@ bash
 # Paso 5: Iniciar Backend
 
     bash
-    - docker run -d \
+     docker run -d \
     --name fichaje-backend-prod \
     --restart always \
     -p 3000:3000 \
-    --network fichaje-network javierm735/fichaje-backend:latest
+    --network fichaje-network javierm735/fichaje-backend-1:latest
 
 #Si el backend también existe:
 

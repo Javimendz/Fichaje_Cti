@@ -1,26 +1,64 @@
+  version: '3.8'
 
-services:
+  services:
+    # --- BACKEND ---
+    backend:
+      image: javierm735/fichaje-backend-1:latest
+      container_name: fichaje_backend
+      restart: always
+      ports:
+        - "${APP_PORT:-3000}:3000"
+      environment:
+        # Conexión a base de datos (contenedor externo)
+        DB_HOST: postgres_bbdd
+        DB_PORT: 5432
+        DB_NAME: ${DB_NAME}
+        DB_USERNAME: ${DB_USERNAME}
+        DB_PASSWORD: ${DB_PASSWORD}
+        
+        # Configuración de la aplicación
+        NODE_ENV: ${NODE_ENV:-development}
+        APP_PORT: 3000
+        CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3567}
+        TZ: ${TZ:-Europe/Madrid}
+        
+        # JWT
+        JWT_SECRET: ${JWT_SECRET}
+        JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+        
+        # Seguridad y lógica
+        SEED_SECRET_KEY: ${SEED_SECRET_KEY}
+        MAX_FICHAR_DISTANCE: ${MAX_FICHAR_DISTANCE:-600}
+        DEFAULT_DAYS_ISSUES: ${DEFAULT_DAYS_ISSUES:-5}
+        DEFAULT_DAYS_REQUESTS: ${DEFAULT_DAYS_REQUESTS:-15}
+      networks:
+        - bbdd_bbdd-network
+      external_links:
+        - postgres_bbdd:postgres_bbdd
 
-  db:
-    image: postgres:14.3
-    restart: always
-    ports: 
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRESS_DB: ${DB_NAME}
-      POSTGRESS_USERNAME: ${DB_USERNAME}
-      POSTGRESS_HOST: ${DB_HOST}
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SEED_SECRET_KEY: ${SEED_SECRET_KEY}
-      MAX_FICHAR_DISTANCE: ${MAX_FICHAR_DISTANCE}
-      DEFAULT_DAYS_ISSUES: ${DEFAULT_DAYS_ISSUES}
-      DEFAULT_DAYS_REQUESTS: ${DEFAULT_DAYS_REQUESTS}
-    container_name: postgresDB_Fichaje
-    env_file:
-      - .env
-    volumes:
-      # - /postgres:/var/lib/postgresql/data
-        - ./postgres-data:/var/lib/postgresql/data
+    # --- pgAdmin (opcional) ---
+    pgadmin:
+      image: dpage/pgadmin4:latest
+      container_name: fichaje_pgadmin
+      restart: always
+      environment:
+        PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@cticontrol.com}
+        PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      ports:
+        - "${PGADMIN_PORT:-5050}:80"
+      volumes:
+        - pgadmin_data:/var/lib/pgadmin
+      networks:
+        - bbdd_bbdd-network
+      external_links:
+        - postgres_bbdd:postgres_bbdd
+      profiles:
+        - admin
+
+  networks:
+    bbdd_bbdd-network:
+      external: true
+
+  volumes:
+    pgadmin_data:
+      driver: local

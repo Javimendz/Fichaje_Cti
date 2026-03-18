@@ -1,35 +1,15 @@
 services:
   backend:
-    #image: javierm735/fichaje-backend-1:latest
     build: .
     container_name: fichaje_backend
     restart: always
-    ports:
-      - "${PORT:-3000}:3000"
+    expose:
+      - "3000" # No abrimos puertos al mundo, solo al Proxy
     env_file:
-      - .env
-    environment:
-      DB_HOST: postgres_bbdd # 👈 Esto debe coincidir con el container_name de la DB
-    networks:
-      - red_fichaje # 👈 Corregido el nombre para que coincida con lo de abajo
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: fichaje_pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@cticontrol.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
-    ports:
-      - "5050:80"
+      - .env.backend
     networks:
       - red_fichaje
-    profiles:
-      - admin
 
 networks:
-  red_fichaje: # 👈 Nombre único y claro
+  red_fichaje:
     external: true
-volumes:
-  postgres_data_bbdd:
-    driver: local

@@ -1,39 +1,28 @@
-# --- ETAPA 1: Construcción (Build) ---
-FROM node:18-alpine AS builder
+# --- ETAPA 1: Construcción ---
+# 👇 Cambiamos el 18 por el 20 o 22
+FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Copiamos archivos de dependencias
 COPY package.json yarn.lock ./
-
-# Instalamos todas las dependencias (incluyendo las de desarrollo para compilar)
 RUN yarn install --frozen-lockfile
-
-# Copiamos el resto del código fuente
 COPY . .
-
-# Compilamos el proyecto (genera la carpeta /dist)
 RUN yarn build
 
-# --- ETAPA 2: Ejecución (Production) ---
-FROM node:18-alpine AS runner
+# --- ETAPA 2: Ejecución ---
+# 👇 Aquí también usamos la misma versión
+FROM node:20-alpine AS runner
 
 WORKDIR /usr/src/app
-
-# Definimos variable de entorno de producción
 ENV NODE_ENV=production
 
-# Copiamos solo lo necesario para ejecutar
 COPY package.json yarn.lock ./
 
-# Instalamos solo dependencias de producción (ahorra mucho espacio)
+# Instalamos solo dependencias de producción
 RUN yarn install --production --frozen-lockfile
 
-# Copiamos la carpeta compilada desde la etapa anterior
+# Copiamos la carpeta compilada
 COPY --from=builder /usr/src/app/dist ./dist
 
-# Exponemos el puerto de tu app (definido en tu .env)
 EXPOSE 3000
-
-# Comando para iniciar la aplicación
 CMD ["node", "dist/main"]

@@ -4,16 +4,183 @@
 
 # FICHAJE-CTI - Sistema de Gestión de Presencia y Recursos
 
+Este proyecto ha sido evolucionado a una arquitectura de Micro-contenedores, separando la infraestructura de la aplicación 
+para permitir un despliegue profesional y escalable.
+
 ## Instalación y Configuración
 
-1. **Clonar proyecto** e instalar dependencias:
-   ```bash
-   yarn install
+# Clonar y entrar en la carpeta
+  
+```
+  - git clone [url-del-repo]
+  - cd Fichaday
+  - yarn install
 
-2. Variables de entorno: Clonar ``` .env.template ``` y renombrarlo a ```.env ``` Configurar las variables según tu entorno
-  Crear ```.env.production ``` para despliegue en vps
+```
 
-3. Dependencias necesarias:
+# Crear la red necesaria para la comunicación entre servicios
+
+```
+  - docker network create red_fichaje
+
+```
+
+Variables de Entorno:
+
+  Configurar los archivos .env en sus respectivas carpetas siguiendo los archivos .template:
+
+```
+    - backend/.env.backend
+
+    - infra/bbdd/.env.bbdd
+```
+
+Levantar Infraestructura (Base de Datos):
+
+```
+    Bash
+    - cd infra/bbdd
+    - docker compose --env-file .env.bbdd up -d
+```
+
+Levantar Aplicación (Backend):
+
+```
+    Bash
+    - cd ../../backend
+    - docker compose --env-file .env.backend up -d --build
+```
+
+Levantar Proxy (Nginx):
+  
+  Asegúrate de liberar el puerto 80 (net stop http en Windows Admin).
+```
+Bash
+  
+   - cd ../infra/proxy
+   - docker compose up -d
+```
+
+Despliegue en Producción (VPS)
+Para producción, utilizamos un flujo de Integración Continua basado en Docker Hub para evitar compilar en el servidor y ahorrar recursos.
+
+1. Preparación y Subida (Local)
+  
+  Bash
+# Iniciar sesión en Docker Hub
+
+```
+  - docker login
+
+```
+
+# Construir y subir la imagen (Backend)
+
+```
+  - cd backend
+  - docker build -t tu_usuario/fichaday-backend:latest .
+  - docker push tu_usuario/fichaday-backend:latest
+```
+2. Puesta en marcha (VPS)
+
+En el servidor, no clonamos todo el código, solo necesitamos los archivos de configuración (docker-compose.yaml y .env):
+
+Bash
+# Crear red y descargar imagen
+
+  - docker network create red_fichaje
+  - docker pull tu_usuario/fichaday-backend:latest
+
+# Levantar servicios
+
+# Levantar bbdd
+
+```
+docker run -d \
+  --name postgres \
+  --network red_fichaje \
+  --restart always \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=mypass \
+  -e POSTGRES_DB=fichaje_cti \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:14-alpine
+
+```
+
+
+
+# Permisos necesarios para ejecutar el .env.prod
+
+```
+docker run -d \
+  --name fichaday-backend01 \
+  --network red_fichaje \
+  --restart always \
+  --env-file .env.prod \
+  javierm735/fichaday-backend01:latest
+
+```
+
+# Sin permisos ejecuto todo el comando
+
+```
+
+# 1. Borramos el que está fallando
+docker rm -f fichaday-backend01 || true
+
+# 2. Lanzamos el nuevo con las variables corregidas
+
+docker run -d \
+  --name fichaday-backend01 \
+  --network red_fichaje \
+  --restart always \
+  -p 3000:3000 \
+  -e DB_HOST=postgres \
+  -e DB_USERNAME=postgres \
+  -e DB_PASSWORD=mypass \
+  -e DB_NAME=fichaje_cti \
+  -e DB_PORT=5432 \
+  -e NODE_ENV=development \
+  -e PORT=3000 \
+  -e CORS_ORIGIN=http://cworker1.cticontrol.com:3567 \
+  -e TZ=Europe/Madrid \
+  -e JWT_SECRET=tu_secreto_para_access \
+  -e JWT_REFRESH_SECRET=tu_secreto_para_refresh \
+  -e JWT_EXPIRATION=1h \
+  -e JWT_REFRESH_EXPIRATION=7d \
+  -e SEED_SECRET_KEY=123 \
+  -e MAX_FICHAR_DISTANCE=600 \
+  -e DEFAULT_DAYS_ISSUES=5 \
+  -e DEFAULT_DAYS_REQUESTS=15 \
+  javierm735/fichaday-backend01:latest
+
+```
+
+# Lanzar sin nginx
+
+```
+docker run -d \
+  --name fichaday-backend01 \
+  --network red_fichaje \
+  --restart always \
+  -p 3000:3000 \
+  -e DB_HOST=postgres \
+  -e DB_USERNAME=postgres \
+  -e DB_PASSWORD=mypass \
+  -e DB_NAME=fichaje_cti \
+  -e NODE_ENV=production \
+  -e JWT_SECRET=un_secreto_seguro \
+  javierm735/fichaday-backend01:latest
+
+```
+
+  - docker compose up -d
+
+
+  
+
+3. Dependencias necesarias (Dentro de directorio ```backend```):
 
 ```Bash
 yarn add cors @nestjs/schedule @nestjs/platform-socket.io @nestjs/websockets cookie-parser class-validator class-transformer

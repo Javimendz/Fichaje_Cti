@@ -10,7 +10,8 @@
    ```bash
    yarn install
 
-2. Variables de entorno: Clonar ``` .env.template ``` y renombrarlo a ```.env. ``` Configurar las variables según tu entorno
+2. Variables de entorno: Clonar ``` .env.template ``` y renombrarlo a ```.env ``` Configurar las variables según tu entorno
+  Crear ```.env.production ``` para despliegue en vps
 
 3. Dependencias necesarias:
 

@@ -17,7 +17,7 @@
 
 ```Bash
 yarn add cors @nestjs/schedule @nestjs/platform-socket.io @nestjs/websockets cookie-parser class-validator class-transformer
-yarn add -D @types/cookie-parser
+yarn add -D @types/cookie-parser @nestjs/config
 
 ```
 4. Levantar Infraestructura (Base de Datos):
@@ -64,8 +64,11 @@ yarn start:dev
 ```
 SEED/LOGIN
 🛠️ Método	   📍 Endpoint	              📝 Descripción	                               📦 Requerimientos / Body
-POST           /api/seeds/run             Inicializa el SuperAdmin y datos base.          Header: x-seed-key
-POST           /api/auth/login            Inicio de sesión para todos los roles.          "{ email, password }"
+POST          /api/seeds/run              Inicializa el SuperAdmin y datos base.                Header: x-seed-key
+POST          /api/auth/login             Inicio de sesión para todos los roles.                "{ email, password }"
+POST          /api/auth/logout            Cierra sesión y revoca token.                         Token (Cualquiera)
+GET           /api/auth/me                Obtiene información del usuario autenticado.          Token (Cualquiera)
+Post          /api/auth/refresh           Actualiza el token de acceso usando el refresh token. Token (Cualquiera)
 
 ```
 
@@ -254,6 +257,29 @@ Body - Json
 {
   "email": "superadmin@cti.com",
   "password": "superpassword123M"
+}
+
+```
+
+
+1 Renovación de Token (Refresh Token)
+
+Método: ```POST```
+
+Endpoint: ```/api/auth/refresh```
+
+Descripción: ```Obtención de un nuevo par de tokens (Access y Refresh) rotando el token anterior para mantener la sesión activa sin volver a pedir credenciales.```
+
+```
+
+Plaintext
+POST  -  http://localhost:3000/api/auth/refresh
+
+Body - Json
+
+{
+  "userId": 1,
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsInJvb..."
 }
 
 ```

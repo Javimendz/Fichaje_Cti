@@ -76,9 +76,11 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'fecha_inicio_horario' })
   fechaInicioHorario: Date | null;
 
-  @Column({ name: 'empresa_id', nullable: true }) // 👈 Cambiar a false
+  @Column({ name: 'empresa_id', nullable: true }) // Cambiar a false
   empresaId: number;
 
+  @Column({ type: 'text', nullable: true }) // Forzamos el tipo a 'text'
+  hashedRefreshToken?: string | null;
 
   @ManyToOne(() => Company, (empresa) => empresa.usuarios, {
     onDelete: 'CASCADE'

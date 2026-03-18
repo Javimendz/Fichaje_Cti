@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { User } from './entities/user.entity';
 
 
 /** 
@@ -27,8 +28,7 @@ async login(
   @Body() loginDto: LoginDto,
   @Res({ passthrough: true }) response: Express.Response,
 ) {
-  const { access_token, user } = await this.authService.login(loginDto);
-
+const { access_token, refresh_token, user } = await this.authService.login(loginDto);
   response.cookie('jwt', access_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -41,7 +41,8 @@ async login(
   return { 
     message: 'Login correcto',
     user,
-    access_token // <--- Añade esto aquí para verlo en el JSON
+    access_token ,// <--- Añade esto aquí para verlo en el JSON
+    refresh_token
   };
 }
 
@@ -53,20 +54,24 @@ async login(
  * * Este endpoint maneja el proceso de cierre de sesión de los usuarios. Al acceder a este endpoint, se limpia la cookie 'jwt' que contiene el token de autenticación, lo que efectivamente cierra la sesión del usuario en el cliente. Además, se devuelve un mensaje de éxito en el cuerpo de la respuesta para confirmar que la sesión se ha cerrado correctamente. Si ocurre algún error durante el proceso de logout, se lanzará una excepción que será manejada por el AuthService. 
  *  */
 @Post('logout')
-async logout(@Res({ passthrough: true }) response: Express.Response) {
-  // Limpiamos la cookie 'jwt'
-  response.clearCookie('jwt', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/', // Es vital que el path coincida exactamente con el del login
-  });
+  @UseGuards(JwtAuthGuard) // Protegemos el logout para saber quién es
+  async logout(
+    @GetUser() user: any, 
+    @Res({ passthrough: true }) response: Express.Response
+  ) {
+    // 1. Borramos el token de la Base de Datos
+    await this.authService.logout(user.userId || user.id); // Asegúrate de pasar el ID correcto según tu decorador
 
-  return { 
-    message: 'Sesión cerrada correctamente' 
-  };
-}
+    // 2. Limpiamos la cookie
+    response.clearCookie('jwt', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
 
+    return { message: 'Sesión cerrada correctamente' };
+  }
 
 @Get('me')
 @UseGuards(JwtAuthGuard)
@@ -84,4 +89,9 @@ async getMe(@GetUser() user: any) {
   };
 }
 
+
+@Post('refresh')
+async refresh(@Body() body: { userId: number; refreshToken: string }) {
+    return this.authService.refreshTokens(body.userId, body.refreshToken);
+  }
 }

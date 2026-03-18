@@ -23,7 +23,7 @@
     "@nestjs/class-transformer": "^0.4.0",
     "@nestjs/class-validator": "^0.13.4",
     "@nestjs/common": "^11.1.10",
-    "@nestjs/config": "^4.0.2",
+    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.10",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "*",

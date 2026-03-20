@@ -25,7 +25,7 @@
 **/*.dbmdl
 
 # --- Secretos (Nunca los incluyas en la imagen) ---
-##**/.env
+
 **/secrets.*
 **/values.dev.yaml
 

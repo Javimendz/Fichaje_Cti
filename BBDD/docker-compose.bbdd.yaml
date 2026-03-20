@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # --- BASE DE DATOS POSTGRESQL ---
+  postgres:
+    image: postgres:14.3
+    container_name: postgres_bbdd
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./bbdd:/var/lib/postgresql/data  # 📁 Datos persistentes en ./bbdd
+      - ./bbdd/init:/docker-entrypoint-initdb.d  # 📁 Scripts de inicialización
+    ports:
+      - "${DB_PORT:-5432}:5432"  # Puerto configurable
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - bbdd-network
+
+  # --- Opcional: pgAdmin para administración ---
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_bbdd
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@cticontrol.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ./bbdd/pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bbdd-network
+    profiles:
+      - admin  # Solo se inicia con --profile admin
+
+networks:
+  bbdd-network:
+    driver: bridge
+
+volumes:
+  postgres_data_bbdd:
+    driver: local

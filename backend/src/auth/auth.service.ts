@@ -67,15 +67,21 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) throw new UnauthorizedException('Credenciales inválidas');
 
-    // 3. Generar Tokens (Lógica unificada)
+    // 3. Generar Tokens (Lógica corregida con variables de entorno)
     const { accessToken, refreshToken } = await this.getTokens(user);
 
     // 4. Guardar Refresh Token hasheado
     await this.updateRefreshToken(user.id, refreshToken);
 
-    // 5. Calcular expiración para el frontend (Access Token)
+    // 5. Calcular expiración para el frontend y base de datos
+    // Usamos ConfigService para obtener las horas (número)
     const isAdmin = user.rol === UserRole.SUPERADMIN || user.rol === UserRole.ADMIN;
-    const tiempoMilisegundos = (isAdmin ? 12 : 1) * 60 * 60 * 1000;
+    
+    const expHoursStr = isAdmin 
+      ? this.configService.get<string>('JWT_ADMIN_EXP_HOURS', '12') 
+      : this.configService.get<string>('JWT_WORKER_EXP_HOURS', '1');
+    
+    const tiempoMilisegundos = parseInt(expHoursStr) * 60 * 60 * 1000;
     const fechaExpiracion = new Date(Date.now() + tiempoMilisegundos);
 
     // Actualizamos fecha en DB
@@ -122,7 +128,11 @@ export class AuthService {
 
 private async getTokens(user: User) {
   const isAdmin = user.rol === UserRole.ADMIN || user.rol === UserRole.SUPERADMIN;
-  const accessTokenExp = isAdmin ? '1m' : '1m'; // 1 minuto para Admins, 1 hora para Workers cambiar a 12, 1h para SuperAdmins
+  
+  // 1. Forzamos el tipo a 'any' al recuperar del config para que encaje en StringValue
+  const accessTokenExp = isAdmin 
+    ? (this.configService.get<string>('JWT_ADMIN_EXPIRATION', '12h') as any) 
+    : (this.configService.get<string>('JWT_WORKER_EXPIRATION', '1h') as any);
 
   const payload = {
     sub: user.id,
@@ -133,14 +143,14 @@ private async getTokens(user: User) {
   const [accessToken, refreshToken] = await Promise.all([
     // Token de Acceso
     this.jwtService.signAsync(payload, { 
-      expiresIn: accessTokenExp,
-      secret: this.configService.get<string>('JWT_SECRET') // 👈 Más seguro que process.env
+      expiresIn: accessTokenExp, // Ahora 'any' engaña al validador de StringValue
+      secret: this.configService.get<string>('JWT_SECRET')! 
     }),
     
     // Token de Refresco
     this.jwtService.signAsync(payload, { 
-      expiresIn: '7d',
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET') // 👈 Usamos la segunda llave
+      expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d') as any),
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET')! 
     }),
   ]);
 

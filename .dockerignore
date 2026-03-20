@@ -1,24 +1,35 @@
-**/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
+# --- Basura de Editores e IDEs ---
 **/.vs
 **/.vscode
-**/*.*proj.user
-**/*.dbmdl
+**/.settings
+**/.project
+**/.classpath
 **/*.jfm
-**/charts
-**/docker-compose*
-**/compose*
-**/Dockerfile*
-**/node_modules
+**/*.*proj.user
+**/.toolstarget
+
+# --- Git ---
+**/.git
+**/.gitignore
+
+# --- Archivos de Sistema y Logs ---
+**/.DS_Store
 **/npm-debug.log
+**/thumbs.db
+
+# --- Dependencias y Compilación (¡Muy importante!) ---
+**/node_modules
 **/obj
-**/secrets.dev.yaml
+**/bin
+**/target
+**/*.dbmdl
+
+# --- Secretos (Nunca los incluyas en la imagen) ---
+##**/.env
+**/secrets.*
 **/values.dev.yaml
-LICENSE
+
+# --- Documentación ---
 README.md
+LICENSE
+**/.dockerignore

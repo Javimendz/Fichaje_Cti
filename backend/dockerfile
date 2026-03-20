@@ -1,28 +1,25 @@
 # --- ETAPA 1: Construcción ---
-# 👇 Cambiamos el 18 por el 20 o 22
 FROM node:20-alpine AS builder
-
 WORKDIR /usr/src/app
-
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
-COPY . .
+COPY . . 
 RUN yarn build
 
 # --- ETAPA 2: Ejecución ---
-# 👇 Aquí también usamos la misma versión
 FROM node:20-alpine AS runner
-
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 
 COPY package.json yarn.lock ./
-
-# Instalamos solo dependencias de producción
 RUN yarn install --production --frozen-lockfile
 
-# Copiamos la carpeta compilada
+# 1. Copiamos la carpeta compilada
 COPY --from=builder /usr/src/app/dist ./dist
+
+# 2. 👇 AQUÍ ESTÁ EL TRUCO: Copiamos el .env desde el builder al runner
+# Asegúrate de haber quitado .env del .dockerignore antes de buildear
+COPY --from=builder /usr/src/app/.env ./.env 
 
 EXPOSE 3000
 CMD ["node", "dist/main"]

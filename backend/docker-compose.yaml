@@ -6,7 +6,7 @@ services:
     expose:
       - "3000" # No abrimos puertos al mundo, solo al Proxy
     env_file:
-      - .env.backend
+      - .env
     networks:
       - red_fichaje
 

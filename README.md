@@ -18,6 +18,18 @@ para permitir un despliegue profesional y escalable.
 
 ```
 
+# Script para levantar la infraestructura
+
+```
+  - en una terminal como administrador, ejecutar el siguiente comando en la carpeta raiz del proyecto:
+
+  - bash .\deply.ps1 
+
+  
+```
+
+
+
 # Crear la red necesaria para la comunicación entre servicios
 
 ```

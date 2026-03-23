@@ -22,6 +22,22 @@ services:
     networks:
       - red_fichaje 
 
+pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_bbdd
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT}:80" # Mapea el puerto 5050 de tu VPS al 80 interno de pgAdmin
+    networks:
+      - red_fichaje
+    depends_on:
+      - postgres
+
 networks:
   red_fichaje: 
     external: true

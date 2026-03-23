@@ -192,7 +192,14 @@ docker run -d \
 
   - docker compose up -d
 
+# Conextar PGADMIN
 
+  ```
+    http://57.129.139.212:5050/
+
+    Entra con admin@cticontrol.com y la clave admin123
+
+```
   
 
 3. Dependencias necesarias (Dentro de directorio ```backend```):

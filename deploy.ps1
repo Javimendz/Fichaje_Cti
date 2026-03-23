@@ -7,6 +7,13 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 
 Write-Host "--- Iniciando despliegue de Fichaje CTI ---" -ForegroundColor Cyan
 
+# --- 2. Limpieza Previa (Teardown) ---
+Write-Host "Limpiando contenedores y redes de instalaciones anteriores..." -ForegroundColor Yellow
+# El '2>$null' oculta los errores en caso de que los contenedores ya no existan
+docker rm -f postgres postgres_bbdd fichaje_backend nginx_proxy 2>$null
+docker network rm red_fichaje 2>$null
+Write-Host "Entorno limpio." -ForegroundColor Green
+
 # --- 2. Crear red de Docker si no existe ---
 Write-Host "Configurando red de Docker..." -ForegroundColor Yellow
 $networkCheck = docker network ls --filter name=red_fichaje -q
@@ -24,15 +31,15 @@ Write-Host "Puerto 80 liberado." -ForegroundColor Green
 
 # --- 4. Levantar Base de Datos ---
 Write-Host "Levantando BBDD..." -ForegroundColor Yellow
-Set-Location "infra/bbdd"
-docker compose --env-file .env.bbdd up -d
-if ($LASTEXITCODE -ne 0) { Write-Host "Error en BBDD"; Set-Location "../../"; exit }
-Set-Location "../../"
+Set-Location "bbdd"    # 👈 Quitamos el "infra/"
+docker compose up -d
+if ($LASTEXITCODE -ne 0) { Write-Host "Error en BBDD"; Set-Location "../"; exit }
+Set-Location "../"
 
 # --- 5. Levantar Backend ---
 Write-Host "Levantando Backend..." -ForegroundColor Yellow
 Set-Location "backend"
-docker compose --env-file .env.backend up -d --build
+docker compose up -d --build
 if ($LASTEXITCODE -ne 0) { Write-Host "Error en Backend"; Set-Location "../"; exit }
 Set-Location "../"
 

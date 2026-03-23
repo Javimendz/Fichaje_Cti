@@ -24,7 +24,7 @@ services:
 
 networks:
   red_fichaje: 
-    driver: bridge
+    external: true
 volumes:
   postgres_data_bbdd:
     driver: local

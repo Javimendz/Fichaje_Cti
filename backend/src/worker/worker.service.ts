@@ -77,7 +77,7 @@ export class WorkerService {
         empresaId: empresaId,
         isActive: true,
         isVerified: true,
-        actividadId: dto.actividadId ?? undefined,  // ✅ añadir
+        actividadId: dto.actividadId ?? undefined, 
 
         horario: dto.horarioId ? { id: dto.horarioId } as Horario : null, // Relación con Horario si se proporciona
       } as DeepPartial<User>);
@@ -199,117 +199,113 @@ export class WorkerService {
    * Nota: Si en el futuro decides permitir que un Admin normal también pueda actualizar trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar a este método independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal. Además, si decides permitir que un SuperAdmin actualice cualquier trabajador sin necesidad de validar la empresa, asegúrate de que la lógica de validación y actualización se ajuste correctamente para manejar ambos casos (SuperAdmin sin filtro de empresa y Admin con filtro de empresa).
    */
   async update(id: number, dto: UpdateWorkerDto, currentUser: UserPayload) {
-    // Envolvemos todo en una transacción para que Worker y User estén 100% sincronizados
-    return await this.dataSource.transaction(async (manager) => {
-      const workerRepo = manager.getRepository(Worker);
-      const userRepo = manager.getRepository(User);
+  return await this.dataSource.transaction(async (manager) => {
+    
+    // 1. BUSCAR TRABAJADOR (Con lógica de permisos similar a findOne)
+    const whereCondition: any = { id };
+    if (currentUser.rol !== UserRole.SUPERADMIN) {
+      if (!currentUser.empresaId) throw new ForbiddenException('No tienes empresa asignada');
+      whereCondition.empresaId = currentUser.empresaId;
+    }
 
-      // 1. Verificamos que el trabajador y su usuario asociado existen
-      const worker = await workerRepo.findOne({ 
-        where: { id, empresaId: currentUser.empresaId } 
+    const worker = await manager.findOne(Worker, { where: whereCondition });
+    if (!worker) throw new NotFoundException(`Trabajador con ID ${id} no encontrado.`);
+
+    const user = await manager.findOne(User, { where: { id } });
+    if (!user) throw new NotFoundException('Usuario de autenticación no encontrado.');
+
+    // 2. VALIDACIÓN DE INTEGRIDAD (Evitar el error de Foreign Key)
+    if (dto.horarioId) {
+      const horarioExiste = await manager.findOne(Horario, { where: { id: dto.horarioId } });
+      if (!horarioExiste) throw new BadRequestException(`El horario ${dto.horarioId} no existe.`);
+    }
+
+    if (dto.actividadId) {
+      // Si tienes entidad Actividad, búscala aquí igual que el horario
+    }
+
+    // 3. VALIDACIONES DE DUPLICIDAD
+    if (dto.email) {
+      const emailDuplicado = await manager.findOne(User, { 
+        where: { email: dto.email.toLowerCase().trim(), id: Not(id) } 
       });
-      if (!worker) throw new NotFoundException(`Trabajador con ID ${id} no encontrado en tu empresa.`);
+      if (emailDuplicado) throw new BadRequestException('El correo ya está en uso por otro usuario.');
+    }
 
-      const user = await userRepo.findOne({ where: { id } });
-      if (!user) throw new NotFoundException('El usuario asociado a este trabajador no existe.');
-
-      // 2. Validaciones preventivas de duplicidad (Excluyendo al propio worker)
-      if (dto.dni) {
-        const dniLimpio = dto.dni.toUpperCase().trim();
-        const dniDuplicado = await workerRepo.findOne({ where: { dni: dniLimpio, id: Not(id) } });
-        if (dniDuplicado) throw new BadRequestException(`El DNI '${dniLimpio}' ya está registrado.`);
-        dto.dni = dniLimpio;
-      }
-
-      if (dto.email) {
-        const emailLimpio = dto.email.toLowerCase().trim();
-        const emailDuplicado = await workerRepo.findOne({ where: { email: emailLimpio, id: Not(id) } });
-        if (emailDuplicado) throw new BadRequestException(`El correo '${emailLimpio}' ya está en uso.`);
-        dto.email = emailLimpio;
-      }
-
-      if (dto.telefono) {
-        const telDuplicado = await workerRepo.findOne({ where: { telefono: dto.telefono, id: Not(id) } });
-        if (telDuplicado) throw new BadRequestException(`El teléfono '${dto.telefono}' ya está en uso.`);
-      }
-
-      // 3. ACTUALIZACIÓN SEGURA DE CAMPOS SIMPLES (Evitamos Object.assign)
-      if (dto.nombre !== undefined) {
-        worker.nombre = dto.nombre;
-        user.nombre = dto.nombre;
-      }
-      
-      if (dto.apellidos !== undefined) {
-        worker.apellidos = dto.apellidos;
-        user.apellidos = dto.apellidos;
-      }
-
-      if (dto.email !== undefined) {
-        worker.email = dto.email;
-        user.email = dto.email;
-      }
-
-      if (dto.telefono !== undefined) {
-        worker.telefono = dto.telefono;
-        user.telefono = dto.telefono;
-      }
-
-      if (dto.dni !== undefined) {
-        worker.dni = dto.dni;
-        user.dni = dto.dni;
-      }
-
-      if (dto.password) {
-        user.password = await bcrypt.hash(dto.password, 10);
-      }
-
-      // 4. ACTUALIZACIÓN DE RELACIONES TYPEORM (Horario y Actividad)
-      
-      // -- HORARIO --
-      if (dto.horarioId !== undefined) {
-        // Actualizamos Worker
-        worker.horarioId = dto.horarioId;
-        worker.horario = dto.horarioId ? { id: dto.horarioId } as any : null;
-        
-        // Actualizamos User
-        user.horarioId = dto.horarioId;
-        user.horario = dto.horarioId ? { id: dto.horarioId } as any : null;
-
-        // 🔥 FIX ROTACIÓN: Si le asignamos un horario nuevo, reseteamos el ancla de rotación
-        if (dto.horarioId) {
-          const fechaAncla = new Date();
-          fechaAncla.setHours(0, 0, 0, 0);
-          user.fechaInicioHorario = fechaAncla;
-        } else {
-          user.fechaInicioHorario = null;
-        }
-      }
-
-      // -- ACTIVIDAD --
-      if (dto.actividadId !== undefined) {
-        // Actualizamos Worker
-        worker.actividadId = dto.actividadId;
-        worker.actividad = dto.actividadId ? { id: dto.actividadId } as any : null;
-
-        // Actualizamos User
-        user.actividadId = dto.actividadId;
-        user.actividad = dto.actividadId ? { id: dto.actividadId } as any : null;
-      }
-
-      try {
-        // 5. Aplicar cambios y guardar ambos (Dentro de la transacción)
-        await userRepo.save(user);
-        return await workerRepo.save(worker);
-        
-      } catch (error) {
-        if (error.code === '23505') {
-          throw new BadRequestException('Error de duplicidad: uno de los campos únicos ya existe.');
-        }
-        console.error('Error actualizando worker:', error);
-        throw new InternalServerErrorException('Error al actualizar el trabajador y su usuario');
-      }
-    });
+    // 4. ACTUALIZACIÓN SINCRONIZADA
+    // Sincronizamos campos básicos
+   const camposCompartidos = ['nombre', 'apellidos', 'email', 'telefono', 'dni'];
+camposCompartidos.forEach(campo => {
+  if (dto[campo] !== undefined) {
+    let valor = dto[campo];
+    if (campo === 'email' && valor) valor = valor.toLowerCase().trim();
+    if (campo === 'dni' && valor) valor = valor.toUpperCase().trim();
+    
+    worker[campo] = valor;
+    user[campo] = valor;
   }
+});
+
+const camposWorker = [
+  'categoria', 
+  'fechaNacimiento', 
+  'calle', 
+  'poblacion', 
+  'provincia', 
+  'pais', 
+  'diaPertenece'
+];
+
+camposWorker.forEach(campo => {
+  if (dto[campo] !== undefined) {
+    // Si es fecha, convertimos a objeto Date
+    if (campo === 'fechaNacimiento' && dto[campo]) {
+        worker[campo] = new Date(dto[campo]);
+    } else {
+        worker[campo] = dto[campo];
+    }
+  }
+});
+
+    if (dto.password) {
+      user.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    // 5. GESTIÓN DE HORARIO Y ROTACIÓN
+    if (dto.horarioId !== undefined) {
+      const nuevoId = dto.horarioId;
+      worker.horarioId = nuevoId;
+      // Seteamos la relación como objeto para TypeORM
+      worker.horario = nuevoId ? { id: nuevoId } as any : null;
+      user.horario = nuevoId ? { id: nuevoId } as any : null;
+
+      // Si cambia el horario, reseteamos la fecha de inicio para el cálculo de rotación
+      if (nuevoId) {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        user.fechaInicioHorario = hoy;
+      } else {
+        user.fechaInicioHorario = null;
+      }
+    }
+
+    // 6. GESTIÓN DE ACTIVIDAD
+    if (dto.actividadId !== undefined) {
+      worker.actividadId = dto.actividadId;
+      worker.actividad = dto.actividadId ? { id: dto.actividadId } as any : null;
+      user.actividadId = dto.actividadId;
+    }
+
+    // 7. GUARDADO FINAL EN TRANSACCIÓN
+    try {
+      await manager.save(User, user);
+      return await manager.save(Worker, worker);
+    } catch (error) {
+      console.error('Error crítico en transacción:', error);
+      throw new InternalServerErrorException('No se pudo sincronizar la actualización.');
+    }
+  });
+}
   /**
    * Elimina un worker (y su usuario asociado)
    * Este método se utiliza para eliminar un trabajador específico del sistema. El controlador se encarga de verificar el rol del usuario autenticado y llamar a este método solo si el usuario tiene permisos para eliminar el trabajador (Admin normal solo puede eliminar trabajadores de su empresa, mientras que un SuperAdmin puede eliminar cualquier trabajador). Al eliminar un trabajador, también se elimina su usuario asociado para mantener la integridad de los datos. Si la eliminación falla por permisos o errores de base de datos, se lanzará una excepción que será manejada por el WorkerController.

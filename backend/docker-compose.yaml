@@ -4,7 +4,7 @@ services:
     container_name: fichaje_backend
     restart: always
     expose:
-      - "3000" # No abrimos puertos al mundo, solo al Proxy
+      - "3000" 
     env_file:
       - .env
     networks:

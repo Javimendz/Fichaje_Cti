@@ -18,7 +18,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - red_fichaje # 👈 Usamos el nombre de la red global
+      - red_fichaje 
 
 networks:
   red_fichaje: 

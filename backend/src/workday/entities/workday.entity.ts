@@ -14,7 +14,7 @@ export class Workday {
   fin: Date;
 
   @Column({ type: 'int', nullable: true })
-  total_minutos: number;
+  total_segundos: number;
 
   @Column({ type: 'float', nullable: true })
   latitudEntrada: number;

@@ -7,11 +7,11 @@ import {
   UseGuards, 
   Query, 
   BadRequestException, 
-  Inject
+  Req
+  
 } from '@nestjs/common';
 import { WorkdayService } from './workday.service';
 import { CheckInDto } from './dto/check-in.dto';
-
 // Auth Imports
 import { GetUser } from 'auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
@@ -125,5 +125,8 @@ export class WorkdayController {
     return await this.workdayService.getTodayStats(user.empresaId);
   }
 
-  
+ @Get('dashboard-stats')
+  async getDashboardStats(@GetUser() user: UserPayload) {
+    return await this.workdayService.getWorkSummary(user.id);
+  }
 }

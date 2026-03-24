@@ -7,7 +7,9 @@ import {
   UseGuards, 
   Query, 
   BadRequestException, 
-  Req
+  Req,
+  Param,
+  ParseIntPipe
   
 } from '@nestjs/common';
 import { WorkdayService } from './workday.service';
@@ -126,8 +128,18 @@ export class WorkdayController {
   }
 
  @Get('dashboard-stats')
- @Roles(UserRole.WORKER) 
+ @Roles(UserRole.ADMIN, UserRole.WORKER) 
   async getDashboardStats(@GetUser() user: UserPayload) {
     return await this.workdayService.getWorkSummary(user.id);
+  }
+
+  @Get('worker/:id/stats')
+  @Roles(UserRole.ADMIN)
+  async getWorkerStatsForAdmin(
+    @Param('id', ParseIntPipe) workerId: number,
+    @GetUser() admin: UserPayload
+  ) {
+    // Pasamos el ID del trabajador y el ID de la empresa del admin para validar
+    return await this.workdayService.getWorkerSummaryForAdmin(workerId, admin.empresaId);
   }
 }

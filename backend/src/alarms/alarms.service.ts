@@ -198,6 +198,7 @@ async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date)
  * await this.resolverAlarmasPrevias(1, [AlarmType.FALTA_FICHAJE]);
  */
 async resolverAlarmasPrevias(usuarioId: number, tipos: AlarmType[]) {
+  // 💡 Asegúrate de que el inicio del día es exacto según tu zona horaria
   const hoy = dayjs().tz('Europe/Madrid').startOf('day').toDate();
 
   return await this.alarmRepository.update(
@@ -205,11 +206,11 @@ async resolverAlarmasPrevias(usuarioId: number, tipos: AlarmType[]) {
       usuario: { id: usuarioId },
       tipo: In(tipos),
       leidaAdmin: false, 
-      createdAt: MoreThan(hoy) 
+      createdAt: MoreThanOrEqual(hoy) // 💡 Cambiado MoreThan por MoreThanOrEqual
     },
     { 
       leidaAdmin: true, 
-      descripcion: "CONSOLIDADA: El trabajador finalmente fichó." 
+      descripcion: "CONSOLIDADA: El trabajador finalmente fichó entrada." 
     }
   );
 }

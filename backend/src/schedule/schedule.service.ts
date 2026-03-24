@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, MoreThanOrEqual } from 'typeorm'; 
+import { Repository, DataSource, MoreThanOrEqual, IsNull, Not } from 'typeorm'; 
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
@@ -198,26 +198,40 @@ export class ScheduleService {
     return { userId, horarioNombre: user.horario.nombre, semanaActual, totalHoras };
   }
 
-  async getHorasTrabajadasSemanales(userId: number) {
-    const hoy = new Date();
-    const inicioSemana = new Date(hoy);
-    inicioSemana.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
-    inicioSemana.setHours(0, 0, 0, 0);
+ async getHorasTrabajadasSemanales(userId: number) {
+  const hoy = new Date();
+  const inicioSemana = new Date(hoy);
+  inicioSemana.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
+  inicioSemana.setHours(0, 0, 0, 0);
 
-    const registros = await this.dataSource.getRepository(Workday).find({
-      where: { usuario: { id: userId }, inicio: MoreThanOrEqual(inicioSemana) },
-    });
+  // 1. Obtenemos las jornadas cerradas de la semana y la activa (si existe)
+  const [registros, activa] = await Promise.all([
+    this.dataSource.getRepository(Workday).find({
+      where: { usuario: { id: userId }, inicio: MoreThanOrEqual(inicioSemana), fin: Not(IsNull()) },
+    }),
+    this.dataSource.getRepository(Workday).findOne({
+      where: { usuario: { id: userId }, fin: IsNull() }
+    })
+  ]);
 
-    const totalMinutos = registros.reduce((acc, reg) => acc + (reg.total_segundos || 0) / 60, 0);
-    const totalHoras = totalMinutos / 60;
+  // 2. Sumamos segundos de jornadas cerradas
+  let totalSegundos = registros.reduce((acc, reg) => acc + (reg.total_segundos || 0), 0);
 
-    return {
-      userId,
-      totalHorasTrabajadas: parseFloat(totalHoras.toFixed(2)),
-      totalMinutos,
-      desde: inicioSemana.toISOString().split('T')[0]
-    };
+  // 3. 💡 SUMAR TIEMPO EN VIVO: Si está trabajando, sumamos lo que lleva hoy
+  if (activa) {
+    const segundosVivo = Math.floor((hoy.getTime() - activa.inicio.getTime()) / 1000);
+    totalSegundos += segundosVivo;
   }
+
+  const totalHoras = totalSegundos / 3600; // Directo de segundos a horas
+
+  return {
+    userId,
+    totalHorasTrabajadas: parseFloat(totalHoras.toFixed(2)),
+    totalSegundos, // Devolvemos segundos para consistencia
+    desde: inicioSemana.toISOString().split('T')[0]
+  };
+}
 
   async getProgresoSemanal(userId: number) {
     const { totalHoras } = await this.getHorasObjetivoSemanal(userId);

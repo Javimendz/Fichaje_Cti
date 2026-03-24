@@ -126,7 +126,7 @@ export class WorkdayController {
   }
 
  @Get('dashboard-stats')
- @Roles(UserRole.ADMIN) 
+ @Roles(UserRole.WORKER) 
   async getDashboardStats(@GetUser() user: UserPayload) {
     return await this.workdayService.getWorkSummary(user.id);
   }

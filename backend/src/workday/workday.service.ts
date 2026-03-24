@@ -286,4 +286,25 @@ private convertirSegundosAHora(segundos: number): string {
       stats: { trabajandoAhora: activos, jornadasFinalizadas: terminados, alertasPendientes: alarmasCriticas }
     };
   }
+
+  /**
+   * Versión para admin del resumen de trabajo.
+   * Incluye validación de pertenencia a la empresa.
+   */
+  async getWorkerSummaryForAdmin(workerId: number, adminEmpresaId: number) {
+    // 1. Validar que el trabajador existe y pertenece a la empresa del admin
+    const worker = await this.userRepository.findOne({
+      where: { id: workerId },
+      relations: ['empresa']
+    });
+
+    if (!worker) throw new NotFoundException('Trabajador no encontrado.');
+    
+    if (worker.empresa?.id !== adminEmpresaId) {
+      throw new BadRequestException('No tienes permisos para ver estadísticas de este trabajador.');
+    }
+
+    // 2. Reutilizamos tu lógica maestra de cálculos (hoy, semana, mes, live time)
+    return await this.getWorkSummary(workerId);
+  }
 }

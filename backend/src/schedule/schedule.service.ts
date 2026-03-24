@@ -208,7 +208,7 @@ export class ScheduleService {
       where: { usuario: { id: userId }, inicio: MoreThanOrEqual(inicioSemana) },
     });
 
-    const totalMinutos = registros.reduce((acc, reg) => acc + (reg.total_minutos || 0), 0);
+    const totalMinutos = registros.reduce((acc, reg) => acc + (reg.total_segundos || 0) / 60, 0);
     const totalHoras = totalMinutos / 60;
 
     return {

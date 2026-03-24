@@ -22,7 +22,7 @@ services:
     networks:
       - red_fichaje 
 
-pgadmin:
+  pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin_bbdd
     restart: always

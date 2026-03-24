@@ -33,7 +33,7 @@ import { Ausencia } from 'absence/entities/ausencia.entity';
 // - AlarmsGateway: Para ser utilizado en otros módulos.
 @Module({
 imports: [
-    TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]),
+    TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]), ScheduleModule,
    
     forwardRef(() => WorkdayModule), 
   ],

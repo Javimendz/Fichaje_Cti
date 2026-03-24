@@ -5,12 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Alarm } from './entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
 import { AlarmCronService } from './alarms.crone.service';
-import { ScheduleModule } from '@nestjs/schedule';
+import { ScheduleModule as CronModule } from '@nestjs/schedule';
 import { Workday } from 'workday/entities/workday.entity';
 import { WorkdayModule } from 'workday/workday.module';
 import { AlarmsGateway } from './gateway/alarms.gateway';
 import { Ausencia } from 'absence/entities/ausencia.entity';
-
+import { ScheduleModule as UserScheduleModule } from 'schedule/schedule.module';
 // AlarmsModule
 // Módulo para manejar operaciones relacionadas con alarmas
 //
@@ -33,7 +33,10 @@ import { Ausencia } from 'absence/entities/ausencia.entity';
 // - AlarmsGateway: Para ser utilizado en otros módulos.
 @Module({
 imports: [
-    TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]), ScheduleModule,
+    TypeOrmModule.forFeature([Alarm, User, Workday,Ausencia]), 
+    CronModule.forRoot(), // 👈 3. Usamos el alias para los @Cron
+    
+    UserScheduleModule,
    
     forwardRef(() => WorkdayModule), 
   ],

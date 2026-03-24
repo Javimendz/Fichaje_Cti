@@ -1591,3 +1591,52 @@ Body - Json
 
 ```
 
+```1.``` JSON de dashboard-stats (Vista del Empleado)
+Este es el que devuelve el tiempo trabajado en segundos y ya formateado para que no tengas que hacer cálculos en el móvil.
+
+```
+JSON
+{
+  "hoy": {
+    "segundos": 15420,
+    "formateado": "04:17:00"
+  },
+  "semana": {
+    "segundos": 105600,
+    "formateado": "29:20:00"
+  },
+  "mes": {
+    "segundos": 450000,
+    "formateado": "125:00:00"
+  },
+  "isWorking": true
+}
+
+```
+  segundos: Útil si quieres hacer una barra de progreso (ej: segundos / 28800 para ver el % de la jornada de 8h).
+
+  formateado: Directo para imprimir en un <p> o <span>.
+
+  isWorking: Boolean para saber si el cronómetro debe seguir corriendo visualmente.
+
+
+```2. ``` JSON de dashboard/resumen (Vista del Administrador)
+Este devuelve conteos globales de la empresa para el día de hoy.
+
+```
+JSON
+{
+  "fecha": "24/03/2026",
+  "stats": {
+    "trabajandoAhora": 12,
+    "jornadasFinalizadas": 8,
+    "alertasPendientes": 3
+  }
+}
+```
+
+  trabajandoAhora: Número de personas con una jornada abierta en este momento.
+
+  jornadasFinalizadas: Personas que ya hicieron el check-out hoy.
+
+  alertasPendientes: Alarmas de hoy que todavía no han sido revisadas o resueltas por el administrador.

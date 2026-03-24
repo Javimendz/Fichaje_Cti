@@ -359,6 +359,9 @@ GET         /api/jornada/status                    Indica si el usuario tiene un
 GET         /api/jornada/historial                 Devuelve todas las jornadas del usuario actual.      Token (Cualquiera)
 GET         /api/jornada/rango?desde=X&hasta=Y     Filtra jornadas del usuario en un rango de fechas.   Token (Cualquiera) + Query params
 GET         /api/jornada/dashboard/resumen         Dashboard en tiempo real de la empresa de hoy.       Token (ADMIN)
+GET         /api/jornada/dashboard/stats            Estadísticas de trabajo del trabajador.              Token (ADMIN/WORKER)
+GET         /api/jornada/worker/:id/stats           Estadísticas de trabajo de cualquier trabajador.     Token (ADMIN)
+
 ```
 
 

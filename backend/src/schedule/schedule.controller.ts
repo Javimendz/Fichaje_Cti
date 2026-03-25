@@ -98,7 +98,7 @@ export class ScheduleController {
    
    */
   @Get('list-schedules')
-  @Roles(UserRole.ADMIN, UserRole.WORKER)
+  @Roles(UserRole.ADMIN)
   findAll(@GetUser() user: UserPayload) {
     const empresaId = this.getEmpresaId(user); 
     return this.schedulesService.findAllByEmpresa(empresaId); 

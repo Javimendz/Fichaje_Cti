@@ -66,7 +66,7 @@ export class RequestController { // Inyección de dependencias
    * @throws BadRequestException si el usuario no tiene una empresa asociada.
    * @see SolicitudesService.findAllByEmpresa 
    */
- 
+
   @Get('company-request')
   @Roles(UserRole.ADMIN) // Solo el admin ve todas las solicitudes de la empresa
   findAllByEmpresa(@GetUser() admin: User) {
@@ -99,9 +99,9 @@ export class RequestController { // Inyección de dependencias
 
 
 
-@Get('historial')
+  @Get('historial')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
-@UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   async getHistorial(
     @GetUser() user: UserPayload,
     @Query('estado') estado?: string

@@ -304,6 +304,7 @@ async findOne(id: number, user: UserPayload) {
     apellidos: adminRaw.apellidos,
     email: adminRaw.email,
     rol: adminRaw.rol,
+    telefono: adminRaw.telefono,
     isActive: adminRaw.isActive,
   } : null;
 

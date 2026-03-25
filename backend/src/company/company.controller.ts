@@ -67,7 +67,7 @@ export class CompanyController {
  *  
  */
 @Get('list-empresas')
-@Roles(UserRole.SUPERADMIN, UserRole.ADMIN)
+@Roles(UserRole.SUPERADMIN)
 findAll(@GetUser() user: UserPayload) { 
   // 1. Cambiamos userId por id
   // 2. Usamos el email que ahora sí tenemos disponible

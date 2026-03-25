@@ -343,13 +343,17 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
   }
 
 
-  async findHistorial(empresaId: number, estado?: string) {
-    //  Condición base: Siempre filtramos por la empresa
+ async findHistorial(user: UserPayload, estado?: string) {
     const whereCondition: any = {
-      empresaId: Number(empresaId)
+      empresaId: user.empresaId
     };
 
-    //  Lógica para OCULTAR PENDIENTES
+    // 🛡️ SEGURIDAD EXTRA: Si es Worker, forzamos que solo vea lo suyo
+    if (user.rol === UserRole.WORKER) {
+      whereCondition.usuarioId = user.id;
+    }
+
+    // Lógica de estados (igual que antes)
     if (estado === 'APROBADA') {
       whereCondition.estado = RequestStatus.APROBADA;
     } else if (estado === 'RECHAZADA') {
@@ -358,14 +362,13 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
       whereCondition.estado = In([RequestStatus.APROBADA, RequestStatus.RECHAZADA]);
     }
 
-    // Ejecución de la búsqueda
     return await this.solicitudRepo.find({
       where: whereCondition,
-      withDeleted: true, // Incluye las archivadas por el Cron
+      withDeleted: true, 
       relations: ['usuario', 'revision'],
-      order: { updatedAt: 'DESC' } // Lo más reciente arriba
+      order: { updatedAt: 'DESC' }
     });
-  } 
+  }
 
   /**
    * Obtiene las solicitudes de un trabajador filtradas por estado.

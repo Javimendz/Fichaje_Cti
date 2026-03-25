@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
+import { UserRole } from 'auth/roles.enum';
 
 
 // 🟢 AttendanceService
@@ -59,25 +60,38 @@ export class AttendanceService {
     * El sistema devuelve todas las asistencias registradas por el usuario autenticado, ordenadas por fecha (más reciente primero).     
     *   @Roles(UserRole.ADMIN, UserRole.WORKER) permite que tanto los trabajadores como los administradores puedan revisar su historial personal de asistencias, lo cual es útil para que los administradores también puedan verificar sus propios registros.
     */
- async findAllByUser(targetUserId: number, adminEmpresaId: number) {
-  return await this.attendanceRepository.find({
-    where: { 
-      usuarioId: targetUserId, 
-      empresaId: adminEmpresaId // Forzamos que coincida con la empresa del admin
-    },
-    order: { fechaJornada: 'DESC' },
-  });
-}
+async findAllByUser(targetUserId: number, requestingUser: UserPayload) {
+    // 🛡️ SEGURIDAD: Un Worker solo puede ver su propio ID. Un Admin puede ver cualquiera de su empresa.
+    if (requestingUser.rol === UserRole.WORKER && targetUserId !== requestingUser.id) {
+      throw new ForbiddenException('No tienes permiso para ver el historial de otros trabajadores.');
+    }
 
+    return await this.attendanceRepository.find({
+      where: { 
+        usuarioId: targetUserId, 
+        empresaId: requestingUser.empresaId 
+      },
+      order: { fechaJornada: 'DESC' },
+    });
+  }
   // --- HISTORIAL DE EMPRESA: SOLO ADMIN ---
   /* Método para que un administrador vea todas las asistencias de su empresa.
     * El sistema devuelve todas las asistencias registradas por los trabajadores de la empresa del administrador autenticado, ordenadas por fecha (más reciente primero).
     * Solo los usuarios con rol ADMIN pueden acceder a este método para revisar el historial de asistencias de su empresa, asegurando que los trabajadores no puedan ver los registros de otros empleados.
     * @Roles(UserRole.ADMIN) garantiza que solo los administradores puedan acceder a este método, protegiendo la privacidad de los trabajadores y asegurando que solo el personal autorizado pueda revisar los registros de asistencia de la empresa.
     */
- async findAllByEmpresa(empresaId: number) {
+ async findAllByEmpresa(requestingUser: UserPayload) {
+    // 🛡️ DOBLE CANDADO: Aunque el Guard falle, el servicio verifica el ROL aquí
+    if (requestingUser.rol !== UserRole.ADMIN && requestingUser.rol !== UserRole.SUPERADMIN) {
+      throw new ForbiddenException('Acceso denegado: Solo el personal administrativo puede ver el historial global.');
+    }
+
+    if (!requestingUser.empresaId) {
+      throw new BadRequestException('No se puede obtener el historial: Usuario sin empresa vinculada.');
+    }
+
     return await this.attendanceRepository.find({
-      where: { empresaId },
+      where: { empresaId: requestingUser.empresaId },
       relations: ['usuario'],
       order: { fechaJornada: 'DESC', fecha: 'DESC' }
     });

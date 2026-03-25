@@ -274,8 +274,11 @@ async resolve(id: number, nota: string, empresaId: number) {
   
   if (!alarma) throw new NotFoundException('Alarma no encontrada');
   
-  alarma.leidaAdmin = true; // 🚩 Corregido
-  alarma.descripcion += ` | NOTA ADMIN: ${nota}`;
+  alarma.leidaAdmin = true;
+  // 💡 Validación para evitar el "undefined"
+  if (nota) {
+    alarma.descripcion += ` | NOTA ADMIN: ${nota}`;
+  }
   
   return await this.alarmRepository.save(alarma);
 }

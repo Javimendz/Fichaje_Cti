@@ -27,7 +27,7 @@ import { RolesGuard } from "auth/guards/roles.guard";
  */
 @Controller('request') // prefijo de ruta
 @Roles(UserRole.ADMIN, UserRole.WORKER)
-@UseGuards(AuthGuard()) // Aplica el guard de autenticación a todo el controlador
+@UseGuards(JwtAuthGuard, RolesGuard) // Aplica el guard de autenticación a todo el controlador
 export class RequestController { // Inyección de dependencias
   constructor(private readonly solicitudesService: SolicitudesService) { } //
 
@@ -97,16 +97,19 @@ export class RequestController { // Inyección de dependencias
   }
 
 
-@Get('historial')
-@Roles(UserRole.ADMIN, UserRole.WORKER)
-@UseGuards(JwtAuthGuard, RolesGuard)
-async getHistorial(
-  @GetUser() user: UserPayload,
-  @Query('estado') estado?: string // 👈 Lo dejamos como 'string' normal
-) {
-  return await this.solicitudesService.findHistorial(user.empresaId, estado);
-}
 
+
+@Get('historial')
+  @Roles(UserRole.ADMIN, UserRole.WORKER)
+@UseGuards(JwtAuthGuard, RolesGuard)
+  async getHistorial(
+    @GetUser() user: UserPayload,
+    @Query('estado') estado?: string
+  ) {
+    // 💡 He movido la lógica de seguridad al servicio para que el 
+    // Worker solo vea SU historial y el Admin el de toda la EMPRESA.
+    return await this.solicitudesService.findHistorial(user, estado);
+  }
 
   @Get('my-request')
   @Roles(UserRole.WORKER)

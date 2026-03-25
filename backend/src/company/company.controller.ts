@@ -103,9 +103,10 @@ findAll(@GetUser() user: UserPayload) {
   @Roles(UserRole.SUPERADMIN)
   update(
     @Param('id', ParseIntPipe) id: number, 
-    @Body() updateEmpresaDto: UpdateCompanyDto
+    @Body() updateEmpresaDto: UpdateCompanyDto,
+    @GetUser() user: UserPayload
   ) {
-    return this.empresasService.update(id, updateEmpresaDto);
+    return this.empresasService.update(id, updateEmpresaDto, user);
   }
 
   // --- BORRAR EMPRESA ---
@@ -129,6 +130,6 @@ async updateArchiveSettings(
   @GetUser() user: UserPayload,
   @Body() dto: UpdateCompanyDto
 ) {
-  return await this.empresasService.update(user.empresaId, dto);
+  return await this.empresasService.update(user.empresaId, dto, user);
 }
 }

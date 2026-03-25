@@ -2,7 +2,7 @@
 // src/empresas/empresas.service.ts
 // --- Servicio para la gestión de Empresas ---
 // El servicio de Company se encarga de toda la lógica de negocio relacionada con las empresas, incluyendo la creación, actualización, eliminación y consulta de empresas. Además, maneja la lógica de seguridad relacionada con el acceso a las empresas según el rol del usuario (SuperAdmin, Admin). El servicio utiliza TypeORM para interactuar con la base de datos y gestiona transacciones para operaciones críticas como la creación de una empresa junto con su usuario Admin asociado. También incluye validaciones para evitar duplicados y garantizar la integridad de los datos.
-import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -37,7 +37,7 @@ import { SetupCompanyDto } from './dto/setup-company.dto';
 */
 @Injectable()
 export class CompanyService {
-  logger: any;
+  private readonly logger = new Logger(CompanyService.name); // 💡 Inicializado correctamente
   constructor(
     @InjectRepository(Company)
     private readonly empresaRepository: Repository<Company>,
@@ -143,37 +143,31 @@ async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos l
  * Este endpoint permite a los SuperAdmin listar todas las empresas, mientras que los Admin solo pueden ver la empresa a la que pertenecen. El método delega la lógica de filtrado y validación al CompanyService, manteniendo el controlador limpio.
  */
 async findAll(user: UserPayload) {
-  const query = this.empresaRepository.createQueryBuilder('empresa')
-    .leftJoinAndSelect(
-      'empresa.usuarios', 
-      'admin', 
-      'admin.rol = :rol AND admin.isActive = :isActive', 
-      { rol: UserRole.ADMIN, isActive: true }
-    );
+    const query = this.empresaRepository.createQueryBuilder('empresa')
+      .leftJoinAndSelect(
+        'empresa.usuarios', 
+        'admin', 
+        'admin.rol = :rol AND admin.isActive = :isActive', 
+        { rol: UserRole.ADMIN, isActive: true }
+      );
 
-  //  Filtro de Seguridad por Rol
-  if (user.rol !== UserRole.SUPERADMIN) {
-    // Si no es SUPERADMIN, solo puede ver SU empresa
-    if (!user.empresaId) {
-      this.logger.warn(`Usuario ${user.email} intentó listar empresas sin tener empresaId asignado.`);
-      return []; 
+    // 🛡️ FILTRO DE SEGURIDAD ESTRICTO
+    if (user.rol !== UserRole.SUPERADMIN) {
+      if (!user.empresaId) {
+        this.logger.error(`Acceso denegado: Usuario ${user.email} sin empresaId`);
+        throw new ForbiddenException('No tienes una empresa asignada');
+      }
+      // Forzamos que la consulta solo devuelva SU empresa
+      query.where('empresa.id = :id', { id: user.empresaId });
     }
 
-    query.where('empresa.id = :id', { id: user.empresaId })
-         .andWhere('empresa.isActive = :active', { active: true });
+    try {
+      const empresas = await query.getMany();
+      return empresas.map(empresa => this.formatResponse(empresa));
+    } catch (error) {
+      throw new InternalServerErrorException('Error al recuperar las empresas');
+    }
   }
-
-  //  Ejecución de la consulta
-  try {
-    const empresas = await query.getMany();
-    
-    // 4. Mapeo de respuesta profesional (formateo centralizado)
-    return empresas.map(empresa => this.formatResponse(empresa));
-  } catch (error) {
-    this.logger.error(`Error al listar empresas: ${error.message}`);
-    throw new InternalServerErrorException('Error al recuperar la lista de empresas');
-  }
-}
 
 // 3. Método para obtener una empresa por ID con validación de acceso
 // Este método permite obtener una empresa por su ID, pero solo si el usuario tiene acceso a ella (SuperAdmin puede acceder a cualquier empresa, Admin solo a la suya). La lógica de validación y obtención de la empresa se delega al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso. El método utiliza un QueryBuilder para incluir la relación con los usuarios Admin de manera eficiente, y maneja las excepciones de manera profesional para proporcionar mensajes claros en caso de errores.
@@ -187,8 +181,10 @@ async findAll(user: UserPayload) {
  */
 
 async findOne(id: number, user: UserPayload) {
-    if (user.rol !== UserRole.SUPERADMIN && user.empresaId !== id) {
-      throw new ForbiddenException('No tienes permiso');
+    // 🛡️ Si no es SuperAdmin, el ID solicitado DEBE ser el suyo
+    if (user.rol !== UserRole.SUPERADMIN && Number(user.empresaId) !== Number(id)) {
+      this.logger.warn(`Intento de brecha: User ${user.id} intentó acceder a empresa ${id}`);
+      throw new ForbiddenException('No tienes permiso para ver esta empresa');
     }
 
     const empresa = await this.empresaRepository.createQueryBuilder('empresa')
@@ -199,7 +195,6 @@ async findOne(id: number, user: UserPayload) {
     if (!empresa) throw new NotFoundException('Empresa no encontrada');
     return this.formatResponse(empresa);
   }
-
   // 4. Método para actualizar una empresa y su Admin asociado
   // Este método permite actualizar los datos de una empresa y su Admin asociado. Solo puede ser accedido por un SuperAdmin, ya que la gestión de empresas es una tarea crítica que debe ser controlada estrictamente. El método delega toda la lógica de validación y actualización al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso. El método incluye validaciones para evitar duplicados de nombre y CIF, y maneja la actualización del Admin asociado, incluyendo la validación de email y encriptación de contraseña si se proporciona.
   /**
@@ -209,9 +204,12 @@ async findOne(id: number, user: UserPayload) {
    * * @returns La empresa actualizada. Si la empresa no existe o no se puede actualizar, se lanzará una excepción que será manejada por el CompanyService. 
    * * Este endpoint es accesible solo para SuperAdmin, ya que la gestión de empresas es una tarea crítica que debe ser controlada estrictamente. El método delega toda la lógica de validación y actualización al CompanyService, manteniendo el controlador enfocado en manejar la solicitud HTTP y la seguridad de acceso.
    */
- async update(id: number, dto: UpdateCompanyDto) {
+ async update(id: number, dto: UpdateCompanyDto, user: UserPayload) {
   const { admin, ...empresaDatos } = dto as any;
 
+  if (user.rol !== UserRole.SUPERADMIN) {
+        throw new ForbiddenException('Solo el SuperAdministrador puede modificar empresas');
+    }
   
   if (empresaDatos.nombre) {
     const nombreNormalizado = empresaDatos.nombre.toUpperCase().trim();
@@ -293,14 +291,27 @@ async findOne(id: number, user: UserPayload) {
   }
 }
 
-  private formatResponse(empresa: Company) {
-    const { usuarios, ...resto } = empresa;
-    return {
-      ...resto,
-      admin: (usuarios && usuarios.length > 0) ? usuarios[0] : null
-    };
-  }
+ private formatResponse(empresa: Company) {
+  const { usuarios, ...resto } = empresa;
 
+  // Extraemos el primer usuario (que es el Admin)
+  const adminRaw = (usuarios && usuarios.length > 0) ? usuarios[0] : null;
+
+  // Creamos un objeto limpio con solo los campos públicos
+  const adminSafe = adminRaw ? {
+    id: adminRaw.id,
+    nombre: adminRaw.nombre,
+    apellidos: adminRaw.apellidos,
+    email: adminRaw.email,
+    rol: adminRaw.rol,
+    isActive: adminRaw.isActive,
+  } : null;
+
+  return {
+    ...resto,
+    admin: adminSafe
+  };
+}
   // 5. Método para eliminar una empresa
   // Este método se encarga de eliminar una empresa, pero primero valida que la empresa exista. La eliminación de una empresa es una acción crítica que puede afectar a muchos usuarios y datos asociados, por lo que solo debe ser realizada por un SuperAdmin. La lógica de eliminación, incluyendo la validación de que la empresa existe y la gestión de las relaciones (como usuarios asociados), se delega al CompanyService para mantener el controlador limpio. El método utiliza el repositorio para eliminar la empresa, lo que también eliminará en cascada a los usuarios asociados debido a la configuración de la entidad.
 /**

@@ -64,7 +64,7 @@ export class AttendanceController {
   @Get('my-history')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async getHistory(@GetUser() user: UserPayload) {
-return this.attendanceService.findAllByUser(user.id, user.empresaId!);  }
+return this.attendanceService.findAllByUser(user.id, user); }
 
   // --- HISTORIAL DE EMPRESA: SOLO ADMIN ---
   /* Endpoint para que un administrador vea todas las asistencias de su empresa.
@@ -72,13 +72,14 @@ return this.attendanceService.findAllByUser(user.id, user.empresaId!);  }
     * Solo los usuarios con rol ADMIN pueden acceder a este endpoint para revisar el historial de asistencias de su empresa, asegurando que los trabajadores no puedan ver los registros de otros empleados.
     * @Roles(UserRole.ADMIN) garantiza que solo los administradores puedan acceder a este endpoint, protegiendo la privacidad de los trabajadores y asegurando que solo el personal autorizado pueda revisar los registros de asistencia de la empresa.
     */  
-  @Get('empresa')
-  @Roles(UserRole.ADMIN) //  Solo administradores
-  async getAllByEmpresa(@GetUser() admin: UserPayload) {
+ @Get('empresa')
+  @Roles(UserRole.ADMIN)
+  async getAllByEmpresa(@GetUser() admin: UserPayload) { // 👈 'admin' es de tipo UserPayload
     if (!admin.empresaId) {
       throw new BadRequestException('Administrador sin empresa asignada');
     }
-    return this.attendanceService.findAllByEmpresa(admin.empresaId);
+
+    return this.attendanceService.findAllByEmpresa(admin); 
   }
 
   // --- HISTORIAL DE UN TRABAJADOR ESPECÍFICO: SOLO ADMIN ---
@@ -89,14 +90,15 @@ return this.attendanceService.findAllByUser(user.id, user.empresaId!);  }
     * El parámetro :id en la ruta se utiliza para identificar al trabajador específico cuyo historial se desea consultar, lo que permite a los administradores revisar fácilmente los registros de asistencia de cualquier empleado dentro de su empresa.
     */
   @Get('user/:id')
-  @Roles(UserRole.ADMIN) 
+  @Roles(UserRole.ADMIN)
   async getByUserId(
     @Param('id', ParseIntPipe) targetUserId: number,
-    @GetUser() admin: UserPayload
+    @GetUser() admin: UserPayload // 👈 El 'admin' es el objeto completo
   ) {
     if (!admin.empresaId) {
-    throw new BadRequestException('Administrador sin empresa asignada');
-  }
-  return this.attendanceService.findAllByUser(targetUserId, admin.empresaId);
+      throw new BadRequestException('Administrador sin empresa asignada');
+    }
+
+    return this.attendanceService.findAllByUser(targetUserId, admin); 
   }
 }

@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Activity  } from './entities/activity.entity';
 import { CreateActividadDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { UserRole } from 'auth/roles.enum';
+import { UserPayload } from 'auth/interfaces/user-payload.interface';
 
 
 /**
@@ -28,15 +30,19 @@ export class ActividadService {
    * @param dto Datos del puesto de trabajo a crear
    * @returns El puesto de trabajo creado
    */
-  async create(empresaId: number, dto: CreateActividadDto) {
+  async create(user: UserPayload, dto: CreateActividadDto) {
+    // 🛡️ Seguridad en el servicio
+    if (user.rol !== UserRole.ADMIN && user.rol !== UserRole.SUPERADMIN) {
+      throw new ForbiddenException('Solo los administradores pueden crear puestos de trabajo');
+    }
+
     const nuevaActividad = this.actividadRepository.create({
-      empresaId,
+      empresaId: user.empresaId,
       ...dto,
-      activa: dto.activa !== undefined ? dto.activa : true, // Por defecto activa
+      activa: dto.activa !== undefined ? dto.activa : true,
     });
     return await this.actividadRepository.save(nuevaActividad);
   }
-
   // 2. LISTAR TODOS LOS PUESTOS DE LA EMPRESA
   /**
    *  Lista todos los puestos de trabajo de la empresa, opcionalmente solo los activos.
@@ -45,19 +51,26 @@ export class ActividadService {
    * @param soloActivas Si se desea listar solo los puestos activos (por defecto: false)
    * @returns Un array con todos los puestos de trabajo de la empresa (opcionalmente solo activos)
    */
-  async findAllByEmpresa(empresaId: number, soloActivas: boolean = false) {
-    const whereClause: any = { empresaId };
+async findAllByEmpresa(user: UserPayload, soloActivas: boolean = false) {
+    // 🛡️ Lógica de visibilidad:
+    // Un Worker TAL VEZ necesita ver los puestos activos para seleccionarlo al fichar.
+    // Pero si NO quieres que vea nada de la lista global, bloqueamos aquí:
+    if (user.rol === UserRole.WORKER && !soloActivas) {
+       throw new ForbiddenException('No tienes permiso para ver el listado global de puestos');
+    }
+
+    const whereClause: any = { empresaId: user.empresaId };
     
-    if (soloActivas) {
+    // Si es Worker, forzamos que solo vea las que están 'activa: true'
+    if (soloActivas || user.rol === UserRole.WORKER) {
       whereClause.activa = true;
     }
 
     return await this.actividadRepository.find({
       where: whereClause,
-      order: { tipo: 'ASC', nombre: 'ASC' }, // Ordenamos por departamento/tipo y luego por nombre
+      order: { tipo: 'ASC', nombre: 'ASC' },
     });
   }
-
   // 3. OBTENER UN PUESTO ESPECÍFICO
   /**
    *  Obtiene un puesto de trabajo específico por su ID y la empresa a la que pertenece.
@@ -66,17 +79,24 @@ export class ActividadService {
    * @param empresaId ID de la empresa en la que se desea buscar el puesto
    * @returns El puesto de trabajo encontrado
    */
-  async findOne(id: number, empresaId: number) {
-    const actividad = await this.actividadRepository.findOne({ 
-      where: { id, empresaId },
-      relations: ['workers'] 
-    });
-    
-    if (!actividad) {
-      throw new NotFoundException('El puesto de trabajo no existe en tu empresa');
-    }
-    return actividad;
+async findOne(id: number, user: UserPayload) {
+  const actividad = await this.actividadRepository.findOne({ 
+    where: { id, empresaId: user.empresaId },
+    relations: ['workers'] 
+  });
+  
+  if (!actividad) {
+    throw new NotFoundException('El puesto de trabajo no existe o no pertenece a tu empresa');
   }
+
+  // 🛡️ Si es un Worker, extraemos 'workers' y devolvemos el resto
+  if (user.rol === UserRole.WORKER) {
+      const { workers, ...actividadSegura } = actividad;
+      return actividadSegura; // 'workers' se queda fuera del retorno
+  }
+
+  return actividad;
+}
 
   // 4. ACTUALIZAR UN PUESTO
   /**
@@ -87,13 +107,16 @@ export class ActividadService {
    * @param dto Datos actualizados del puesto de trabajo
    * @returns El puesto de trabajo actualizado
    */
-  async update(id: number, empresaId: number, dto: UpdateActivityDto) {
-    const actividad = await this.findOne(id, empresaId); // Reutilizamos findOne por seguridad
-    
-    Object.assign(actividad, dto);
-    return await this.actividadRepository.save(actividad);
+ async update(id: number, user: UserPayload, dto: UpdateActivityDto) {
+  if (user.rol !== UserRole.ADMIN && user.rol !== UserRole.SUPERADMIN) {
+    throw new ForbiddenException('No tienes permiso para modificar puestos de trabajo');
   }
 
+  const actividad = await this.findOne(id, user); 
+  
+  Object.assign(actividad, dto);
+  return await this.actividadRepository.save(actividad);
+}
   // 5. DESACTIVAR (Soft Delete) - 
   /**
    *  Desactiva un puesto de trabajo existente, marcándolo como inactivo.

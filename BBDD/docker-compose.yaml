@@ -39,7 +39,8 @@ services:
       - postgres
 
 networks:
-  red_fichaje: 
+  red_fichaje:
+    name: red_fichaje # 👈 Esto obliga a Docker a buscar "red_fichaje" sin prefijos
     external: true
 volumes:
   postgres_data_bbdd:

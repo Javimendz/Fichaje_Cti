@@ -22,11 +22,11 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
  * 
  * 
  * 
-*/ 
+*/
 @Controller('actividades')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ActividadController {
-  constructor(private readonly actividadService: ActividadService) {}
+  constructor(private readonly actividadService: ActividadService) { }
 
   // ====================================================================
   //  RUTAS EXCLUSIVAS PARA ADMINISTRADORES
@@ -45,7 +45,7 @@ export class ActividadController {
   @Post('crear')
   @Roles(UserRole.ADMIN)
   create(@Body() createActividadDto: CreateActividadDto, @GetUser() user: UserPayload) {
-    return this.actividadService.create(user.empresaId, createActividadDto);
+    return this.actividadService.create(user, createActividadDto);
   }
 
   //  Editar actividad por ID
@@ -65,18 +65,18 @@ export class ActividadController {
   @Put('editar/:id')
   @Roles(UserRole.ADMIN)
   update(
-    @Param('id', ParseIntPipe) id: number, 
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateActividadDto: UpdateActivityDto,
     @GetUser() user: UserPayload
   ) {
-    return this.actividadService.update(id, user.empresaId, updateActividadDto);
+    return this.actividadService.update(id, user, updateActividadDto);
   }
   // =====================================================================
   //  RUTAS EXCLUSIVAS PARA EMPRESAS
   // ====================================================================
 
   //============================================
-   
+
   //  Desactivar actividad por ID
   // Desactiva la actividad con el ID especificado
   // Solo puede ser accedido por administradores
@@ -100,29 +100,29 @@ export class ActividadController {
   //  ADMIN Y  TRABAJADORES (Consultas)
   // ====================================================================
 
-  
-   /**
-    *  //  Catalogo de actividades por empresa
-      Si el usuario es trabajador, solo verá las actividades activas
-      Si el usuario es admin, podrá ver todas las actividades o solo las activas según el parámetro
-    * @param user Usuario autenticado
-    * @param soloActivas Si se desea filtrar solo por actividades activas
-    * @returns Catálogo de actividades por empresa
-    * @throws {NotFoundException} Si la empresa no tiene actividades
-    * @throws {NotFoundException} Si la empresa no tiene actividades activas
-    * 
-    * 
-    */
+
+  /**
+   *  //  Catalogo de actividades por empresa
+     Si el usuario es trabajador, solo verá las actividades activas
+     Si el usuario es admin, podrá ver todas las actividades o solo las activas según el parámetro
+   * @param user Usuario autenticado
+   * @param soloActivas Si se desea filtrar solo por actividades activas
+   * @returns Catálogo de actividades por empresa
+   * @throws {NotFoundException} Si la empresa no tiene actividades
+   * @throws {NotFoundException} Si la empresa no tiene actividades activas
+   * 
+   * 
+   */
   @Get('catalogo')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   findAll(
     @GetUser() user: UserPayload,
   ) {
 
-    return this.actividadService.findAllByEmpresa(user.empresaId);
+    return this.actividadService.findAllByEmpresa(user);
   }
 
-  
+
   /**
    * Devuelve la actividad con el ID especificado
    * Si el usuario es trabajador, solo podrá ver actividades activas
@@ -138,6 +138,6 @@ export class ActividadController {
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
-    return this.actividadService.findOne(id, user.empresaId);
+    return this.actividadService.findOne(id, user);
   }
 }

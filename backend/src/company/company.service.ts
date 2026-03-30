@@ -63,14 +63,14 @@ async createWithAdmin(dto: SetupCompanyDto) {
   if (!dto.nombreEmpresa) throw new BadRequestException('El nombre de la empresa es obligatorio.');
   if (!adminData.email) throw new BadRequestException('El email del administrador es obligatorio.');
   if (!adminData.password) throw new BadRequestException('La contraseña del administrador es obligatoria.');
-  if (!adminData.dni) throw new BadRequestException('El DNI del administrador es obligatorio.');
+ 
   if (!adminData.telefono) throw new BadRequestException('El teléfono del administrador es obligatorio.');
 
   // -- Validar duplicados --
   const cifLimpio = dto.cif.toUpperCase().trim();
   const nombreLimpio = dto.nombreEmpresa.toUpperCase().trim();
   const emailLimpio = adminData.email.toLowerCase().trim();
-  const dniLimpio = adminData.dni.toUpperCase().trim();
+ 
   const telLimpio = adminData.telefono.trim();
 
   const cifExiste = await this.empresaRepository.findOne({ where: { cif: cifLimpio } });
@@ -86,7 +86,6 @@ async createWithAdmin(dto: SetupCompanyDto) {
 
   if (adminConflicto) {
     if (adminConflicto.email === emailLimpio) throw new BadRequestException('El email ya está registrado.');
-    if (adminConflicto.dni === dniLimpio) throw new BadRequestException('El DNI ya está registrado.');
     if (adminConflicto.telefono === telLimpio) throw new BadRequestException('El teléfono ya está registrado.');
   }
 
@@ -112,7 +111,7 @@ async createWithAdmin(dto: SetupCompanyDto) {
     const nuevoAdmin = queryRunner.manager.create(User, {
       ...adminData,
       email: emailLimpio,
-      dni: dniLimpio,
+     
       password: hashedPassword,
       rol: UserRole.ADMIN,
       empresaId: empresaGuardada.id,

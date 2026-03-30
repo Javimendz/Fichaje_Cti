@@ -65,7 +65,6 @@ export class Company {
   // Una empresa tiene muchos Usuarios (SuperAdmins, Admins, etc.)
   @OneToMany(() => User, (user) => user.empresa, {
     cascade: true,
-    onDelete: 'CASCADE' // Esto le dice a la DB que cree la relación con ON DELETE CASCADE
   })
   usuarios: User[];
 

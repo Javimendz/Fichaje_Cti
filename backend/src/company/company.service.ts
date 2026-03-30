@@ -55,84 +55,89 @@ export class CompanyService {
    * * Este endpoint es el único método para crear una empresa, y solo puede ser accedido por un SuperAdmin. Este método también se encarga de crear un usuario Admin asociado a la empresa, garantizando que cada empresa tenga al menos un Admin desde su creación.
    * 
    */
-async createWithAdmin(dto: SetupCompanyDto) { // Usamos el DTO que tiene todos los campos
-  const cifExiste = await this.empresaRepository.findOneBy({ cif: dto.cif });
-  if (cifExiste) throw new BadRequestException('El CIF de la empresa ya está registrado');
+async createWithAdmin(dto: SetupCompanyDto) {
+  const { admin: adminData } = dto;
 
+  // 1. 🛡️ VALIDACIONES PREVIAS (Fuera de la transacción)
+  if (!dto.cif) throw new BadRequestException('El CIF de la empresa es obligatorio.');
+  if (!dto.nombreEmpresa) throw new BadRequestException('El nombre de la empresa es obligatorio.');
+  if (!adminData.email) throw new BadRequestException('El email del administrador es obligatorio.');
+  if (!adminData.password) throw new BadRequestException('La contraseña del administrador es obligatoria.');
+  if (!adminData.dni) throw new BadRequestException('El DNI del administrador es obligatorio.');
+  if (!adminData.telefono) throw new BadRequestException('El teléfono del administrador es obligatorio.');
+
+  // -- Validar duplicados --
+  const cifLimpio = dto.cif.toUpperCase().trim();
+  const nombreLimpio = dto.nombreEmpresa.toUpperCase().trim();
+  const emailLimpio = adminData.email.toLowerCase().trim();
+  const dniLimpio = adminData.dni.toUpperCase().trim();
+  const telLimpio = adminData.telefono.trim();
+
+  const cifExiste = await this.empresaRepository.findOne({ where: { cif: cifLimpio } });
+  if (cifExiste) throw new BadRequestException(`El CIF '${cifLimpio}' ya está registrado.`);
+
+  const nombreExiste = await this.empresaRepository.findOne({ where: { nombre: nombreLimpio } });
+  if (nombreExiste) throw new BadRequestException(`El nombre '${nombreLimpio}' ya está en uso.`);
+
+  const userRepository = this.dataSource.getRepository(User);
+  const adminConflicto = await userRepository.findOne({
+    where: [{ email: emailLimpio }, { dni: dniLimpio }, { telefono: telLimpio }]
+  });
+
+  if (adminConflicto) {
+    if (adminConflicto.email === emailLimpio) throw new BadRequestException('El email ya está registrado.');
+    if (adminConflicto.dni === dniLimpio) throw new BadRequestException('El DNI ya está registrado.');
+    if (adminConflicto.telefono === telLimpio) throw new BadRequestException('El teléfono ya está registrado.');
+  }
+
+  // 2. ⚡ PREPARACIÓN (Fuera de la transacción)
+  const hashedPassword = await bcrypt.hash(adminData.password, 10);
+
+  // 3. 🚀 INICIO DE LA TRANSACCIÓN
   const queryRunner = this.dataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
 
   try {
-    // 1. Crear la Empresa con el mapeo completo de campos
     const nuevaEmpresa = queryRunner.manager.create(Company, {
-  nombre: dto.nombreEmpresa,
-  cif: dto.cif,
-  direccion: dto.direccion,
-  poblacion: dto.poblacion,
-  provincia: dto.provincia,
-  pais: dto.pais,
-  email: dto.email,
-  latitud: dto.latitud,
-  longitud: dto.longitud,
-  contactoNombre: dto.nombreContacto,
-  telefonoContacto: dto.telefonoContacto,
-  telefonoEmpresa: dto.telefonoEmpresa,
-  codigoPostal: dto.codigoPostal,
-    isActive: true             
-});
+      ...dto, // Puedes usar spread si los nombres coinciden, o mapear uno a uno:
+      nombre: nombreLimpio,
+      cif: cifLimpio,
+      email: dto.email?.toLowerCase().trim(),
+      isActive: true,
+    });
     
     const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
 
-    const adminData = dto.admin;
-
-    const hashedPassword = await bcrypt.hash(adminData.password, 10);
     const nuevoAdmin = queryRunner.manager.create(User, {
       ...adminData,
+      email: emailLimpio,
+      dni: dniLimpio,
       password: hashedPassword,
       rol: UserRole.ADMIN,
-      empresa: empresaGuardada,        // Vinculación de objeto 
-      empresaId: empresaGuardada.id,  // Vinculación de FK
+      empresaId: empresaGuardada.id,
       isVerified: true,
       isActive: true,
-
     } as any);
     
-    await queryRunner.manager.save(nuevoAdmin);
+    const adminGuardado = await queryRunner.manager.save(nuevoAdmin);
 
     await queryRunner.commitTransaction();
 
-   return {
-  message: 'Setup de empresa completado con éxito',
-  empresa: { 
-    id: empresaGuardada.id, 
-    nombre: empresaGuardada.nombre 
-  },
-  admin: { 
-    id: nuevoAdmin.id, 
-    email: nuevoAdmin.email,
-    rol: nuevoAdmin.rol 
-  }
-};
+    return {
+      message: 'Alta de empresa y administrador completada con éxito',
+      empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
+      admin: { id: adminGuardado.id, email: adminGuardado.email }
+    };
 
   } catch (error) {
     await queryRunner.rollbackTransaction();
-    
-    if (error.code === '23505') {
-      // Este código de error es específico de PostgreSQL para violaciones de unicidad, lo que indica que el email del Admin o el CIF de la empresa ya están registrados.
-      // Distinguir entre email y CIF para un mensaje de error más claro
-      throw new BadRequestException('El email o DNI ya están registrados');
-    }
-    // Para otros errores, devolvemos un mensaje genérico de error interno, pero podríamos mejorar esto dependiendo del tipo de error.
-    // Log del error para diagnóstico (en un entorno real, usaríamos un logger en lugar de console.error)
-
-    throw new InternalServerErrorException('No se pudo procesar el alta: ' + error.message);
+    this.logger.error(`Error en createWithAdmin: ${error.message}`, error.stack);
+    throw new InternalServerErrorException('Error interno al procesar el alta.');
   } finally {
     await queryRunner.release();
   }
 }
-
-
 // 2. Método para listar empresas con log de auditoría
 // Este método permite a los SuperAdmin listar todas las empresas, mientras que los Admin solo pueden ver la empresa a la que pertenecen. El método incluye un log de auditoría que registra el email, ID y rol del usuario que solicita el listado de empresas, lo cual es útil para monitorear el acceso a información sensible y detectar posibles actividades no autorizadas. La lógica de filtrado y validación se delega al CompanyService, manteniendo el controlador limpio.
 // El método utiliza un QueryBuilder para construir la consulta de manera flexible, permitiendo incluir condiciones dinámicas según el rol del usuario. Además, se maneja la respuesta de manera profesional, formateando los datos antes de devolverlos al controlador.

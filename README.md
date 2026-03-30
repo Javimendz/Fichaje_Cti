@@ -395,8 +395,8 @@ PUT	        /api/actividades/editar/:id	     Modifica nombre, descripción o tip
 DELETE	    /api/actividades/delete/:id	     Borrado de la actividad. Los usuarios asociados pasan a actividadId=null	Token (ADMIN) + Param: id
 GET	      /api/actividades/catalogo  	       Lista de puestos de la empresa (Filtrable por soloActivas).	         Token (ADMIN / WORKER)
 GET	      /api/actividades/:id	             Obtiene el detalle de un puesto y sus trabajadores asignados.
-GET	      /api/actividades/:id/workers/count	Cuenta trabajadores asignados a ese puesto.	Token (ADMIN) + Param: :id
-
+GET	      /api/actividades/user/:id          Cuenta trabajadores asignados a ese puesto.	                        Token (ADMIN) + Param: :id
+GET       /api/actividades/list/:id          Lista todos los trabajadores asignados a ese puesto.	                Token (ADMIN) + Param: :id
 ```
 
 ```

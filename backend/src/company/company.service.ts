@@ -56,7 +56,7 @@ export class CompanyService {
    * 
    */
 async createWithAdmin(dto: SetupCompanyDto) {
-  const { admin: adminData } = dto;
+  const { admin: adminData, ...empresaDatos } = dto;
 
   // 1. 🛡️ VALIDACIONES PREVIAS Y NORMALIZACIÓN (Fuera de la transacción)
   if (!dto.cif) throw new BadRequestException('El CIF de la empresa es obligatorio.');
@@ -101,6 +101,7 @@ async createWithAdmin(dto: SetupCompanyDto) {
   try {
     // A. Crear la Empresa
     const nuevaEmpresa = queryRunner.manager.create(Company, {
+      ...empresaDatos,
       nombre: nombreLimpio, // Se guarda en MAYÚSCULAS
       cif: cifLimpio,      // Se guarda en MAYÚSCULAS
       direccion: dto.direccion,

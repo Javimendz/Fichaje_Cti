@@ -42,15 +42,18 @@ export class AlarmController {
    * @returns Lista de alarmas pendientes de la empresa del usuario
    */
 
- @Get('user/:userId')
-  @Roles(UserRole.ADMIN) // 🛡️ Seguridad: Solo el Admin puede buscar por ID ajeno
-  async getByUserId(
-    @Param('userId', ParseIntPipe) targetUserId: number,
+/**
+   * Obtiene todas las alarmas de un trabajador específico.
+   * Reservado para Administradores de la misma empresa.
+   */
+  @Get('worker/:workerId')
+  @Roles(UserRole.ADMIN) 
+  async getByWorkerId(
+    @Param('workerId', ParseIntPipe) workerId: number,
     @GetUser() admin: UserPayload
   ) {
-    return this.alarmService.getById(targetUserId, admin);
+    return this.alarmService.findAllByWorker(workerId, admin);
   }
-
   @Get('pendientes')
   @Roles(UserRole.ADMIN, UserRole.WORKER)
   async getMyAlarms(@GetUser() user: UserPayload) {

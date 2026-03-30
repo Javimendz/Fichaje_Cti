@@ -284,15 +284,26 @@ async resolve(id: number, nota: string, empresaId: number) {
   return await this.alarmRepository.save(alarma);
 }
 
-async getById(id: number, admin: UserPayload){
+/**
+   * Busca el historial de alarmas de un trabajador filtrando por empresa.
+   */
+  async findAllByWorker(workerId: number, admin: UserPayload) {
+    
+    //  Filtro de seguridad: el trabajador debe ser de la empresa del Admin
+    const alarmas = await this.alarmRepository.find({
+      where: {
+        usuario: { id: workerId },
+        empresaId: admin.empresaId // 👈 Bloqueo multi-empresa
+      },
+      relations: ['usuario'], // Para incluir datos del trabajador si los necesitas
+      order: { createdAt: 'DESC' }
+    });
 
-  const alarmas = await this.alarmRepository.find({
-    where: {
-      id,
-      empresaId: admin.empresaId
-    },
-    relations: ['usuario']
-    , order: { createdAt: 'DESC' }
-  })
-}
+    if (alarmas.length === 0) {
+      // Opcional: Podrías verificar si el usuario existe o simplemente devolver array vacío
+      throw new NotFoundException(`No se encontraron alarmas para el worker ${workerId} en la empresa ${admin.empresaId}`);
+    }
+
+    return alarmas;
+  }
 }

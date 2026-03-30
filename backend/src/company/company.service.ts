@@ -58,38 +58,39 @@ export class CompanyService {
 async createWithAdmin(dto: SetupCompanyDto) {
   const { admin: adminData } = dto;
 
-  // 1. 🛡️ VALIDACIONES PREVIAS (Fuera de la transacción)
+  // 1. 🛡️ VALIDACIONES PREVIAS Y NORMALIZACIÓN (Fuera de la transacción)
   if (!dto.cif) throw new BadRequestException('El CIF de la empresa es obligatorio.');
   if (!dto.nombreEmpresa) throw new BadRequestException('El nombre de la empresa es obligatorio.');
   if (!adminData.email) throw new BadRequestException('El email del administrador es obligatorio.');
   if (!adminData.password) throw new BadRequestException('La contraseña del administrador es obligatoria.');
- 
   if (!adminData.telefono) throw new BadRequestException('El teléfono del administrador es obligatorio.');
 
-  // -- Validar duplicados --
+  // Normalización de datos para asegurar unicidad real (Case Insensitive)
   const cifLimpio = dto.cif.toUpperCase().trim();
   const nombreLimpio = dto.nombreEmpresa.toUpperCase().trim();
   const emailLimpio = adminData.email.toLowerCase().trim();
- 
   const telLimpio = adminData.telefono.trim();
 
-  const cifExiste = await this.empresaRepository.findOne({ where: { cif: cifLimpio } });
-  if (cifExiste) throw new BadRequestException(`El CIF '${cifLimpio}' ya está registrado.`);
-
+  // -- Validar duplicados de Empresa --
+  // Al buscar y guardar siempre en Mayúsculas, garantizamos que el nombre sea único
   const nombreExiste = await this.empresaRepository.findOne({ where: { nombre: nombreLimpio } });
-  if (nombreExiste) throw new BadRequestException(`El nombre '${nombreLimpio}' ya está en uso.`);
+  if (nombreExiste) throw new BadRequestException(`La empresa con el nombre '${nombreLimpio}' ya existe.`);
 
+  const cifExiste = await this.empresaRepository.findOne({ where: { cif: cifLimpio } });
+  if (cifExiste) throw new BadRequestException(`El CIF '${cifLimpio}' ya está registrado por otra empresa.`);
+
+  // -- Validar duplicados de Administrador --
   const userRepository = this.dataSource.getRepository(User);
   const adminConflicto = await userRepository.findOne({
     where: [{ email: emailLimpio }, { telefono: telLimpio }]
   });
 
   if (adminConflicto) {
-    if (adminConflicto.email === emailLimpio) throw new BadRequestException('El email ya está registrado.');
-    if (adminConflicto.telefono === telLimpio) throw new BadRequestException('El teléfono ya está registrado.');
+    if (adminConflicto.email === emailLimpio) throw new BadRequestException('El correo electrónico del administrador ya está registrado.');
+    if (adminConflicto.telefono === telLimpio) throw new BadRequestException('El teléfono del administrador ya está registrado.');
   }
 
-  // 2. ⚡ PREPARACIÓN (Fuera de la transacción)
+  // 2. ⚡ PREPARACIÓN PESADA (Fuera de la transacción para no bloquear la DB)
   const hashedPassword = await bcrypt.hash(adminData.password, 10);
 
   // 3. 🚀 INICIO DE LA TRANSACCIÓN
@@ -98,42 +99,65 @@ async createWithAdmin(dto: SetupCompanyDto) {
   await queryRunner.startTransaction();
 
   try {
+    // A. Crear la Empresa
     const nuevaEmpresa = queryRunner.manager.create(Company, {
-      ...dto, // Puedes usar spread si los nombres coinciden, o mapear uno a uno:
-      nombre: nombreLimpio,
-      cif: cifLimpio,
+      nombre: nombreLimpio, // Se guarda en MAYÚSCULAS
+      cif: cifLimpio,      // Se guarda en MAYÚSCULAS
+      direccion: dto.direccion,
+      poblacion: dto.poblacion,
+      provincia: dto.provincia,
+      pais: dto.pais,
       email: dto.email?.toLowerCase().trim(),
+      latitud: dto.latitud,
+      longitud: dto.longitud,
+      contactoNombre: dto.nombreContacto,
+      telefonoContacto: dto.telefonoContacto,
+      telefonoEmpresa: dto.telefonoEmpresa,
+      codigoPostal: dto.codigoPostal,
       isActive: true,
     });
     
     const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
 
+    // B. Crear el Administrador vinculado
     const nuevoAdmin = queryRunner.manager.create(User, {
       ...adminData,
       email: emailLimpio,
-     
       password: hashedPassword,
       rol: UserRole.ADMIN,
-      empresaId: empresaGuardada.id,
+      empresaId: empresaGuardada.id, // FK vinculada al ID recién creado
       isVerified: true,
       isActive: true,
     } as any);
     
     const adminGuardado = await queryRunner.manager.save(nuevoAdmin);
 
+    // C. Confirmar cambios: Si llegamos aquí, Empresa y Admin se guardan juntos
     await queryRunner.commitTransaction();
+
+    this.logger.log(`[SETUP] Empresa "${empresaGuardada.nombre}" creada con éxito.`);
 
     return {
       message: 'Alta de empresa y administrador completada con éxito',
-      empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
-      admin: { id: adminGuardado.id, email: adminGuardado.email }
+      empresa: { 
+        id: empresaGuardada.id, 
+        nombre: empresaGuardada.nombre 
+      },
+      admin: { 
+        id: adminGuardado.id, 
+        email: adminGuardado.email,
+        rol: adminGuardado.rol 
+      }
     };
 
   } catch (error) {
+    // 🔙 En caso de cualquier error, se deshace la creación de la empresa
     await queryRunner.rollbackTransaction();
-    this.logger.error(`Error en createWithAdmin: ${error.message}`, error.stack);
-    throw new InternalServerErrorException('Error interno al procesar el alta.');
+    this.logger.error(`Fallo en el alta de empresa: ${error.message}`, error.stack);
+    
+    throw new InternalServerErrorException('No se pudo procesar el registro. Inténtelo de nuevo.');
   } finally {
+    // 🔌 Liberar la conexión para mantener la salud del pool
     await queryRunner.release();
   }
 }

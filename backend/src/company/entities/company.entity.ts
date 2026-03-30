@@ -16,6 +16,7 @@ export class Company {
   @Column('text', { nullable: true })
   cif?: string;
 
+  
   @Column('text', { nullable: true })
   direccion?: string;
 

@@ -25,6 +25,11 @@ export class CreateCompanyDto {
   })
   cif?: string;
 
+
+  @IsNumber({}, { message: 'El radio permitido debe ser un número' })
+  @Expose()
+  radioPermitido?: number;
+
   @IsString({ message: 'La dirección debe ser una cadena de texto' })
   @IsOptional()
   // Regex: Permite letras, números, tildes, ñ, y símbolos comunes de dirección (º, ª, /, -, ., ,)

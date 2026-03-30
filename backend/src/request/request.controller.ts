@@ -119,6 +119,16 @@ export class RequestController { // Inyección de dependencias
   ) {
     return this.solicitudesService.findByWorker(user, estado);
   }
+  @Get('user/:userId')
+  @Roles(UserRole.ADMIN)
+  async findByUserId(
+    @Param('userId', ParseIntPipe) userId: number,
+    @GetUser() admin: UserPayload,
+  ) {
+    if(!admin.empresaId) {
+      throw new BadRequestException('El administrador no tiene una empresa asociada.');
+    }
 
-
+    return await this.solicitudesService.findByUserId(userId, admin);
+ }    
 }

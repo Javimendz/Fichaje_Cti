@@ -22,6 +22,7 @@ import { AlarmsGateway } from "./gateway/alarms.gateway";
 
 import dayjs from 'dayjs';
 import { UserRole } from "auth/roles.enum";
+import { UserPayload } from "auth/interfaces/user-payload.interface";
 
 // 
 @Injectable()
@@ -281,5 +282,17 @@ async resolve(id: number, nota: string, empresaId: number) {
   }
   
   return await this.alarmRepository.save(alarma);
+}
+
+async getById(id: number, admin: UserPayload){
+
+  const alarmas = await this.alarmRepository.find({
+    where: {
+      id,
+      empresaId: admin.empresaId
+    },
+    relations: ['usuario']
+    , order: { createdAt: 'DESC' }
+  })
 }
 }

@@ -370,6 +370,24 @@ export class SolicitudesService extends BaseCleanupService<SolicitudEntity> { //
     });
   }
 
+
+  async findByUserId(id:number, user: UserPayload) {
+    
+  const solicitudes = await this.solicitudRepo.find({
+
+    where: {
+      usuarioId: id,
+      empresaId: user.empresaId
+    },
+    relations: ['usuario', 'revision'],
+    order: { createdAt: 'DESC' },
+    withDeleted: true, 
+
+  })
+
+  return solicitudes;
+  }
+
   /**
    * Obtiene las solicitudes de un trabajador filtradas por estado.
    * Útil para los apartados "Pendientes", "Aceptadas" y "Rechazadas" del Worker.

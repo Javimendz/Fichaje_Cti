@@ -80,6 +80,7 @@ export class IssueService extends BaseCleanupService<Issue> {
 
 
 
+
     // Evitar duplicado mismo tipo en el mismo día
     const inicioHoy = new Date();
     inicioHoy.setHours(0, 0, 0, 0);
@@ -362,5 +363,19 @@ async findAllTramitadasByUsuario(userId: number) {
   });
   }
 
- 
+ async findByUserId(targetUserId: number, admin: UserPayload) {
+    
+    // 🛡️ Filtro de seguridad: usuarioId + empresaId
+    const issues = await this.issueRepo.find({
+      where: {
+        usuario: { id: targetUserId },
+        empresaId: admin.empresaId 
+      },
+      relations: ['usuario'], 
+      order: { createdAt: 'DESC' }
+    });
+
+    return issues;
+  }
+
 }

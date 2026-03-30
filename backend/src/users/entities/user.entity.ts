@@ -86,7 +86,7 @@ password: string | null; // Contraseña del usuario (hashed)
   @Column({ name: 'empresa_id', nullable: true }) // Columna física en la DB
   empresaId: number ; // ID de la empresa a la que pertenece el usuario
 
-  @ManyToOne(() => Company, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Empresa
+  @ManyToOne(() => Company, (empresa) => empresa.usuarios, { nullable: true, onDelete: 'CASCADE' }) // Relación con Empresa
   @JoinColumn({ name: 'empresa_id' }) // Llave foránea personalizada
   empresa: Company | null; // Empresa a la que pertenece el usuario
 

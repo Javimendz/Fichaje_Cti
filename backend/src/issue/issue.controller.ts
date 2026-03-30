@@ -57,6 +57,15 @@ export class IncidenciaController {
     );
   }
 
+@Get('user/:userId')
+  @Roles(UserRole.ADMIN) // 🛡️ Seguridad: Solo el jefe puede buscar por ID de otro
+  async getByUserId(
+    @Param('userId', ParseIntPipe) userId: number,
+    @GetUser() admin: UserPayload
+  ) {
+    return this.issueService.findByUserId(userId, admin);
+  }
+
   /**
    * 
    * Obtiene todas las incidencias creadas por el usuario autenticado.

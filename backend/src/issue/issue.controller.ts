@@ -58,7 +58,7 @@ export class IncidenciaController {
   }
 
 @Get('user/:userId')
-  @Roles(UserRole.ADMIN) // 🛡️ Seguridad: Solo el jefe puede buscar por ID de otro
+  @Roles(UserRole.ADMIN) 
   async getByUserId(
     @Param('userId', ParseIntPipe) userId: number,
     @GetUser() admin: UserPayload

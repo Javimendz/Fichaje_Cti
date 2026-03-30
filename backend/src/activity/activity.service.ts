@@ -140,4 +140,27 @@ async findOne(id: number, user: UserPayload) {
     await this.actividadRepository.delete(id)
     return { mensaje: `La actividad con ID ${id} ha sido eliminada correctamente.` };
   }
+
+  async countByUserId(userId: number, user: UserPayload) {
+
+    const actividad = await this.findOne(userId, user)
+
+    const total = await this.actividadRepository.createQueryBuilder('activity')
+      .leftJoin('activity.workers', 'worker')
+      .where('activity.id = :id', { id: userId})
+      .andWhere('activity.empresaId = :empresaId', {empresaId: user.empresaId})
+      .getCount();
+
+      return {
+        actividadId: actividad.id,
+        nombre: actividad.nombre,
+        totalTrabajadores: total
+      }
+
+  }
+
+  async listByUserId(userId: number, user: UserPayload) {
+    const actividades = await this.findAllByEmpresa(user, true);
+    return actividades.filter(actividad => actividad.id === userId);
+  }
 }

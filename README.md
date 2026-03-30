@@ -311,6 +311,7 @@ PATCH	          /api/request/edit-request/:id	     Permite al trabajador modific
 GET             /api/request/historial             Obtiene el historial de solicitudes de la empresa.    Token (ADMIN) + Query: ?estado=APROBADA|RECHAZADA
 GET     /api/request/historial??estado=APROBADA|RECHAZADA  Obtiene el historial de solicitudes de la empresa por estado.    Token (ADMIN) + Query: ?
 GET             /api/request/my-request             Obtiene todas las solicitudes del trabajador autenticado.    Token (WORKER)
+GET             /api/request/user/:userId          Lista todas las solicitudes de un trabajador específico.    Token (ADMIN) + Param: :userId
 ```
 
 ```
@@ -372,6 +373,7 @@ POST        /api/asistencia/crear-asistencia         Registra entrada/ausencia s
 GET         /api/asistencia/my-history               Historial personal de asistencias del usuario.        Token (ADMIN/WORKER)
 GET         /api/asistencia/empresa                  Historial global de todos los empleados de la empresa.Token (ADMIN)
 GET         /api/asistencia/user/:id                 Consulta el historial de un trabajador específico.    Token (ADMIN)
+GET         /api/asistencia/list/:id	               Historial de fichajes de un trabajador específico.	   Token (ADMIN) + Param: :id
 ```
 
 ```
@@ -379,7 +381,9 @@ ALARMAS (ALARMS)
 🛠️ Método  📍 Endpoint                              📝 Descripción                                      📦 Requerimientos / Auth
 GET         /api/alarmas/pendientes                  Lista todas las alertas sin revisar de la empresa.   Token (ADMIN)
 PUT         /api/alarmas/revisar/:id                 Marca una alarma como leída de forma rápida.         Token (ADMIN)
-PUT         /api/alarmas/resolver/:id                Resuelve una alarma añadiendo una nota de gestión.   Token (ADMIN) + Body: { nota: string }
+PUT        /api/alarmas/resolver/:id                Resuelve una alarma añadiendo una nota de gestión.   Token (ADMIN) + Body: { nota: string }
+GET         /api/alarmas/user/:userId                Lista todas las alertas de un trabajador específico.    Token (ADMIN) + Param: :userId
+
 
 ```
 
@@ -391,6 +395,7 @@ PUT	        /api/actividades/editar/:id	     Modifica nombre, descripción o tip
 DELETE	    /api/actividades/delete/:id	     Borrado de la actividad. Los usuarios asociados pasan a actividadId=null	Token (ADMIN) + Param: id
 GET	      /api/actividades/catalogo  	       Lista de puestos de la empresa (Filtrable por soloActivas).	         Token (ADMIN / WORKER)
 GET	      /api/actividades/:id	             Obtiene el detalle de un puesto y sus trabajadores asignados.
+GET	      /api/actividades/:id/workers/count	Cuenta trabajadores asignados a ese puesto.	Token (ADMIN) + Param: :id
 
 ```
 
@@ -405,6 +410,7 @@ PUT	         /api/incidencias/edit-incidencia/:id	Edita una incidencia reportada
 GET          /api/incidencias/pendientes           Lista incidencias ocultas (Solo Admin).	                    Token (ADMIN)
 GET          /api/incidencias/mis-tramitadas       Obtiene todas las incidencias tramitadas (resueltas) de la empresa.    Token (WORKER)
 GET          /api/incidencias/mis-pendientes      Obtiene todas las incidencias pendientes de la empresa.    Token (WORKER)
+GET	         /api/incidencias/user/:userId	   Lista incidencias de un trabajador específico.	              Token (ADMIN) + Param: :userId  
 
 ```
 

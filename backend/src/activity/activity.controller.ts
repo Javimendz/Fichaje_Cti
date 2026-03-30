@@ -140,4 +140,16 @@ export class ActividadController {
   findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
     return this.actividadService.findOne(id, user);
   }
+
+  @Get('user/:id')
+  @Roles(UserRole.ADMIN)
+  countByUserId(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
+    return this.actividadService.countByUserId(id, user);
+  }
+
+  @Get('list/:id')
+  @Roles(UserRole.ADMIN)
+  listByUserId(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
+    return this.actividadService.listByUserId(id, user);
+  }
 }

@@ -81,7 +81,7 @@ async createWithAdmin(dto: SetupCompanyDto) {
 
   const userRepository = this.dataSource.getRepository(User);
   const adminConflicto = await userRepository.findOne({
-    where: [{ email: emailLimpio }, { dni: dniLimpio }, { telefono: telLimpio }]
+    where: [{ email: emailLimpio }, { telefono: telLimpio }]
   });
 
   if (adminConflicto) {

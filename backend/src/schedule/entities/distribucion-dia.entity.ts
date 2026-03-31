@@ -44,7 +44,7 @@ export class DistribucionDia {
 
   @PrimaryGeneratedColumn()
   id: number;
-
+  nombre?: string;
   @Column({
     type: 'enum',
     enum: DiaSemana,

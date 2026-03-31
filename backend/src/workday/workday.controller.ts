@@ -121,18 +121,34 @@ export class WorkdayController {
     );
   }
 
+  /**
+   * Obtiene el resumen de jornadas del día para el dashboard del admin
+   * @param user Usuario admin
+   * @returns Resumen de jornadas del día
+   */
   @Get('dashboard/resumen')
   @Roles(UserRole.ADMIN) 
   async getDashboard(@GetUser() user: UserPayload) {
     return await this.workdayService.getTodayStats(user.empresaId);
   }
 
+  /**
+   * Obtiene el resumen de jornadas del usuario para el dashboard
+   * @param user Usuario autenticado
+   * @returns Resumen de jornadas del usuario
+   */
  @Get('dashboard-stats')
  @Roles(UserRole.ADMIN, UserRole.WORKER) 
   async getDashboardStats(@GetUser() user: UserPayload) {
     return await this.workdayService.getWorkSummary(user.id);
   }
 
+  /**
+   * Obtiene el resumen de jornadas de un trabajador para el dashboard del admin
+   * @param workerId ID del trabajador
+   * @param admin Usuario admin
+   * @returns Resumen de jornadas del trabajador
+   */
   @Get('worker/:id/stats')
   @Roles(UserRole.ADMIN)
   async getWorkerStatsForAdmin(

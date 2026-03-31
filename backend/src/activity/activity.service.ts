@@ -6,6 +6,7 @@ import { CreateActividadDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { UserRole } from 'auth/roles.enum';
 import { UserPayload } from 'auth/interfaces/user-payload.interface';
+import { User } from 'users/entities/user.entity';
 
 
 /**
@@ -20,6 +21,8 @@ export class ActividadService {
   constructor(
     @InjectRepository(Activity)
     private readonly actividadRepository: Repository<Activity>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   // 1. CREAR UN PUESTO (Solo Admin)
@@ -142,24 +145,22 @@ async findOne(id: number, user: UserPayload) {
   }
 
  async countWorkersInActivity(actividadId: number, user: UserPayload) {
-  // 1. 🛡️ Validación rápida: ¿Existe la actividad y es de mi empresa?
-  // Buscamos solo UNA, no todas.
+  // 1. Validar que la actividad existe y es de la empresa (tu lógica actual está bien)
   const actividad = await this.actividadRepository.findOne({
-    where: { 
-      id: actividadId, 
-      empresaId: user.empresaId 
-    }
+    where: { id: actividadId, empresaId: user.empresaId }
   });
 
-  if (!actividad) {
-    throw new NotFoundException(`La actividad con ID ${actividadId} no existe o no tienes acceso a ella`);
-  }
+  if (!actividad) throw new NotFoundException('Actividad no encontrada');
 
-  // 2. 🔢 Conteo eficiente mediante QueryBuilder
-  const total = await this.actividadRepository.createQueryBuilder('activity')
-    .leftJoin('activity.workers', 'worker') // Unimos con la relación de trabajadores
-    .where('activity.id = :id', { id: actividadId })
-    .getCount();
+  // 2. Contar los trabajadores que tengan esta actividad asignada
+  // Asumiendo que en tu entidad User tienes la relación 'actividad'
+  const total = await this.userRepository.count({
+    where: { 
+      actividad: { id: actividadId },
+      empresaId: user.empresaId,
+      isActive: true // Opcional: contar solo los que no están de baja
+    }
+  });
 
   return {
     actividadId: actividad.id,

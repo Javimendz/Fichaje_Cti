@@ -116,34 +116,66 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
 
 
 async getWorkSummary(usuarioId: number) {
-    const ahora = new Date();
-    const inicioHoy = new Date(ahora);
-    inicioHoy.setHours(0, 0, 0, 0);
+  const ahora = new Date();
+  const inicioHoy = new Date(ahora);
+  inicioHoy.setHours(0, 0, 0, 0);
 
-    // 💡 Ejecutamos las 4 consultas pesadas en paralelo
-    const [mensualDB, semanalDB, hoyDB, activa] = await Promise.all([
-      this.getMonthlyTotal(usuarioId),
-      this.getWeeklyTotal(usuarioId),
-      this.getDailyTotalDB(usuarioId, inicioHoy),
-      this.findActiveWorkday(usuarioId)
-    ]);
+  // 1. 💡 Ejecutamos las consultas (Añadimos la del turno teórico)
+  const [mensualDB, semanalDB, hoyDB, activa, turnoHoy] = await Promise.all([
+    this.getMonthlyTotal(usuarioId),
+    this.getWeeklyTotal(usuarioId),
+    this.getDailyTotalDB(usuarioId, inicioHoy),
+    this.findActiveWorkday(usuarioId),
+    this.scheduleService.getTurnoHoy(usuarioId, ahora) // 👈 Obtenemos su horario de hoy
+  ]);
 
-    // 💡 BUG SOLUCIONADO: Si hay jornada activa, calculamos cuánto lleva "hoy" hasta este milisegundo
-    const segundosEnVivo = activa 
-      ? Math.floor((ahora.getTime() - activa.inicio.getTime()) / 1000) 
-      : 0;
+  // 2. 🕒 Cálculo de tiempo trabajado "en vivo"
+  const segundosEnVivo = activa 
+    ? Math.floor((ahora.getTime() - activa.inicio.getTime()) / 1000) 
+    : 0;
 
-    const totalHoy = hoyDB + segundosEnVivo;
-    const totalSemana = semanalDB + segundosEnVivo;
-    const totalMes = mensualDB + segundosEnVivo;
+  const totalHoy = hoyDB + segundosEnVivo;
+  const totalSemana = semanalDB + segundosEnVivo;
+  const totalMes = mensualDB + segundosEnVivo;
 
-    return {
-      hoy: { segundos: totalHoy, formateado: this.convertirSegundosAHora(totalHoy) },
-      semana: { segundos: totalSemana, formateado: this.convertirSegundosAHora(totalSemana) },
-      mes: { segundos: totalMes, formateado: this.convertirSegundosAHora(totalMes) },
-      isWorking: !!activa
-    };
+  // 3. 🗓️ Cálculo de horas TEÓRICAS (Lo que DEBE trabajar hoy)
+  let segundosTeoricosHoy = 0;
+  if (turnoHoy && turnoHoy.franjas) {
+    segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, franja) => {
+      if (!franja.inicio || !franja.fin) return acc;
+      return acc + this.calcularSegundosFranja(franja.inicio, franja.fin);
+    }, 0);
   }
+
+  // 4. 📊 Cálculo de diferencia (Balance)
+  const balanceHoy = totalHoy - segundosTeoricosHoy;
+
+  return {
+    hoy: { 
+      trabajado: { segundos: totalHoy, formateado: this.convertirSegundosAHora(totalHoy) },
+      teorico: { segundos: segundosTeoricosHoy, formateado: this.convertirSegundosAHora(segundosTeoricosHoy) },
+      balance: { 
+        segundos: balanceHoy, 
+        completado: segundosTeoricosHoy > 0 ? parseFloat(((totalHoy / segundosTeoricosHoy) * 100).toFixed(2)) : 0
+      }
+    },
+    semana: { segundos: totalSemana, formateado: this.convertirSegundosAHora(totalSemana) },
+    mes: { segundos: totalMes, formateado: this.convertirSegundosAHora(totalMes) },
+    isWorking: !!activa,
+    puesto: turnoHoy?.nombre || 'Sin turno asignado'
+  };
+}
+
+/**
+ * Auxiliar: Calcula la duración en segundos entre dos horas (ej: "08:00" a "14:00")
+ */
+private calcularSegundosFranja(inicio: string, fin: string): number {
+  const [h1, m1] = inicio.split(':').map(Number);
+  const [h2, m2] = fin.split(':').map(Number);
+  
+  const totalMinutos = (h2 * 60 + m2) - (h1 * 60 + m1);
+  return totalMinutos * 60;
+}
 
   private async getDailyTotalDB(usuarioId: number, inicio: Date): Promise<number> {
     const res = await this.workdayRepository

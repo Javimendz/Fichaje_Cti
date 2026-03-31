@@ -96,4 +96,7 @@ async findAllByUser(targetUserId: number, requestingUser: UserPayload) {
       order: { fechaJornada: 'DESC', fecha: 'DESC' }
     });
   }
+
+  
+
 }

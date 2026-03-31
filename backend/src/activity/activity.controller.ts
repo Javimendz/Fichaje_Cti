@@ -144,7 +144,7 @@ export class ActividadController {
   @Get('user/:id')
   @Roles(UserRole.ADMIN)
   countByUserId(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
-    return this.actividadService.countByUserId(id, user);
+    return this.actividadService.countWorkersInActivity(id, user);
   }
 
   @Get('list/:id')

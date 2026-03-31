@@ -141,24 +141,32 @@ async findOne(id: number, user: UserPayload) {
     return { mensaje: `La actividad con ID ${id} ha sido eliminada correctamente.` };
   }
 
-  async countByUserId(userId: number, user: UserPayload) {
+ async countWorkersInActivity(actividadId: number, user: UserPayload) {
+  // 1. 🛡️ Validación rápida: ¿Existe la actividad y es de mi empresa?
+  // Buscamos solo UNA, no todas.
+  const actividad = await this.actividadRepository.findOne({
+    where: { 
+      id: actividadId, 
+      empresaId: user.empresaId 
+    }
+  });
 
-    const actividad = await this.findOne(userId, user)
-
-    const total = await this.actividadRepository.createQueryBuilder('activity')
-      .leftJoin('activity.workers', 'worker')
-      .where('activity.id = :id', { id: userId})
-      .andWhere('activity.empresaId = :empresaId', {empresaId: user.empresaId})
-      .getCount();
-
-      return {
-        actividadId: actividad.id,
-        nombre: actividad.nombre,
-        totalTrabajadores: total
-      }
-
+  if (!actividad) {
+    throw new NotFoundException(`La actividad con ID ${actividadId} no existe o no tienes acceso a ella`);
   }
 
+  // 2. 🔢 Conteo eficiente mediante QueryBuilder
+  const total = await this.actividadRepository.createQueryBuilder('activity')
+    .leftJoin('activity.workers', 'worker') // Unimos con la relación de trabajadores
+    .where('activity.id = :id', { id: actividadId })
+    .getCount();
+
+  return {
+    actividadId: actividad.id,
+    nombre: actividad.nombre,
+    totalTrabajadores: total
+  };
+}
   async listByUserId(userId: number, user: UserPayload) {
     const actividades = await this.findAllByEmpresa(user, true);
     return actividades.filter(actividad => actividad.id === userId);

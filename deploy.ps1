@@ -7,48 +7,76 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 
 Write-Host "--- Iniciando despliegue de Fichaje CTI ---" -ForegroundColor Cyan
 
-# --- 2. Limpieza Previa (Teardown) ---
-Write-Host "Limpiando contenedores y redes de instalaciones anteriores..." -ForegroundColor Yellow
-# El '2>$null' oculta los errores en caso de que los contenedores ya no existan
+# --- 2. Limpieza Radical (Teardown) ---
+Write-Host "Limpiando contenedores y liberando red..." -ForegroundColor Yellow
+
+# Obtenemos todos los contenedores que podrían estar usando nuestra red
+$containers = docker ps -a --filter "network=red_fichaje" -q
+if ($containers) {
+    Write-Host "Desconectando y eliminando contenedores antiguos..."
+    foreach ($id in $containers) {
+        docker network disconnect -f red_fichaje $id 2>$null
+        docker rm -f $id 2>$null
+    }
+}
+
+# Eliminamos contenedores por nombre por si acaso
 docker rm -f postgres postgres_bbdd fichaje_backend nginx_proxy 2>$null
+
+# Borramos la red de raíz para evitar IDs huérfanos
 docker network rm red_fichaje 2>$null
 Write-Host "Entorno limpio." -ForegroundColor Green
 
-# --- 2. Crear red de Docker si no existe ---
+# --- 3. Crear red de Docker Limpia ---
 Write-Host "Configurando red de Docker..." -ForegroundColor Yellow
-$networkCheck = docker network ls --filter name=red_fichaje -q
-if (-not $networkCheck) {
-    docker network create red_fichaje
-    Write-Host "Red red_fichaje creada." -ForegroundColor Green
-} else {
-    Write-Host "La red red_fichaje ya existe."
-}
+docker network create red_fichaje
+Write-Host "Red red_fichaje creada." -ForegroundColor Green
 
-# --- 3. Liberar puerto 80 ---
-Write-Host "Liberando puerto 80 (net stop http)..." -ForegroundColor Yellow
+# --- 4. Liberar puerto 80 (Conflictos con IIS/HTTP) ---
+Write-Host "Liberando puerto 80..." -ForegroundColor Yellow
 net stop http /y 2>$null
 Write-Host "Puerto 80 liberado." -ForegroundColor Green
 
-# --- 4. Levantar Base de Datos ---
-Write-Host "Levantando BBDD..." -ForegroundColor Yellow
-Set-Location "bbdd"    # 👈 Quitamos el "infra/"
-docker compose up -d
-if ($LASTEXITCODE -ne 0) { Write-Host "Error en BBDD"; Set-Location "../"; exit }
-Set-Location "../"
+# --- 5. Levantar Base de Datos ---
+if (Test-Path "bbdd") {
+    Write-Host "Levantando BBDD..." -ForegroundColor Yellow
+    Set-Location "bbdd"
+    docker compose up -d
+    if ($LASTEXITCODE -ne 0) { 
+        Write-Host "❌ Error en BBDD. Revisa el archivo docker-compose en /bbdd" -ForegroundColor Red
+        Set-Location ".."
+        exit 
+    }
+    Set-Location ".."
+} else {
+    Write-Host "❌ ERROR: No se encuentra la carpeta /bbdd" -ForegroundColor Red
+}
 
-# --- 5. Levantar Backend ---
-Write-Host "Levantando Backend..." -ForegroundColor Yellow
-Set-Location "backend"
-docker compose up -d --build
-if ($LASTEXITCODE -ne 0) { Write-Host "Error en Backend"; Set-Location "../"; exit }
-Set-Location "../"
+# --- 6. Levantar Backend ---
+if (Test-Path "backend") {
+    Write-Host "Levantando Backend..." -ForegroundColor Yellow
+    Set-Location "backend"
+    docker compose up -d --build
+    if ($LASTEXITCODE -ne 0) { 
+        Write-Host "❌ Error en Backend. Revisa logs con 'docker logs fichaje_backend'" -ForegroundColor Red
+        Set-Location ".."
+        exit 
+    }
+    Set-Location ".."
+}
 
-# --- 6. Levantar Proxy (Nginx) ---
-Write-Host "Levantando Proxy..." -ForegroundColor Yellow
-Set-Location "infra/proxy"
-docker compose up -d
-if ($LASTEXITCODE -ne 0) { Write-Host "Error en Proxy"; Set-Location "../../"; exit }
-Set-Location "../../"
+# --- 7. Levantar Proxy (Nginx) ---
+if (Test-Path "infra/proxy") {
+    Write-Host "Levantando Proxy..." -ForegroundColor Yellow
+    Set-Location "infra/proxy"
+    docker compose up -d
+    if ($LASTEXITCODE -ne 0) { 
+        Write-Host "❌ Error en Proxy." -ForegroundColor Red
+        Set-Location "../../"
+        exit 
+    }
+    Set-Location "../../"
+}
 
-Write-Host "--- DESPLIEGUE COMPLETADO ---" -ForegroundColor Green
-docker ps
+Write-Host "`n--- DESPLIEGUE COMPLETADO ---" -ForegroundColor Green
+docker ps --filter "network=red_fichaje"

@@ -318,4 +318,49 @@ export class ScheduleService {
     const semanasPasadas = Math.max(0, Math.floor(diferenciaMs / msPorSemana));
     return (semanasPasadas % totalSemanasRotacion) + 1;
   }
+
+
+  /**
+ * Calcula el total de segundos teóricos que un trabajador debe cumplir 
+ * en un rango de fechas determinado.
+ */
+async getTeoricoRange(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
+  let totalSegundos = 0;
+  
+  // Creamos una copia de la fecha de inicio para no mutar el objeto original
+  let fechaActual = new Date(inicio);
+  fechaActual.setHours(0, 0, 0, 0);
+
+  // Recorremos día por día desde el inicio hasta el fin
+  while (fechaActual <= fin) {
+    // 1. Obtenemos el turno que le toca este día específico
+    const turno = await this.getTurnoHoy(usuarioId, fechaActual);
+
+    // 2. Si tiene turno y tiene franjas horarias, las sumamos
+    if (turno && turno.franjas) {
+      turno.franjas.forEach(franja => {
+        if (franja.inicio && franja.fin) {
+          totalSegundos += this.calcularSegundosFranja(franja.inicio, franja.fin);
+        }
+      });
+    }
+
+    // 3. Saltamos al día siguiente
+    fechaActual.setDate(fechaActual.getDate() + 1);
+  }
+
+  return totalSegundos;
+}
+
+/**
+ * Auxiliar para convertir franjas (HH:MM) en segundos totales
+ */
+private calcularSegundosFranja(inicio: string, fin: string): number {
+  const [h1, m1] = inicio.split(':').map(Number);
+  const [h2, m2] = fin.split(':').map(Number);
+  
+  const totalMinutos = (h2 * 60 + m2) - (h1 * 60 + m1);
+  return totalMinutos * 60;
+}
+
 }

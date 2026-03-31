@@ -117,28 +117,50 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
 
 async getWorkSummary(usuarioId: number) {
   const ahora = new Date();
+  
+  // --- 1. Definición de rangos temporales ---
   const inicioHoy = new Date(ahora);
   inicioHoy.setHours(0, 0, 0, 0);
 
-  // 1. 💡 Ejecutamos las consultas (Añadimos la del turno teórico)
-  const [mensualDB, semanalDB, hoyDB, activa, turnoHoy] = await Promise.all([
+  // Inicio de semana (Lunes)
+  const inicioSemana = new Date(ahora);
+  const diaSemana = inicioSemana.getDay();
+  const diffLunes = inicioSemana.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+  inicioSemana.setDate(diffLunes);
+  inicioSemana.setHours(0, 0, 0, 0);
+
+  // Inicio de mes (Día 1)
+  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0);
+
+  // --- 2. Consultas en paralelo ---
+  const [
+    mensualDB, 
+    semanalDB, 
+    hoyDB, 
+    activa, 
+    turnoHoy,
+    teoricoSemana, // 👈 Nuevo método necesario en ScheduleService
+    teoricoMes     // 👈 Nuevo método necesario en ScheduleService
+  ] = await Promise.all([
     this.getMonthlyTotal(usuarioId),
     this.getWeeklyTotal(usuarioId),
     this.getDailyTotalDB(usuarioId, inicioHoy),
     this.findActiveWorkday(usuarioId),
-    this.scheduleService.getTurnoHoy(usuarioId, ahora) // 👈 Obtenemos su horario de hoy
+    this.scheduleService.getTurnoHoy(usuarioId, ahora),
+    this.scheduleService.getTeoricoRange(usuarioId, inicioSemana, ahora),
+    this.scheduleService.getTeoricoRange(usuarioId, inicioMes, ahora)
   ]);
 
-  // 2. 🕒 Cálculo de tiempo trabajado "en vivo"
+  // --- 3. Cálculo de tiempo "en vivo" ---
   const segundosEnVivo = activa 
     ? Math.floor((ahora.getTime() - activa.inicio.getTime()) / 1000) 
     : 0;
 
-  const totalHoy = hoyDB + segundosEnVivo;
-  const totalSemana = semanalDB + segundosEnVivo;
-  const totalMes = mensualDB + segundosEnVivo;
+  const totalHoyActual = hoyDB + segundosEnVivo;
+  const totalSemanaActual = semanalDB + segundosEnVivo;
+  const totalMesActual = mensualDB + segundosEnVivo;
 
-  // 3. 🗓️ Cálculo de horas TEÓRICAS (Lo que DEBE trabajar hoy)
+  // --- 4. Cálculo Teórico Diario ---
   let segundosTeoricosHoy = 0;
   if (turnoHoy && turnoHoy.franjas) {
     segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, franja) => {
@@ -147,22 +169,33 @@ async getWorkSummary(usuarioId: number) {
     }, 0);
   }
 
-  // 4. 📊 Cálculo de diferencia (Balance)
-  const balanceHoy = totalHoy - segundosTeoricosHoy;
+  // --- 5. Preparación de Balances ---
+  const balanceHoy = totalHoyActual - segundosTeoricosHoy;
+  const balanceSemana = totalSemanaActual - teoricoSemana;
+  const balanceMes = totalMesActual - teoricoMes;
 
   return {
-    hoy: { 
-      trabajado: { segundos: totalHoy, formateado: this.convertirSegundosAHora(totalHoy) },
-      teorico: { segundos: segundosTeoricosHoy, formateado: this.convertirSegundosAHora(segundosTeoricosHoy) },
-      balance: { 
-        segundos: balanceHoy, 
-        completado: segundosTeoricosHoy > 0 ? parseFloat(((totalHoy / segundosTeoricosHoy) * 100).toFixed(2)) : 0
-      }
-    },
-    semana: { segundos: totalSemana, formateado: this.convertirSegundosAHora(totalSemana) },
-    mes: { segundos: totalMes, formateado: this.convertirSegundosAHora(totalMes) },
+    hoy: this.formatPeriod(totalHoyActual, segundosTeoricosHoy, balanceHoy),
+    semana: this.formatPeriod(totalSemanaActual, teoricoSemana, balanceSemana),
+    mes: this.formatPeriod(totalMesActual, teoricoMes, balanceMes),
     isWorking: !!activa,
-    puesto: turnoHoy?.nombre || 'Sin turno asignado'
+    puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado'
+  };
+}
+
+/**
+ * Helper para formatear los datos de cada periodo (evita repetir código)
+ */
+private formatPeriod(trabajado: number, teorico: number, balance: number) {
+  return {
+    trabajado: { segundos: trabajado, formateado: this.convertirSegundosAHora(trabajado) },
+    teorico: { segundos: teorico, formateado: this.convertirSegundosAHora(teorico) },
+    balance: { 
+      segundos: balance, 
+      formateado: this.convertirSegundosAHora(Math.abs(balance)),
+      isNegative: balance < 0,
+      completado: teorico > 0 ? parseFloat(((trabajado / teorico) * 100).toFixed(2)) : 0
+    }
   };
 }
 

@@ -23,6 +23,8 @@ export class ActividadService {
     private readonly actividadRepository: Repository<Activity>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly workersRepository: Repository<User>,
   ) {}
 
   // 1. CREAR UN PUESTO (Solo Admin)
@@ -168,8 +170,30 @@ async findOne(id: number, user: UserPayload) {
     totalTrabajadores: total
   };
 }
-  async listByUserId(userId: number, user: UserPayload) {
-    const actividades = await this.findAllByEmpresa(user, true);
-    return actividades.filter(actividad => actividad.id === userId);
+async listWorkersByActivity(actividadId: number, user: UserPayload) {
+  // 1. Buscamos la actividad asegurándonos de que sea de la empresa del Admin
+  // Cargamos la relación 'workers' (o como se llame en tu entidad Activity)
+  const actividad = await this.actividadRepository.findOne({
+    where: { 
+      id: actividadId, 
+      empresaId: user.empresaId 
+    },
+    relations: ['workers'], // 👈 Cargamos los trabajadores vinculados
+  });
+
+  // 2. Si la actividad no existe o no es de su empresa, lanzamos error
+  if (!actividad) {
+    throw new NotFoundException(`La actividad con ID ${actividadId} no existe o no tienes acceso`);
   }
+
+  // 3. Retornamos la lista de trabajadores
+  // Puedes mapearlos si solo quieres devolver campos específicos (nombre, email, etc.)
+  return actividad.workers.map(worker => ({
+    id: worker.id,
+    nombre: worker.nombre,
+    apellido: worker.apellido,
+    email: worker.email,
+    isActive: worker.isActive
+  }));
+}
 }

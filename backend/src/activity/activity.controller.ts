@@ -150,6 +150,6 @@ export class ActividadController {
   @Get('list/:id')
   @Roles(UserRole.ADMIN)
   listByUserId(@Param('id', ParseIntPipe) id: number, @GetUser() user: UserPayload) {
-    return this.actividadService.listByUserId(id, user);
+    return this.actividadService.listWorkersByActivity(id, user);
   }
 }

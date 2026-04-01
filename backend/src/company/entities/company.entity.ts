@@ -46,6 +46,9 @@ export class Company {
   @Column({ name: 'is_active', default: true }) // Mapeo explícito
   isActive: boolean;
 
+  @Column({ default: 'MD' }) // Por defecto Madrid, o el que prefieras
+  codigoRegion: string;
+
   @Column({ type: 'float', nullable: false })
   latitud: number;
 

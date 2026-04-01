@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between, Not } from 'typeorm';
+import { Repository, IsNull, Between, Not, MoreThan, MoreThanOrEqual } from 'typeorm';
 import { Workday } from './entities/workday.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
@@ -9,6 +9,16 @@ import { AlarmType } from 'alarms/entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
 import { ScheduleService } from 'schedule/schedule.service'; 
 import { DateTime, Duration } from 'luxon';
+import { UserRole } from 'auth/roles.enum';
+import { Cron } from '@nestjs/schedule';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(isSameOrBefore);
 
 @Injectable()
 export class WorkdayService {
@@ -20,7 +30,128 @@ private readonly TIMEZONE = 'Europe/Madrid';
     private readonly alarmService: AlarmsService,
     @Inject(forwardRef(() => ScheduleService))
     private readonly scheduleService: ScheduleService,
+    private readonly workdayService: WorkdayService,
   ) { }
+
+
+
+
+  @Cron('*/1 * * * *', { timeZone: 'Europe/Madrid' })
+  async checkHorasIncumplidas() {
+    this.logger.log('=== Iniciando Auditoría de Horas (23:50) ===');
+
+    const ahora = dayjs().tz(this.TIMEZONE);
+    // 🚩 COMENTA ESTAS LÍNEAS PARA EL TEST (Si no, hoy miércoles se detendrá aquí)
+  // const esViernes = ahora.day() === 5;
+  // const esUltimoDiaMes = ahora.date() === ahora.daysInMonth();
+  // if (!esViernes && !esUltimoDiaMes) return;
+    //if (!esViernes && !esUltimoDiaMes) {
+      //this.logger.debug('No es cierre de periodo. Saltando auditoría.');
+      //return;
+    //}
+
+    const esViernes = true; 
+  const esUltimoDiaMes = true;
+
+    const trabajadores = await this.userRepository.find({
+      where: { rol: UserRole.WORKER, isActive: true },
+      relations: ['empresa']
+    });
+
+    for (const worker of trabajadores) {
+      if (!worker.empresaId) continue;
+
+      try {
+        // Llamamos directamente a this.getWorkSummary
+        const resumen = await this.getWorkSummary(
+          worker.id, 
+          { id: worker.id, empresaId: worker.empresaId } as any
+        );
+
+        // 1. 📅 CHEQUEO SEMANAL (Viernes)
+        if (esViernes) {
+          await this.procesarIncumplimiento(
+            worker, 
+            resumen.semana, 
+            'SEMANALES', 
+            AlarmType.WEEKLY_HOURS_INCOMPLETE
+          );
+        }
+
+        // 2. 🗓️ CHEQUEO MENSUAL (Fin de mes)
+        if (esUltimoDiaMes) {
+          await this.procesarIncumplimiento(
+            worker, 
+            resumen.mes, 
+            'MENSUALES', 
+            AlarmType.MONTHLY_HOURS_INCOMPLETE
+          );
+        }
+
+      } catch (err) {
+        this.logger.error(`Error en auditoría ID:${worker.id}: ${err.message}`);
+      }
+    }
+    this.logger.log('=== Auditoría de Horas Finalizada ===');
+  }
+
+  /**
+   * Lógica unificada para generar las dos alarmas (Admin y Worker)
+   */
+  private async procesarIncumplimiento(worker: User, datos: any, periodoLabel: string, tipoAlarma: AlarmType) {
+    const trabajado = datos.trabajado.segundos;
+    const objetivo = datos.objetivoTotal.segundos;
+    
+    if (objetivo <= 0) return;
+
+    const porcentaje = (trabajado / objetivo) * 100;
+
+    // Umbral del 95% para permitir un margen pequeño de error
+    if (porcentaje < 95) {
+      const faltantes = objetivo - trabajado;
+      const hFaltantes = this.segundosAHoras(faltantes);
+      
+      const descAdmin = `INCUMPLIMIENTO ${periodoLabel}: ${worker.nombre} ha trabajado ${datos.trabajado.formateado}h de ${datos.objetivoTotal.formateado}h. Faltan ${hFaltantes}.`;
+      const descWorker = `Atención: No has completado tus horas ${periodoLabel.toLowerCase()}. Llevas ${datos.trabajado.formateado}h de las ${datos.objetivoTotal.formateado}h requeridas.`;
+
+      // 🚨 Alarma 1: Para el Administrador (triggerAlarm envía al Gateway/WebSocket)
+      await this.alarmService.triggerAlarm(worker.id, worker.empresaId, tipoAlarma, descAdmin);
+
+      // 🚨 Alarma 2: Para el Trabajador (notificarWorker crea registro silencioso para el admin)
+      await this.notificarWorker(worker.id, worker.empresaId, tipoAlarma, descWorker);
+
+      this.logger.warn(`🚨 Alerta enviada a Worker ID:${worker.id} por horas ${periodoLabel}`);
+    }
+  }
+
+  private async notificarWorker(workerId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
+    const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();
+    
+    // Evitar duplicados del mismo día
+    const duplicada = await this.alarmService['alarmRepository'].findOne({
+      where: { usuario: { id: workerId }, tipo, createdAt: MoreThanOrEqual(hoy) }
+    });
+
+    if (duplicada) return duplicada;
+
+    const alarma = this.alarmService['alarmRepository'].create({
+      usuario: { id: workerId },
+      empresaId,
+      tipo,
+      descripcion,
+      leidaAdmin: true,   // El admin ya tiene su propia alarma, esta no le sale
+      leidaWorker: false, // El worker la verá en su panel
+    });
+
+    return await this.alarmService['alarmRepository'].save(alarma);
+  }
+
+private segundosAHoras(segundos: number): string {
+  const h = Math.floor(segundos / 3600);
+  const m = Math.floor((segundos % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+
 
   // ============================================
   // 1. INICIAR JORNADA (Check-In)

@@ -137,10 +137,10 @@ export class WorkdayController {
    * @param user Usuario autenticado
    * @returns Resumen de jornadas del usuario
    */
- @Get('dashboard-stats')
+ @Get('dashboard-stats/:id')
  @Roles(UserRole.ADMIN, UserRole.WORKER) 
-  async getDashboardStats(@GetUser() user: UserPayload) {
-    return await this.workdayService.getWorkSummary(user.id);
+  async getDashboardStats(@Param('id',ParseIntPipe) id, @GetUser() user: UserPayload) {
+    return await this.workdayService.getWorkSummary(id, user);
   }
 
   /**

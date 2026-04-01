@@ -144,7 +144,7 @@ docker rm -f fichaday-backend01 || true
 # 2. Lanzamos el nuevo con las variables corregidas
 
 docker run -d \
-  --name fichaday-backend02 \
+  --name fichaday_backend02 \
   --network red_fichaje \
   --restart always \
   -p 3000:3000 \
@@ -168,7 +168,42 @@ docker run -d \
   -e MAX_FICHAR_DISTANCE=600 \
   -e DEFAULT_DAYS_ISSUES=5 \
   -e DEFAULT_DAYS_REQUESTS=15 \
-  javierm735/fichaday-backend02:latest
+  javierm735/fichaday_backend00:latest
+
+
+
+
+----
+
+docker run -d \
+  --name fichaday_backend \
+  --network red_fichaje \
+  --restart always \
+  -p 3000:3000 \
+  -e DB_HOST=postgres \
+  -e DB_USERNAME=postgres \
+  -e DB_PASSWORD=mypass \
+  -e DB_NAME=fichaje_cti \
+  -e DB_PORT=5432 \
+  -e NODE_ENV=development \
+  -e PORT=3000 \
+  -e CORS_ORIGIN=* \
+  -e TZ=Europe/Madrid \
+  -e JWT_ADMIN_EXPIRATION=24h \
+  -e JWT_WORKER_EXPIRATION=2h \
+  -e JWT_ADMIN_EXP_HOURS=24 \
+  -e JWT_WORKER_EXP_HOURS=2 \
+  -e JWT_REFRESH_EXPIRATION=7d \
+  -e SEED_SECRET_KEY=123 \
+  -e MAX_FICHAR_DISTANCE=600 \
+  -e DEFAULT_DAYS_ISSUES=5 \
+  -e DEFAULT_DAYS_REQUESTS=15 \
+  javierm735/fichaday_backend00:latest
+
+
+
+
+
 
 ```
 

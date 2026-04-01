@@ -117,55 +117,55 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
    * Genera un resumen completo de horas: Hoy, Semana y Mes.
    * Compara el tiempo real (DB + Live) contra el horario teórico.
    */
-  async getWorkSummary(usuarioId: number) {
+  async getWorkSummary(id: number, user: UserPayload) {
     const ahora = new Date();
 
-    // --- 1. NORMALIZACIÓN DE RANGOS TEMPORALES (Local Time) ---
-    // Hoy: 00:00:00
     const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
     
-    // Semana: Lunes actual a las 00:00:00
     const inicioSemana = new Date(ahora);
     const dia = inicioSemana.getDay();
     const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
     inicioSemana.setDate(diff);
     inicioSemana.setHours(0, 0, 0, 0);
 
-    // Mes: Día 1 a las 00:00:00
+    // ← Fin de semana y mes para calcular el teórico COMPLETO del periodo
+    const finSemana = new Date(inicioSemana);
+    finSemana.setDate(finSemana.getDate() + 6);
+    finSemana.setHours(23, 59, 59);
+
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0);
     const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59);
 
-    // --- 2. EJECUCIÓN DE CONSULTAS EN PARALELO ---
     const [
       mensualDB, 
       semanalDB, 
       hoyDB, 
       activa, 
       turnoHoy,
-      teoricoSemana, 
-      teoricoMes
+      teoricoSemanaHastaHoy,   // ← cuánto debería llevar acumulado hasta hoy
+      teoricoMesHastaHoy,      // ← cuánto debería llevar acumulado hasta hoy
+      teoricoSemanaCompleta,   // ← total teórico de toda la semana
+      teoricoMesCompleto       // ← total teórico de todo el mes
     ] = await Promise.all([
-      this.getTotalRangeDB(usuarioId, inicioMes, finMes),
-      this.getTotalRangeDB(usuarioId, inicioSemana, ahora),
-      this.getTotalRangeDB(usuarioId, inicioHoy, ahora),
-      this.findActiveWorkday(usuarioId),
-      this.scheduleService.getTurnoHoy(usuarioId, ahora),
-      this.scheduleService.getTeoricoRange(usuarioId, inicioSemana, ahora),
-      this.scheduleService.getTeoricoRange(usuarioId, inicioMes, ahora)
+      this.getTotalRangeDB(id, inicioMes, finMes),
+      this.getTotalRangeDB(id, inicioSemana, ahora),
+      this.getTotalRangeDB(id, inicioHoy, ahora),
+      this.findActiveWorkday(id),
+      this.scheduleService.getTurnoHoy(id, ahora),
+      this.scheduleService.getTeoricoRange(id, inicioSemana, ahora),
+      this.scheduleService.getTeoricoRange(id, inicioMes, ahora),
+      this.scheduleService.getTeoricoRange(id, inicioSemana, finSemana),  // ← NUEVO
+      this.scheduleService.getTeoricoRange(id, inicioMes, finMes)         // ← NUEVO
     ]);
 
-    // --- 3. CÁLCULO DEL TIEMPO "EN VIVO" ---
-    // Si el usuario tiene una jornada abierta, calculamos cuánto lleva hasta ahora
     const segundosEnVivo = activa 
       ? Math.floor((ahora.getTime() - activa.inicio.getTime()) / 1000) 
       : 0;
 
-    // Totales finales: Lo que está en la DB (cerrado) + Lo que está haciendo ahora (abierto)
     const totalHoy = hoyDB + segundosEnVivo;
     const totalSemana = semanalDB + segundosEnVivo;
     const totalMes = mensualDB + segundosEnVivo;
 
-    // --- 4. CÁLCULO TEÓRICO DIARIO (Hoy) ---
     let segundosTeoricosHoy = 0;
     if (turnoHoy?.franjas) {
       segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, f) => {
@@ -175,18 +175,27 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
       }, 0);
     }
 
-    // --- 5. RETORNO DE RESULTADOS FORMATEADOS ---
     return {
-      hoy: this.formatPeriod(totalHoy, segundosTeoricosHoy),
-      semana: this.formatPeriod(totalSemana, teoricoSemana),
-      mes: this.formatPeriod(totalMes, teoricoMes),
+      hoy: {
+        ...this.formatPeriod(totalHoy, segundosTeoricosHoy),
+        // horas que debe trabajar hoy en total
+        totalTeórico: this.convertirSegundosAHora(segundosTeoricosHoy)
+      },
+      semana: {
+        ...this.formatPeriod(totalSemana, teoricoSemanaHastaHoy),
+        // horas que debe trabajar en toda la semana (lun-dom)
+        totalTeórico: this.convertirSegundosAHora(teoricoSemanaCompleta)
+      },
+      mes: {
+        ...this.formatPeriod(totalMes, teoricoMesHastaHoy),
+        // horas que debe trabajar en todo el mes
+        totalTeórico: this.convertirSegundosAHora(teoricoMesCompleto)
+      },
       isWorking: !!activa,
       puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado',
       lastUpdate: ahora.toISOString()
     };
   }
-
-
 
 // 💡 Método genérico para evitar duplicidad de lógica y errores de fechas
 private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
@@ -381,7 +390,6 @@ private convertirSegundosAHora(segundos: number): string {
    * Incluye validación de pertenencia a la empresa.
    */
   async getWorkerSummaryForAdmin(workerId: number, adminEmpresaId: number) {
-    // 1. Validar que el trabajador existe y pertenece a la empresa del admin
     const worker = await this.userRepository.findOne({
       where: { id: workerId },
       relations: ['empresa']
@@ -393,7 +401,11 @@ private convertirSegundosAHora(segundos: number): string {
       throw new BadRequestException('No tienes permisos para ver estadísticas de este trabajador.');
     }
 
-    // 2. Reutilizamos tu lógica maestra de cálculos (hoy, semana, mes, live time)
-    return await this.getWorkSummary(workerId);
-  }
+    // Pasamos un UserPayload mínimo ya que getWorkSummary lo requiere
+    // pero en este flujo no lo usa realmente para los cálculos
+    return await this.getWorkSummary(workerId, { 
+      id: workerId, 
+      empresaId: worker.empresa?.id 
+    } as UserPayload);
+}
 }

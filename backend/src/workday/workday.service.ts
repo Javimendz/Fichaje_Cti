@@ -30,7 +30,6 @@ private readonly TIMEZONE = 'Europe/Madrid';
     private readonly alarmService: AlarmsService,
     @Inject(forwardRef(() => ScheduleService))
     private readonly scheduleService: ScheduleService,
-    private readonly workdayService: WorkdayService,
   ) { }
 
 
@@ -63,10 +62,10 @@ private readonly TIMEZONE = 'Europe/Madrid';
 
       try {
         // Llamamos directamente a this.getWorkSummary
-        const resumen = await this.getWorkSummary(
-          worker.id, 
-          { id: worker.id, empresaId: worker.empresaId } as any
-        );
+       const resumen = await this.getWorkSummary(
+  worker.id, 
+  { id: worker.id, empresaId: worker.empresaId } as any
+);
 
         // 1. 📅 CHEQUEO SEMANAL (Viernes)
         if (esViernes) {

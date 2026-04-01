@@ -288,7 +288,7 @@ export class ScheduleService {
 
   return {
     nombre: horario.nombre,
-    semana: semanaActual,
+    semanaRotacion: semanaActual, 
     franjas: distribucion.franjas
   };
 }

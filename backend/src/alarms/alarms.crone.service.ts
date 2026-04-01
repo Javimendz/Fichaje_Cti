@@ -193,19 +193,18 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
    * haPasadoHoraLimite("09:30", 15) // true
    */
 
-  private haPasadoHoraLimite(horaEntrada: string, margenMinutos: number): boolean {
+ private haPasadoHoraLimite(
+    horaEntrada: string,
+    margenMinutos: number
+  ): boolean {
     const ahora = dayjs().tz(this.ZONA_HORARIA);
-    const minutosActuales = (ahora.hour() * 60) + ahora.minute();
+    const minutosActuales = ahora.hour() * 60 + ahora.minute();
 
-    const partesHora = horaEntrada.split(':');
-    const horasTeoricas = parseInt(partesHora[0], 10);
-    const minutosTeoricos = parseInt(partesHora[1], 10);
+    const [h, m] = horaEntrada.split(':').map(Number);
+    const minutosTeoricos = h * 60 + m;
 
-    const minutosTotalesTeoricos = (horasTeoricas * 60) + (minutosTeoricos || 0);
-
-    return minutosActuales > (minutosTotalesTeoricos + margenMinutos);
+    return minutosActuales > minutosTeoricos + margenMinutos;
   }
-
    // 
   /**
    * Determina si un empleado ha salido antes de la hora teórica establecida.

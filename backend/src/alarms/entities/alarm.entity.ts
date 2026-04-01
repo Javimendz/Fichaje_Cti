@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from 'users/entities/user.entity';
 import { Company } from 'company/entities/company.entity';
 
@@ -40,6 +40,7 @@ export enum AlarmType {
 // - usuario: Usuario que generó la alarma.
 // - empresa: Empresa a la que pertenece la alarma. 
 @Entity('alarms')
+@Index(['usuario', 'tipo', 'fecha'], { unique: true })
 export class Alarm {
   @PrimaryGeneratedColumn()
   id: number;
@@ -52,6 +53,9 @@ export class Alarm {
 
   @Column({ default: false, name: 'leida_admin' })
   leidaAdmin: boolean;
+
+  @Column({ type: 'date', name: 'fecha' })
+  fecha: string;
 
   @Column({ default: false, name: 'leida_worker' })
   leidaWorker: boolean;

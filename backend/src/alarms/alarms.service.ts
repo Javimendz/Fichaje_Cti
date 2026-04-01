@@ -72,32 +72,52 @@ export class AlarmsService {
  * @example
  * const alarm = await this.triggerAlarm(1, 5, AlarmType.WARNING, 'Unauthorized access attempt');
  */
-async triggerAlarm(usuarioId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
-  const haceCincoMinutos = new Date(Date.now() - 5 * 60000);
-  
-  const duplicada = await this.alarmRepository.findOne({
-    where: {
-      usuario: { id: usuarioId },
-      tipo,
-      createdAt: MoreThan(haceCincoMinutos)
-    }
-  });
-
-  if (duplicada) return duplicada;
+async triggerAlarm(
+  usuarioId: number,
+  empresaId: number,
+  tipo: AlarmType,
+  descripcion: string
+) {
+  const fecha = dayjs().tz('Europe/Madrid').format('YYYY-MM-DD');
 
   const alarma = this.alarmRepository.create({
     usuario: { id: usuarioId },
     empresaId,
     tipo,
     descripcion,
+    fecha,
+    leidaAdmin: false,
+    leidaWorker: false,
   });
 
-  const savedAlarm = await this.alarmRepository.save(alarma);
-  this.alarmsGateway.sendAlarmToAdmin(empresaId, savedAlarm);
-  return savedAlarm;
+  try {
+    return await this.alarmRepository.save(alarma);
+  } catch (error: any) {
+    // 🔒 Protección contra duplicados (índice único)
+    if (error?.code === '23505') {
+      return null; // ya existe → ignoramos
+    }
+
+    // ⚠️ Log real para debugging
+    console.error('Error creando alarma:', error);
+
+    throw error;
+  }
 }
 
+async existeHoy(userId: number, tipo: AlarmType): Promise<boolean> {
+  const fecha = dayjs().tz('Europe/Madrid').format('YYYY-MM-DD');
 
+  const alarma = await this.alarmRepository.findOne({
+    where: {
+      usuario: { id: userId },
+      tipo,
+      fecha,
+    },
+  });
+
+  return !!alarma;
+}
 async findPendingForAdmin(empresaId: number) {
   return await this.alarmRepository.find({
     where: { empresaId, leidaAdmin: false },

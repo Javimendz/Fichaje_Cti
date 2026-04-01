@@ -115,7 +115,7 @@ private readonly TIMEZONE = 'Europe/Madrid';
     // 1. Verificamos si YA existe una alarma de este tipo hoy para este usuario
     // Así evitamos que el Cron la cree cada minuto
     const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();
-    const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, tipoAlarma, hoy);
+    const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, tipoAlarma);
 
     if (!alarmaExistente) {
       // 2. Creamos una única alarma que verán ambos

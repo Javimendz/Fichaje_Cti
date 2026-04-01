@@ -9,7 +9,7 @@ import { AlarmType } from 'alarms/entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
 import { ScheduleService } from 'schedule/schedule.service'; 
 import { DateTime, Duration } from 'luxon';
-import Holidays from 'date-holidays';
+const Holidays = require('date-holidays');
 
 // Imports de Dayjs
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';

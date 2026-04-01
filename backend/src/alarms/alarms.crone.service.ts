@@ -65,6 +65,7 @@ dayjs.extend(isoWeek);
 export class AlarmCronService {
   private readonly ZONA_HORARIA = 'Europe/Madrid';
   private readonly logger = new Logger('CronAlarmas');
+  private appStarted = false;
 
   /**
    * Constructor del servicio de alarmas programadas.
@@ -244,6 +245,12 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
 //@Cron('*/1 * * * *')
   async checkPeriodClosures() {
     const ahora = dayjs().tz(this.ZONA_HORARIA);
+
+     if (!this.appStarted) {
+    this.logger.debug('⏱ Ignorando ejecución inicial de auditoría al levantar la app');
+    this.appStarted = true;
+    return;
+  }
     
 // 🔥 FORZADO PARA TEST:
  // const esDomingo = true; 

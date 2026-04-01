@@ -16,7 +16,7 @@
 
 import { InjectRepository } from "@nestjs/typeorm";
 import { Alarm, AlarmType } from "./entities/alarm.entity";
-import { In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
+import { Between, In, MoreThan, MoreThanOrEqual, Repository } from "typeorm";
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { AlarmsGateway } from "./gateway/alarms.gateway";
 
@@ -123,16 +123,23 @@ async findPendingForWorker(userId: number) {
  * @returns Una promesa que se resuelve en `true` si existe al menos una alarma del tipo especificado
  *          para el usuario creada desde el inicio del día, `false` en caso contrario.
  */
-async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType, inicioDelDia: Date): Promise<boolean> {
-    const alarma = await this.alarmRepository.findOne({
-      where: {
-        usuario: { id: usuarioId },
-        tipo: tipo,
-        createdAt: MoreThanOrEqual(inicioDelDia)
-      }
-    });
-    return !!alarma; 
-  }
+async verificarAlarmaHoy(usuarioId: number, tipo: AlarmType): Promise<boolean> {
+  // 1. Calculamos el inicio y fin del día actual en Madrid
+  const zona = 'Europe/Madrid';
+  const inicio = dayjs().tz(zona).startOf('day').toDate();
+  const fin = dayjs().tz(zona).endOf('day').toDate();
+
+  // 2. Buscamos si existe CUALQUIER alarma en ese rango de 24h
+  const alarma = await this.alarmRepository.findOne({
+    where: {
+      usuario: { id: usuarioId },
+      tipo: tipo,
+      createdAt: Between(inicio, fin) // 👈 Rango cerrado: 00:00:00 a 23:59:59
+    }
+  });
+
+  return !!alarma; 
+}
   // Listar alarmas para el administrador de la empresa
   /**
    * Obtiene todas las alarmas sin revisar de una empresa específica.

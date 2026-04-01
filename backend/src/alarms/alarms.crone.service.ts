@@ -157,8 +157,7 @@ export class AlarmCronService {
         const horaLimiteSuperada = this.haPasadoHoraLimite(hEntradaTeorica, margenMinutos);
 
         if (horaLimiteSuperada) {
-          const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, AlarmType.ABSENCE, inicioDelDia);
-
+const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, AlarmType.ABSENCE);
           if (!alarmaExistente) {
             await this.alarmService.triggerAlarm(
               worker.id,

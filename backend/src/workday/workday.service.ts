@@ -17,6 +17,7 @@ export class WorkdayService {
     @InjectRepository(Workday) private readonly workdayRepository: Repository<Workday>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly alarmService: AlarmsService,
+    private readonly TIMEZONE = 'Europe/Madrid',
     private readonly scheduleService: ScheduleService, // 👈 INYECTADO AQUÍ
   ) { }
 
@@ -113,12 +114,20 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
     // ... lógica de alarmas de salida
     return saved;
   }
+
+  private getSpainDate(): Date {
+    const ahora = new Date();
+    // Convertimos la fecha actual a un string en formato España y creamos un nuevo Date
+    const s = ahora.toLocaleString('en-US', { timeZone: this.TIMEZONE });
+    return new Date(s);
+  }
+
 /**
    * Genera un resumen completo de horas: Hoy, Semana y Mes.
    * Compara el tiempo real (DB + Live) contra el horario teórico.
    */
  async getWorkSummary(id: number, user: UserPayload) {
-  const ahora = new Date();
+ const ahora = this.getSpainDate();
 
   // --- 1. NORMALIZACIÓN DE RANGOS ---
   const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);

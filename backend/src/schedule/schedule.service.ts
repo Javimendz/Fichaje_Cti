@@ -257,47 +257,54 @@ export class ScheduleService {
 
   // 🔥 NUEVO: Método centralizado para obtener el turno exacto de un día
  async getTurnoHoy(usuarioId: number, fechaReferencia: Date) {
-  const horario = await this.horarioRepository.findOne({ 
-    where: { usuarios: { id: usuarioId } },
-    relations: ['distribuciones', 'distribuciones.franjas']
-  });
+    const horario = await this.horarioRepository.findOne({ 
+      where: { usuarios: { id: usuarioId } },
+      relations: ['distribuciones', 'distribuciones.franjas']
+    });
 
-  if (!horario) return null;
+    if (!horario) return null;
 
-  // ← Usar Luxon para normalizar ambas fechas a medianoche en Madrid
-  //    antes de calcular semanas — así evitamos desfase de horas UTC
-  const ancla = DateTime.fromJSDate(horario.createdAt)
-    .setZone('Europe/Madrid')
-    .startOf('week'); // lunes de la semana en que se creó el horario
+    // 1. ASUMIMOS SEMANA 1 POR DEFECTO (Para horarios continuos o partidos)
+    let semanaActual = 1;
 
-  const referencia = DateTime.fromJSDate(fechaReferencia)
-    .setZone('Europe/Madrid')
-    .startOf('week'); // lunes de la semana de referencia
+    // 2. SOLO CALCULAMOS MATEMÁTICAS SI ES ROTATIVO
+    if (horario.esRotativo && horario.semanasRotacion > 0) {
+      const ancla = DateTime.fromJSDate(horario.createdAt)
+        .setZone('Europe/Madrid')
+        .startOf('week'); 
 
-  const semanasTranscurridas = Math.floor(
-    referencia.diff(ancla, 'weeks').weeks
-  );
+      const referencia = DateTime.fromJSDate(fechaReferencia)
+        .setZone('Europe/Madrid')
+        .startOf('week'); 
 
-  const semanaActual = (Math.max(0, semanasTranscurridas) % horario.semanasRotacion) + 1;
+      const semanasTranscurridas = Math.floor(referencia.diff(ancla, 'weeks').weeks);
+      semanaActual = (Math.max(0, semanasTranscurridas) % horario.semanasRotacion) + 1;
+    }
 
-  const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
-  // ← Usar Luxon para obtener el día en zona Madrid, no en UTC
-  const nombreDia = dias[
-    DateTime.fromJSDate(fechaReferencia).setZone('Europe/Madrid').weekday % 7
-  ];
+    const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+    const nombreDia = dias[
+      DateTime.fromJSDate(fechaReferencia).setZone('Europe/Madrid').weekday % 7
+    ];
 
-  const distribucion = horario.distribuciones.find(d => 
-    d.diaSemana === nombreDia && d.semanaRotacion === semanaActual
-  );
+    // 3. BUSCAMOS LA DISTRIBUCIÓN CON LÓGICA FLEXIBLE
+    const distribucion = horario.distribuciones.find(d => {
+      const coincideDia = d.diaSemana === nombreDia;
+      // Si es rotativo, debe coincidir la semana exacta. Si no, debe ser la 1 (o sin semana asignada)
+      const coincideSemana = horario.esRotativo 
+        ? d.semanaRotacion === semanaActual 
+        : (d.semanaRotacion === 1 || !d.semanaRotacion);
+      
+      return coincideDia && coincideSemana;
+    });
 
-  if (!distribucion || !distribucion.esLaborable) return null;
+    if (!distribucion || !distribucion.esLaborable) return null;
 
-  return {
-    nombre: horario.nombre,
-    semanaRotacion: semanaActual, 
-    franjas: distribucion.franjas
-  };
-}
+    return {
+      nombre: horario.nombre,
+      semanaRotacion: semanaActual, 
+      franjas: distribucion.franjas
+    };
+  }
   public obtenerNombreDia(fecha: Date): string {
     const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
     return dias[fecha.getDay()];

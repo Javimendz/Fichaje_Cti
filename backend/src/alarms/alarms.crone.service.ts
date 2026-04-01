@@ -22,7 +22,7 @@ import { Cron } from '@nestjs/schedule';
 import { UserRole } from "auth/roles.enum";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "users/entities/user.entity";
-import { Between, Repository } from "typeorm";
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
 import { Workday } from "workday/entities/workday.entity";
 import isoWeek from 'dayjs/plugin/isoWeek';
 
@@ -33,7 +33,7 @@ import { Ausencia } from "absence/entities/ausencia.entity";
 import { AlarmType } from "./entities/alarm.entity";
 import { ScheduleService } from "schedule/schedule.service";
 import { WorkdayService } from "workday/workday.service";
-
+import { AusenciaEstado } from 'absence/dto/ausencia-estado.enum'; // Revisa que la ruta coincida con tu proyecto
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isoWeek);
@@ -119,33 +119,56 @@ export class AlarmCronService {
    * ```
    */
   
+ @Cron('*/10 * * * * *')
   async checkAbsencesBySchedule() {
-    this.logger.log('--- Iniciando escaneo de seguridad ---');
+    this.logger.log('--- Iniciando escaneo de seguridad (Incomparecencias) ---');
 
     const ahora = dayjs().tz(this.ZONA_HORARIA);
     const inicioDelDia = ahora.startOf('day').toDate();
     const finDelDia = ahora.endOf('day').toDate();
 
+    // Obtenemos trabajadores activos con su horario
     const trabajadores = await this.userRepository.find({
       where: { rol: UserRole.WORKER, isActive: true },
       relations: ['horario'] 
     });
 
     for (const worker of trabajadores) {
-      // 1. ESCUDO DE AUSENCIAS (Igual que antes)
-      // ... (manten tu lógica de ausenciaRepository)
+      if (!worker.empresaId) continue;
 
-      // 2. 💡 CORRECCIÓN ROTACIÓN: Usamos la lógica maestra del ScheduleService
+      // ==========================================
+      // 🛡️ 1. ESCUDO DE AUSENCIAS
+      // ==========================================
+      const ausenciaAprobada = await this.ausenciaRepository.findOne({
+        where: {
+          usuario: { id: worker.id },
+          estado: AusenciaEstado.APROBADA, // Cambia a AusenciaEstado.APROBADA si usas un Enum
+         fechaInicio: LessThanOrEqual(ahora.toDate()) as any, 
+          fechaFin: MoreThanOrEqual(ahora.toDate()) as any,
+        }
+      });
+
+      // Si el trabajador tiene una ausencia vigente hoy, lo saltamos
+      if (ausenciaAprobada) {
+        this.logger.debug(`[ID: ${worker.id}] Ignorando incomparecencia por ausencia aprobada: ${ausenciaAprobada.motivo || 'Vacaciones'}`);
+        continue; 
+      }
+
+      // ==========================================
+      // 📅 2. VERIFICAR TURNO DE HOY
+      // ==========================================
       const turnoHoy = await this.scheduleService.getTurnoHoy(worker.id, ahora.toDate());
       
       if (!turnoHoy || !turnoHoy.franjas?.[0]) {
-        this.logger.debug(`[ID: ${worker.id}] Sin turno o descanso hoy.`);
+        // No tiene turno asignado o es su día libre
         continue;
       }
 
       const hEntradaTeorica = turnoHoy.franjas[0].inicio;
 
-      // 3. BUSCAR FICHAJE
+      // ==========================================
+      // 🔎 3. BUSCAR FICHAJE (CHECK-IN)
+      // ==========================================
       const fichaje = await this.workdayRepository.findOne({
         where: {
           usuario: { id: worker.id },
@@ -153,14 +176,17 @@ export class AlarmCronService {
         },
       });
 
-      // 4. LÓGICA: SOLO INCOMPARECENCIA
-      // La salida anticipada ya la gestiona el WorkdayService al hacer check-out.
+      // ==========================================
+      // 🚨 4. LÓGICA DE ALARMA: INCOMPARECENCIA
+      // ==========================================
       if (!fichaje) {
-        const margenMinutos = 15;
+        const margenMinutos = 15; // Tiempo de cortesía antes de pitar
         const horaLimiteSuperada = this.haPasadoHoraLimite(hEntradaTeorica, margenMinutos);
 
         if (horaLimiteSuperada) {
-const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, AlarmType.ABSENCE);
+          // Verificamos si YA enviamos la alarma hoy para no hacer spam
+          const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, AlarmType.ABSENCE);
+          
           if (!alarmaExistente) {
             await this.alarmService.triggerAlarm(
               worker.id,
@@ -173,7 +199,8 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
         }
       }
     }
-    this.logger.log('--- Escaneo completado ---');
+    
+    this.logger.log('--- Escaneo de seguridad completado ---');
   }
 
   // =========================================================================
@@ -241,7 +268,8 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
     return minReales < minTeoricos;
   }
 
-@Cron('55 23 * * *', { timeZone: 'Europe/Madrid' })
+//@Cron('55 23 * * *', { timeZone: 'Europe/Madrid' })
+@Cron('*/1 * * * *', { timeZone: 'Europe/Madrid' })
 //@Cron('*/1 * * * *')
   async checkPeriodClosures() {
     const ahora = dayjs().tz(this.ZONA_HORARIA);

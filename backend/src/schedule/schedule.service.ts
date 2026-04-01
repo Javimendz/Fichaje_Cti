@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, MoreThanOrEqual, IsNull, Not } from 'typeorm'; 
+import { Repository, DataSource, MoreThanOrEqual, IsNull, Not, LessThanOrEqual } from 'typeorm'; 
 import { Horario } from './entities/schedules.entity';
 import { CreateHorarioDto } from './dto/create-schedule.dto';
 import type { UserPayload } from '../auth/interfaces/user-payload.interface'; 
@@ -9,6 +9,8 @@ import { User } from 'auth/entities/user.entity';
 import { Workday } from 'workday/entities/workday.entity';
 import { DistribucionDia } from './entities/distribucion-dia.entity';
 import { DateTime } from 'luxon';
+import { Ausencia } from 'absence/entities/ausencia.entity';
+import { AusenciaEstado } from 'absence/dto/ausencia-estado.enum';
 
 @Injectable()
 export class ScheduleService {
@@ -16,7 +18,8 @@ export class ScheduleService {
     @InjectRepository(Horario) private readonly horarioRepository: Repository<Horario>,
     private readonly dataSource: DataSource,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(FranjaHoraria) private readonly franjaRepo: Repository<FranjaHoraria>
+    @InjectRepository(FranjaHoraria) private readonly franjaRepo: Repository<FranjaHoraria>,
+    @InjectRepository(Ausencia) private readonly ausenciaRepository: Repository<Ausencia>
   ) {}
 
   // ---------------------------------------------------------
@@ -349,23 +352,47 @@ export class ScheduleService {
   }
 
 
-  /**
+/**
  * Calcula el total de segundos teóricos que un trabajador debe cumplir 
- * en un rango de fechas determinado.
+ * en un rango de fechas, descontando los días de vacaciones/bajas aprobadas.
  */
 async getTeoricoRange(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
   let totalSegundos = 0;
   
+  // 1. 🛡️ Buscar TODAS las ausencias aprobadas del usuario que se crucen con este periodo
+  const ausenciasDelPeriodo = await this.ausenciaRepository.find({
+    where: {
+      usuario: { id: usuarioId },
+      estado: AusenciaEstado.APROBADA, // 💡 Cambia a AusenciaEstado.APROBADA si usas Enum
+      fechaInicio: LessThanOrEqual(fin) as any,
+      fechaFin: MoreThanOrEqual(inicio) as any
+    }
+  });
+
   // Creamos una copia de la fecha de inicio para no mutar el objeto original
   let fechaActual = new Date(inicio);
   fechaActual.setHours(0, 0, 0, 0);
 
-  // Recorremos día por día desde el inicio hasta el fin
+  // Recorremos día por día
   while (fechaActual <= fin) {
-    // 1. Obtenemos el turno que le toca este día específico
+    // 2. 🛡️ Comprobar si el día actual cae dentro de alguna de las ausencias
+    const esDiaDeAusencia = ausenciasDelPeriodo.some(ausencia => {
+      // Normalizamos a principio del día para comparar fechas limpias
+      const inicioAusencia = new Date(ausencia.fechaInicio).setHours(0,0,0,0);
+      const finAusencia = new Date(ausencia.fechaFin).setHours(23,59,59,999);
+      return fechaActual.getTime() >= inicioAusencia && fechaActual.getTime() <= finAusencia;
+    });
+
+    if (esDiaDeAusencia) {
+      // Si está de vacaciones, este día el objetivo es 0 horas. Pasamos al siguiente.
+      fechaActual.setDate(fechaActual.getDate() + 1);
+      continue;
+    }
+
+    // 3. Obtenemos el turno que le toca este día específico
     const turno = await this.getTurnoHoy(usuarioId, fechaActual);
 
-    // 2. Si tiene turno y tiene franjas horarias, las sumamos
+    // 4. Si tiene turno y tiene franjas horarias, las sumamos
     if (turno && turno.franjas) {
       turno.franjas.forEach(franja => {
         if (franja.inicio && franja.fin) {
@@ -374,7 +401,7 @@ async getTeoricoRange(usuarioId: number, inicio: Date, fin: Date): Promise<numbe
       });
     }
 
-    // 3. Saltamos al día siguiente
+    // Saltamos al día siguiente
     fechaActual.setDate(fechaActual.getDate() + 1);
   }
 

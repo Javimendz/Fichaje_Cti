@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, Between, Not } from 'typeorm';
 import { Workday } from './entities/workday.entity';
@@ -17,6 +17,7 @@ export class WorkdayService {
     @InjectRepository(Workday) private readonly workdayRepository: Repository<Workday>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly alarmService: AlarmsService,
+    @Inject(forwardRef(() => ScheduleService))
     private readonly TIMEZONE = 'Europe/Madrid',
     private readonly scheduleService: ScheduleService, // 👈 INYECTADO AQUÍ
   ) { }

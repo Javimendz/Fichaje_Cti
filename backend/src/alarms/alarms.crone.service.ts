@@ -240,22 +240,21 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
     return minReales < minTeoricos;
   }
 
-//@Cron('55 23 * * *', { timeZone: 'Europe/Madrid' })
-@Cron('*/1 * * * *')
+@Cron('55 23 * * *', { timeZone: 'Europe/Madrid' })
+//@Cron('*/1 * * * *')
   async checkPeriodClosures() {
     const ahora = dayjs().tz(this.ZONA_HORARIA);
     
 // 🔥 FORZADO PARA TEST:
-  const esDomingo = true; 
-  const esUltimoDiaMes = true;
-    /*
+ // const esDomingo = true; 
+  //const esUltimoDiaMes = true;
+    
 
 const esDomingo = ahora.day() === 0;
     const esUltimoDiaMes = ahora.date() === ahora.daysInMonth();
     if (!esDomingo && !esUltimoDiaMes) {
       return; // No es fin de ningún periodo, no hacemos nada.
     }
-*/
 
     this.logger.log(`--- Iniciando auditoría: ${esDomingo ? '[SEMANAL]' : ''} ${esUltimoDiaMes ? '[MENSUAL]' : ''} ---`);
 

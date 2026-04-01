@@ -327,6 +327,34 @@ export class WorkdayService {
     return calendario;
   }
 
+
+  /**
+   * Versión para admin del calendario mensual.
+   * Valida que el trabajador pertenezca a la misma empresa que el admin.
+   */
+  async getWorkerMonthlyCalendarForAdmin(
+    workerId: number, 
+    adminEmpresaId: number, 
+    year: number, 
+    month: number
+  ) {
+    // 1. Verificamos que el trabajador existe y traemos su empresa
+    const worker = await this.userRepository.findOne({
+      where: { id: workerId },
+      relations: ['empresa']
+    });
+
+    if (!worker) throw new NotFoundException('Trabajador no encontrado.');
+    
+    // 2. Seguridad: ¿El trabajador es de la empresa del admin?
+    if (worker.empresa?.id !== adminEmpresaId) {
+      throw new BadRequestException('No tienes permisos para ver el calendario de este trabajador.');
+    }
+
+    // 3. Si todo es correcto, reutilizamos la lógica de calendario que ya tenemos
+    return await this.getMonthlyCalendar(workerId, year, month);
+  }
+
   async getMonthlyTotal(usuarioId: number): Promise<number> {
     const inicioMes = new Date();
     inicioMes.setDate(1);

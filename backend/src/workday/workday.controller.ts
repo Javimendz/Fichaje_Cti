@@ -153,6 +153,24 @@ export class WorkdayController {
     return await this.workdayService.getMonthlyCalendar(user.id, year, month);
   }
 
+
+  @Get('worker/:id/calendar/:year/:month')
+  @Roles(UserRole.ADMIN)
+  async getWorkerCalendarForAdmin(
+    @Param('id', ParseIntPipe) workerId: number,
+    @Param('year', ParseIntPipe) year: number,
+    @Param('month', ParseIntPipe) month: number,
+    @GetUser() admin: UserPayload
+  ) {
+    // Usamos el ID del trabajador de la URL y el empresaId del Admin (del token)
+    return await this.workdayService.getWorkerMonthlyCalendarForAdmin(
+      workerId, 
+      admin.empresaId, 
+      year, 
+      month
+    );
+  }
+
   /**
    * Obtiene el resumen de jornadas de un trabajador para el dashboard del admin
    * @param workerId ID del trabajador

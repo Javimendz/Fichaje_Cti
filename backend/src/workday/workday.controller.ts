@@ -143,6 +143,16 @@ export class WorkdayController {
     return await this.workdayService.getWorkSummary(id, user);
   }
 
+  @Get('calendar/:year/:month')
+  @Roles(UserRole.ADMIN, UserRole.WORKER) 
+  async getCalendarData(
+    @Param('year', ParseIntPipe) year: number,
+    @Param('month', ParseIntPipe) month: number,
+    @GetUser() user: UserPayload // Tu decorador para sacar los datos del token
+  ) {
+    return await this.workdayService.getMonthlyCalendar(user.id, year, month);
+  }
+
   /**
    * Obtiene el resumen de jornadas de un trabajador para el dashboard del admin
    * @param workerId ID del trabajador

@@ -288,6 +288,45 @@ export class WorkdayService {
     return parseInt(res.suma || 0);
   }
 
+
+/**
+   * Obtiene el total de horas trabajadas agrupadas por día para un mes específico.
+   * Ideal para pintar calendarios en el Frontend.
+   */
+  async getMonthlyCalendar(usuarioId: number, year: number, month: number) {
+    // 1. Calculamos el primer y último día del mes en la zona horaria correcta
+    // Nota: dayjs usa meses del 0 (Enero) al 11 (Diciembre), por eso restamos 1.
+    const inicioMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).startOf('month').toDate();
+    const finMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).endOf('month').toDate();
+
+    // 2. Consulta a la base de datos agrupando por fecha
+    const registros = await this.workdayRepository
+      .createQueryBuilder('w')
+      .select('DATE(w.inicio)', 'fecha') // Extraemos solo la fecha (YYYY-MM-DD) ignorando la hora
+      .addSelect('SUM(w.total_segundos)', 'total_segundos')
+      .where('w.usuario_id = :userId', { userId: usuarioId })
+      .andWhere('w.inicio BETWEEN :inicio AND :fin', { inicio: inicioMes, fin: finMes })
+      .groupBy('DATE(w.inicio)')
+      .orderBy('fecha', 'ASC') // Los devolvemos ordenados del día 1 al 31
+      .getRawMany();
+
+    // 3. Formateamos la respuesta en un Diccionario/Objeto para el Frontend
+    const calendario: Record<string, any> = {};
+
+    registros.forEach(r => {
+      // Aseguramos el formato YYYY-MM-DD por si la BD lo devuelve como Date completo
+      const fechaStr = dayjs(r.fecha).format('YYYY-MM-DD'); 
+      const segundos = parseInt(r.total_segundos || '0', 10);
+
+      calendario[fechaStr] = {
+        segundos: segundos,
+        formateado: this.convertirSegundosAHora(segundos) // Tu método actual "08:30:00"
+      };
+    });
+
+    return calendario;
+  }
+
   async getMonthlyTotal(usuarioId: number): Promise<number> {
     const inicioMes = new Date();
     inicioMes.setDate(1);

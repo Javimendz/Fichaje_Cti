@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between, Not, MoreThan, MoreThanOrEqual } from 'typeorm';
+import { Repository, IsNull, Between, Not } from 'typeorm';
 import { Workday } from './entities/workday.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
@@ -9,8 +9,8 @@ import { AlarmType } from 'alarms/entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
 import { ScheduleService } from 'schedule/schedule.service'; 
 import { DateTime, Duration } from 'luxon';
-import { UserRole } from 'auth/roles.enum';
-import { Cron } from '@nestjs/schedule';
+
+// Imports de Dayjs
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -23,7 +23,8 @@ dayjs.extend(isSameOrBefore);
 @Injectable()
 export class WorkdayService {
   private readonly logger = new Logger('WorkdayService');
-private readonly TIMEZONE = 'Europe/Madrid';
+  private readonly TIMEZONE = 'Europe/Madrid';
+
   constructor(
     @InjectRepository(Workday) private readonly workdayRepository: Repository<Workday>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
@@ -31,135 +32,6 @@ private readonly TIMEZONE = 'Europe/Madrid';
     @Inject(forwardRef(() => ScheduleService))
     private readonly scheduleService: ScheduleService,
   ) { }
-
-
-
-
-  @Cron('*/1 * * * *', { timeZone: 'Europe/Madrid' })
-  async checkHorasIncumplidas() {
-    this.logger.log('=== Iniciando Auditoría de Horas (23:50) ===');
-
-    const ahora = dayjs().tz(this.TIMEZONE);
-    // 🚩 COMENTA ESTAS LÍNEAS PARA EL TEST (Si no, hoy miércoles se detendrá aquí)
-  // const esViernes = ahora.day() === 5;
-  // const esUltimoDiaMes = ahora.date() === ahora.daysInMonth();
-  // if (!esViernes && !esUltimoDiaMes) return;
-    //if (!esViernes && !esUltimoDiaMes) {
-      //this.logger.debug('No es cierre de periodo. Saltando auditoría.');
-      //return;
-    //}
-
-    const esViernes = true; 
-  const esUltimoDiaMes = true;
-
-    const trabajadores = await this.userRepository.find({
-      where: { rol: UserRole.WORKER, isActive: true },
-      relations: ['empresa']
-    });
-
-    for (const worker of trabajadores) {
-      if (!worker.empresaId) continue;
-
-      try {
-        // Llamamos directamente a this.getWorkSummary
-       const resumen = await this.getWorkSummary(
-  worker.id, 
-  { id: worker.id, empresaId: worker.empresaId } as any
-);
-
-        // 1. 📅 CHEQUEO SEMANAL (Viernes)
-        if (esViernes) {
-          await this.procesarIncumplimiento(
-            worker, 
-            resumen.semana, 
-            'SEMANALES', 
-            AlarmType.WEEKLY_HOURS_INCOMPLETE
-          );
-        }
-
-        // 2. 🗓️ CHEQUEO MENSUAL (Fin de mes)
-        if (esUltimoDiaMes) {
-          await this.procesarIncumplimiento(
-            worker, 
-            resumen.mes, 
-            'MENSUALES', 
-            AlarmType.MONTHLY_HOURS_INCOMPLETE
-          );
-        }
-
-      } catch (err) {
-        this.logger.error(`Error en auditoría ID:${worker.id}: ${err.message}`);
-      }
-    }
-    this.logger.log('=== Auditoría de Horas Finalizada ===');
-  }
-
-  /**
-   * Lógica unificada para generar las dos alarmas (Admin y Worker)
-   */
-  private async procesarIncumplimiento(worker: User, datos: any, periodoLabel: string, tipoAlarma: AlarmType) {
-  const trabajado = datos.trabajado.segundos;
-  const objetivo = datos.objetivoTotal.segundos;
-  
-  if (objetivo <= 0) return;
-
-  const porcentaje = (trabajado / objetivo) * 100;
-
-  if (porcentaje < 95) {
-    const faltantes = objetivo - trabajado;
-    const hFaltantes = this.segundosAHoras(faltantes);
-    
-    // Unificamos el mensaje para que sirva a ambos
-    const descripcion = `INCUMPLIMIENTO ${periodoLabel}: Ha trabajado ${datos.trabajado.formateado}h de ${datos.objetivoTotal.formateado}h. (Faltan ${hFaltantes})`;
-
-    // 1. Verificamos si YA existe una alarma de este tipo hoy para este usuario
-    // Así evitamos que el Cron la cree cada minuto
-    const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();
-    const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, tipoAlarma);
-
-    if (!alarmaExistente) {
-      // 2. Creamos una única alarma que verán ambos
-      // Usamos triggerAlarm pero le haremos un pequeño ajuste
-      await this.alarmService.triggerAlarm(
-        worker.id, 
-        worker.empresaId, 
-        tipoAlarma, 
-        descripcion
-      );
-      
-      this.logger.warn(`🚨 Alerta de horas ${periodoLabel} generada para Worker ID:${worker.id}`);
-    }
-  }
-}
-
-  private async notificarWorker(workerId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
-    const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();
-    
-    // Evitar duplicados del mismo día
-    const duplicada = await this.alarmService['alarmRepository'].findOne({
-      where: { usuario: { id: workerId }, tipo, createdAt: MoreThanOrEqual(hoy) }
-    });
-
-    if (duplicada) return duplicada;
-
-    const alarma = this.alarmService['alarmRepository'].create({
-      usuario: { id: workerId },
-      empresaId,
-      tipo,
-      descripcion,
-      leidaAdmin: true,   // El admin ya tiene su propia alarma, esta no le sale
-      leidaWorker: false, // El worker la verá en su panel
-    });
-
-    return await this.alarmService['alarmRepository'].save(alarma);
-  }
-
-private segundosAHoras(segundos: number): string {
-  const h = Math.floor(segundos / 3600);
-  const m = Math.floor((segundos % 3600) / 60);
-  return `${h}h ${m}m`;
-}
-
 
   // ============================================
   // 1. INICIAR JORNADA (Check-In)
@@ -175,7 +47,7 @@ private segundosAHoras(segundos: number): string {
 
     const usuarioDB = await this.userRepository.findOne({
       where: { id: userPayload.id },
-      relations: ['empresa'] // Ya no necesitamos traer todo el horario aquí
+      relations: ['empresa'] 
     });
 
     if (!usuarioDB) throw new BadRequestException('Usuario no encontrado.');
@@ -215,7 +87,7 @@ private segundosAHoras(segundos: number): string {
 
     await this.alarmService.resolverAlarmasPrevias(userPayload.id, [AlarmType.ABSENCE]);
 
-    // 🔥 FIX: VALIDACIÓN DE RETRASO USANDO LA ROTACIÓN REAL
+    // Validación de Retraso
     const turnoHoy = await this.scheduleService.getTurnoHoy(userPayload.id, ahora);
 
     if (turnoHoy?.franjas?.[0]?.inicio) {
@@ -234,7 +106,7 @@ private segundosAHoras(segundos: number): string {
   // ============================================
   // 2. FINALIZAR JORNADA (Check-Out)
   // ============================================
-async checkOut(dto: CheckInDto, userPayload: UserPayload) {
+  async checkOut(dto: CheckInDto, userPayload: UserPayload) {
     const jornada = await this.findActiveWorkday(userPayload.id);
     if (!jornada) throw new BadRequestException('No hay jornada activa.');
 
@@ -245,55 +117,26 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
       jornada.longitudSalida = dto.longitud;
     }
 
-    // 💡 GUARDAMOS EN SEGUNDOS
+    // GUARDAMOS EN SEGUNDOS
     jornada.total_segundos = Math.floor((ahora.getTime() - jornada.inicio.getTime()) / 1000);
     jornada.tipo = 'Salida';
     jornada.presente = dto.presente;
 
-    const saved = await this.workdayRepository.save(jornada);
-    // ... lógica de alarmas de salida
-    return saved;
+    return await this.workdayRepository.save(jornada);
   }
 
-private getSpainDate(): Date {
-  // Obtenemos la fecha actual en la zona de Madrid
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: this.TIMEZONE,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: false,
-  };
-
-  const formatter = new Intl.DateTimeFormat('en-US', options);
-  const parts = formatter.formatToParts(new Date());
-  
-  const d: any = {};
-  parts.forEach(p => d[p.type] = p.value);
-
-  // Creamos un objeto que representa las 10:00 AM de Madrid como si fueran las 10:00 AM locales
-  return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.second);
-}
-
-/**
-   * Genera un resumen completo de horas: Hoy, Semana y Mes.
-   * Compara el tiempo real (DB + Live) contra el horario teórico.
-   */
- async getWorkSummary(id: number, user: UserPayload) {
-    // 1. OBTENEMOS "AHORA" EN ESPAÑA
+  // ============================================
+  // 3. GENERACIÓN DE RESÚMENES (Work Summary)
+  // ============================================
+  async getWorkSummary(id: number, user: UserPayload) {
     const ahora = DateTime.now().setZone(this.TIMEZONE);
 
-    // 2. DEFINICIÓN DE RANGOS (Lunes a Domingo)
     const inicioHoy = ahora.startOf('day');
     const inicioSemana = ahora.startOf('week'); 
     const finSemana = ahora.endOf('week');
     const inicioMes = ahora.startOf('month');
     const finMes = ahora.endOf('month');
 
-    // 3. CONSULTAS EN PARALELO (Convertimos a Date nativo solo para TypeORM)
     const [
       mensualDB, semanalDB, hoyDB, activa, turnoHoy,
       teoricoSemanaHastaHoy, teoricoMesHastaHoy,
@@ -310,8 +153,6 @@ private getSpainDate(): Date {
       this.scheduleService.getTeoricoRange(id, inicioMes.toJSDate(), finMes.toJSDate())
     ]);
 
-    // 4. CÁLCULO TIEMPO REAL "EN VIVO"
-    // Luxon calcula la diferencia real entre dos puntos en el tiempo (milisegundos UTC)
     let segundosEnVivo = 0;
     if (activa) {
       const inicioActiva = DateTime.fromJSDate(activa.inicio);
@@ -322,7 +163,6 @@ private getSpainDate(): Date {
     const totalSemana = semanalDB + segundosEnVivo;
     const totalMes = mensualDB + segundosEnVivo;
 
-    // 5. CÁLCULO TEÓRICO DE HOY
     let segundosTeoricosHoy = 0;
     if (turnoHoy?.franjas) {
       segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, f) => {
@@ -330,7 +170,6 @@ private getSpainDate(): Date {
       }, 0);
     }
 
-    // 6. RETORNO DE RESULTADOS
     return {
       hoy: {
         ...this.formatPeriod(totalHoy, segundosTeoricosHoy),
@@ -355,102 +194,19 @@ private getSpainDate(): Date {
       },
       isWorking: !!activa,
       puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado',
-      lastUpdate: ahora.toISO() // Formato estándar: 2026-04-01T10:15:00+02:00
+      lastUpdate: ahora.toISO() 
     };
   }
 
-// 💡 Método genérico para evitar duplicidad de lógica y errores de fechas
-private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
-    const res = await this.workdayRepository
-      .createQueryBuilder("j")
-      .select("SUM(j.total_segundos)", "suma")
-      .where("j.usuario_id = :id", { id: usuarioId })
-      .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
-      .andWhere("j.fin IS NOT NULL") 
-      .getRawOne();
-    return parseInt(res.suma || 0);
-  }
-/**
- * Helper para formatear los datos de cada periodo (evita repetir código)
- */
-private formatPeriod(trabajado: number, teorico: number) {
-    const balance = trabajado - teorico;
-    return {
-      trabajado: { 
-        segundos: trabajado, 
-        formateado: this.convertirSegundosAHora(trabajado) 
-      },
-      teorico: { 
-        segundos: teorico, 
-        formateado: this.convertirSegundosAHora(teorico) 
-      },
-      balance: { 
-        segundos: balance, 
-        formateado: this.convertirSegundosAHora(Math.abs(balance)),
-        isNegative: balance < 0,
-        completado: teorico > 0 ? parseFloat(((trabajado / teorico) * 100).toFixed(2)) : 0
-      }
-    };
-  }
-
-/**
- * Auxiliar: Calcula la duración en segundos entre dos horas (ej: "08:00" a "14:00")
- */
-private calcularSegundosFranja(inicio: string, fin: string): number {
-    const [h1, m1] = inicio.split(':').map(Number);
-    const [h2, m2] = fin.split(':').map(Number);
-    return ((h2 * 60 + m2) - (h1 * 60 + m1)) * 60;
-  }
-
-
-
-// 2. TOTAL SEMANAL (Segundos puros)
-async getWeeklyTotal(usuarioId: number): Promise<number> {
-    const ahora = new Date();
-    const inicioSemana = new Date(ahora); // 💡 Copia para evitar mutación
-    const dia = inicioSemana.getDay();
-    const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-    inicioSemana.setDate(diff);
-    inicioSemana.setHours(0, 0, 0, 0);
-
-    const res = await this.workdayRepository
-      .createQueryBuilder("j")
-      .select("SUM(j.total_segundos)", "suma")
-      .where("j.usuario_id = :id AND j.inicio >= :inicio", { id: usuarioId, inicio: inicioSemana })
-      .getRawOne();
-    return parseInt(res.suma || 0);
-  }
-
-  // 1. TOTAL MENSUAL (Segundos puros)
- async getMonthlyTotal(usuarioId: number): Promise<number> {
-    const inicioMes = new Date();
-    inicioMes.setDate(1);
-    inicioMes.setHours(0, 0, 0, 0);
-
-    const res = await this.workdayRepository
-      .createQueryBuilder("j")
-      .select("SUM(j.total_segundos)", "suma")
-      .where("j.usuario_id = :id AND j.inicio >= :inicio", { id: usuarioId, inicio: inicioMes })
-      .getRawOne();
-    return parseInt(res.suma || 0);
-  }
-
-  // 3. SUMMARY (Objeto formateado para el Frontend)
- 
-
-  // Utilidad para convertir segundos a texto HH:MM:SS
-private convertirSegundosAHora(segundos: number): string {
-    // Usamos Luxon para formatear la duración de forma elegante
-    return Duration.fromObject({ seconds: segundos }).toFormat('hh:mm:ss');
-  }
   // ============================================
-  // MÉTODOS DE HISTORIAL Y STATUS (Sin cambios)
+  // MÉTODOS DE HISTORIAL Y STATUS
   // ============================================
-async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
+  async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
     return await this.workdayRepository.findOne({
       where: { usuario: { id: usuarioId }, fin: IsNull() }
     });
   }
+
   async getHistory(usuarioId: number) {
     return await this.workdayRepository.find({
       where: { usuario: { id: usuarioId } },
@@ -458,12 +214,9 @@ async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
     });
   }
 
-
-
   async findAllByRange(usuarioId: number, desde: Date, hasta: Date) {
     const fechaFin = new Date(hasta);
     fechaFin.setHours(23, 59, 59, 999);
-
     const fechaInicio = new Date(desde);
     fechaInicio.setHours(0, 0, 0, 0);
 
@@ -480,11 +233,111 @@ async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
     });
   }
 
-  // ============================================
-  // MÉTODOS AUXILIARES (Lógica de negocio)
-  // ============================================
+  async getTodayStats(empresaId: number) {
+    const inicioDia = new Date();
+    inicioDia.setHours(0, 0, 0, 0);
+    const finDia = new Date();
+    finDia.setHours(23, 59, 59, 999);
 
-  // Nota: obtenerDistribucionHoy ha sido eliminado porque ahora usamos scheduleService.getTurnoHoy
+    const activos = await this.workdayRepository.count({
+      where: { empresa: { id: empresaId }, fin: IsNull(), inicio: Between(inicioDia, finDia) }
+    });
+
+    const terminados = await this.workdayRepository.count({
+      where: { empresa: { id: empresaId }, fin: Not(IsNull()), inicio: Between(inicioDia, finDia) }
+    });
+
+    const alarmasCriticas = await this.alarmService.countPendingToday(empresaId);
+
+    return {
+      fecha: inicioDia.toLocaleDateString('es-ES'),
+      stats: { trabajandoAhora: activos, jornadasFinalizadas: terminados, alertasPendientes: alarmasCriticas }
+    };
+  }
+
+  async getWorkerSummaryForAdmin(workerId: number, adminEmpresaId: number) {
+    const worker = await this.userRepository.findOne({
+      where: { id: workerId },
+      relations: ['empresa']
+    });
+
+    if (!worker) throw new NotFoundException('Trabajador no encontrado.');
+    if (worker.empresa?.id !== adminEmpresaId) {
+      throw new BadRequestException('No tienes permisos para ver estadísticas de este trabajador.');
+    }
+
+    return await this.getWorkSummary(workerId, { 
+      id: workerId, 
+      empresaId: worker.empresa?.id 
+    } as UserPayload);
+  }
+
+  async getWeeklyTotal(usuarioId: number): Promise<number> {
+    const ahora = new Date();
+    const inicioSemana = new Date(ahora); 
+    const dia = inicioSemana.getDay();
+    const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
+    inicioSemana.setDate(diff);
+    inicioSemana.setHours(0, 0, 0, 0);
+
+    const res = await this.workdayRepository
+      .createQueryBuilder("j")
+      .select("SUM(j.total_segundos)", "suma")
+      .where("j.usuario_id = :id AND j.inicio >= :inicio", { id: usuarioId, inicio: inicioSemana })
+      .getRawOne();
+    return parseInt(res.suma || 0);
+  }
+
+  async getMonthlyTotal(usuarioId: number): Promise<number> {
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    const res = await this.workdayRepository
+      .createQueryBuilder("j")
+      .select("SUM(j.total_segundos)", "suma")
+      .where("j.usuario_id = :id AND j.inicio >= :inicio", { id: usuarioId, inicio: inicioMes })
+      .getRawOne();
+    return parseInt(res.suma || 0);
+  }
+
+  // ============================================
+  // MÉTODOS AUXILIARES 
+  // ============================================
+  private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
+    const res = await this.workdayRepository
+      .createQueryBuilder("j")
+      .select("SUM(j.total_segundos)", "suma")
+      .where("j.usuario_id = :id", { id: usuarioId })
+      .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
+      .andWhere("j.fin IS NOT NULL") 
+      .getRawOne();
+    return parseInt(res.suma || 0);
+  }
+
+  private formatPeriod(trabajado: number, teorico: number) {
+    const balance = trabajado - teorico;
+    return {
+      trabajado: { segundos: trabajado, formateado: this.convertirSegundosAHora(trabajado) },
+      teorico: { segundos: teorico, formateado: this.convertirSegundosAHora(teorico) },
+      balance: { 
+        segundos: balance, 
+        formateado: this.convertirSegundosAHora(Math.abs(balance)),
+        isNegative: balance < 0,
+        completado: teorico > 0 ? parseFloat(((trabajado / teorico) * 100).toFixed(2)) : 0
+      }
+    };
+  }
+
+  private calcularSegundosFranja(inicio: string, fin: string): number {
+    const [h1, m1] = inicio.split(':').map(Number);
+    const [h2, m2] = fin.split(':').map(Number);
+    return ((h2 * 60 + m2) - (h1 * 60 + m1)) * 60;
+  }
+
+  private convertirSegundosAHora(segundos: number): string {
+    return Duration.fromObject({ seconds: segundos }).toFormat('hh:mm:ss');
+  }
 
   private comprobarRetraso(horaActual: Date, horaTeoricaStr: string, margenMins: number): boolean {
     const [h, m] = horaTeoricaStr.split(':').map(Number);
@@ -511,50 +364,17 @@ async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
     return R * c;
   }
 
-  async getTodayStats(empresaId: number) {
-    const inicioDia = new Date();
-    inicioDia.setHours(0, 0, 0, 0);
-
-    const finDia = new Date();
-    finDia.setHours(23, 59, 59, 999);
-
-    const activos = await this.workdayRepository.count({
-      where: { empresa: { id: empresaId }, fin: IsNull(), inicio: Between(inicioDia, finDia) }
-    });
-
-    const terminados = await this.workdayRepository.count({
-      where: { empresa: { id: empresaId }, fin: Not(IsNull()), inicio: Between(inicioDia, finDia) }
-    });
-
-    const alarmasCriticas = await this.alarmService.countPendingToday(empresaId);
-
-    return {
-      fecha: inicioDia.toLocaleDateString('es-ES'),
-      stats: { trabajandoAhora: activos, jornadasFinalizadas: terminados, alertasPendientes: alarmasCriticas }
+  private getSpainDate(): Date {
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: this.TIMEZONE,
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
+      hour12: false,
     };
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const parts = formatter.formatToParts(new Date());
+    const d: any = {};
+    parts.forEach(p => d[p.type] = p.value);
+    return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.second);
   }
-
-  /**
-   * Versión para admin del resumen de trabajo.
-   * Incluye validación de pertenencia a la empresa.
-   */
-  async getWorkerSummaryForAdmin(workerId: number, adminEmpresaId: number) {
-    const worker = await this.userRepository.findOne({
-      where: { id: workerId },
-      relations: ['empresa']
-    });
-
-    if (!worker) throw new NotFoundException('Trabajador no encontrado.');
-    
-    if (worker.empresa?.id !== adminEmpresaId) {
-      throw new BadRequestException('No tienes permisos para ver estadísticas de este trabajador.');
-    }
-
-    // Pasamos un UserPayload mínimo ya que getWorkSummary lo requiere
-    // pero en este flujo no lo usa realmente para los cálculos
-    return await this.getWorkSummary(workerId, { 
-      id: workerId, 
-      empresaId: worker.empresa?.id 
-    } as UserPayload);
-}
 }

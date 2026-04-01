@@ -98,30 +98,39 @@ private readonly TIMEZONE = 'Europe/Madrid';
    * Lógica unificada para generar las dos alarmas (Admin y Worker)
    */
   private async procesarIncumplimiento(worker: User, datos: any, periodoLabel: string, tipoAlarma: AlarmType) {
-    const trabajado = datos.trabajado.segundos;
-    const objetivo = datos.objetivoTotal.segundos;
+  const trabajado = datos.trabajado.segundos;
+  const objetivo = datos.objetivoTotal.segundos;
+  
+  if (objetivo <= 0) return;
+
+  const porcentaje = (trabajado / objetivo) * 100;
+
+  if (porcentaje < 95) {
+    const faltantes = objetivo - trabajado;
+    const hFaltantes = this.segundosAHoras(faltantes);
     
-    if (objetivo <= 0) return;
+    // Unificamos el mensaje para que sirva a ambos
+    const descripcion = `INCUMPLIMIENTO ${periodoLabel}: Ha trabajado ${datos.trabajado.formateado}h de ${datos.objetivoTotal.formateado}h. (Faltan ${hFaltantes})`;
 
-    const porcentaje = (trabajado / objetivo) * 100;
+    // 1. Verificamos si YA existe una alarma de este tipo hoy para este usuario
+    // Así evitamos que el Cron la cree cada minuto
+    const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();
+    const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, tipoAlarma, hoy);
 
-    // Umbral del 95% para permitir un margen pequeño de error
-    if (porcentaje < 95) {
-      const faltantes = objetivo - trabajado;
-      const hFaltantes = this.segundosAHoras(faltantes);
+    if (!alarmaExistente) {
+      // 2. Creamos una única alarma que verán ambos
+      // Usamos triggerAlarm pero le haremos un pequeño ajuste
+      await this.alarmService.triggerAlarm(
+        worker.id, 
+        worker.empresaId, 
+        tipoAlarma, 
+        descripcion
+      );
       
-      const descAdmin = `INCUMPLIMIENTO ${periodoLabel}: ${worker.nombre} ha trabajado ${datos.trabajado.formateado}h de ${datos.objetivoTotal.formateado}h. Faltan ${hFaltantes}.`;
-      const descWorker = `Atención: No has completado tus horas ${periodoLabel.toLowerCase()}. Llevas ${datos.trabajado.formateado}h de las ${datos.objetivoTotal.formateado}h requeridas.`;
-
-      // 🚨 Alarma 1: Para el Administrador (triggerAlarm envía al Gateway/WebSocket)
-      await this.alarmService.triggerAlarm(worker.id, worker.empresaId, tipoAlarma, descAdmin);
-
-      // 🚨 Alarma 2: Para el Trabajador (notificarWorker crea registro silencioso para el admin)
-      await this.notificarWorker(worker.id, worker.empresaId, tipoAlarma, descWorker);
-
-      this.logger.warn(`🚨 Alerta enviada a Worker ID:${worker.id} por horas ${periodoLabel}`);
+      this.logger.warn(`🚨 Alerta de horas ${periodoLabel} generada para Worker ID:${worker.id}`);
     }
   }
+}
 
   private async notificarWorker(workerId: number, empresaId: number, tipo: AlarmType, descripcion: string) {
     const hoy = dayjs().tz(this.TIMEZONE).startOf('day').toDate();

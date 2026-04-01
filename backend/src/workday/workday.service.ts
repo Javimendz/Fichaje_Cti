@@ -115,131 +115,129 @@ async checkOut(dto: CheckInDto, userPayload: UserPayload) {
     return saved;
   }
 
-  private getSpainDate(): Date {
-    const ahora = new Date();
-    // Convertimos la fecha actual a un string en formato España y creamos un nuevo Date
-    const s = ahora.toLocaleString('en-US', { timeZone: this.TIMEZONE });
-    return new Date(s);
-  }
+private getSpainDate(): Date {
+  // Obtenemos la fecha actual en la zona de Madrid
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: this.TIMEZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+  };
+
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+  const parts = formatter.formatToParts(new Date());
+  
+  const d: any = {};
+  parts.forEach(p => d[p.type] = p.value);
+
+  // Creamos un objeto que representa las 10:00 AM de Madrid como si fueran las 10:00 AM locales
+  return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.second);
+}
 
 /**
    * Genera un resumen completo de horas: Hoy, Semana y Mes.
    * Compara el tiempo real (DB + Live) contra el horario teórico.
    */
  async getWorkSummary(id: number, user: UserPayload) {
- const ahora = this.getSpainDate();
+    // 1. OBTENEMOS LAS FECHAS DE REFERENCIA
+    const ahoraReal = new Date(); // 👈 UTC Real para restar milisegundos exactos
+    const ahoraEspana = this.getSpainDate(); // 👈 Hora de Madrid para límites del calendario
 
-  // --- 1. NORMALIZACIÓN DE RANGOS ---
-  const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
-  
-  // Semana: Lunes 00:00:00 a Domingo 23:59:59
-  const inicioSemana = new Date(ahora);
-  const dia = inicioSemana.getDay();
-  const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-  inicioSemana.setDate(diff);
-  inicioSemana.setHours(0, 0, 0, 0);
+    // Normalización de inicios de periodo (00:00:00 de Madrid)
+    const inicioHoy = new Date(ahoraEspana);
+    inicioHoy.setHours(0, 0, 0, 0);
 
-  const finSemana = new Date(inicioSemana);
-  finSemana.setDate(finSemana.getDate() + 6);
-  finSemana.setHours(23, 59, 59, 999);
+    const inicioSemana = new Date(inicioHoy);
+    const dia = inicioSemana.getDay();
+    const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
+    inicioSemana.setDate(diff);
 
-  // Mes: Día 1 a las 00:00:00 hasta el último día 23:59:59
-  const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0);
-  const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
+    const finSemana = new Date(inicioSemana);
+    finSemana.setDate(finSemana.getDate() + 6);
+    finSemana.setHours(23, 59, 59, 999);
 
-  // --- 2. CONSULTAS EN PARALELO ---
-  const [
-    mensualDB, 
-    semanalDB, 
-    hoyDB, 
-    activa, 
-    turnoHoy,
-    teoricoSemanaHastaHoy, 
-    teoricoMesHastaHoy,
-    teoricoSemanaCompleta, 
-    teoricoMesCompleto
-  ] = await Promise.all([
-    this.getTotalRangeDB(id, inicioMes, finMes),
-    this.getTotalRangeDB(id, inicioSemana, ahora),
-    this.getTotalRangeDB(id, inicioHoy, ahora),
-    this.findActiveWorkday(id),
-    this.scheduleService.getTurnoHoy(id, ahora),
-    this.scheduleService.getTeoricoRange(id, inicioSemana, ahora),
-    this.scheduleService.getTeoricoRange(id, inicioMes, ahora),
-    this.scheduleService.getTeoricoRange(id, inicioSemana, finSemana), 
-    this.scheduleService.getTeoricoRange(id, inicioMes, finMes)
-  ]);
+    const inicioMes = new Date(ahoraEspana.getFullYear(), ahoraEspana.getMonth(), 1, 0, 0, 0);
+    const finMes = new Date(ahoraEspana.getFullYear(), ahoraEspana.getMonth() + 1, 0, 23, 59, 59, 999);
 
-  // --- 3. CÁLCULO TIEMPO REAL (Live) ---
-  const segundosEnVivo = activa 
-    ? Math.floor((ahora.getTime() - activa.inicio.getTime()) / 1000) 
-    : 0;
+    // 2. CONSULTAS EN PARALELO
+    const [
+      mensualDB, semanalDB, hoyDB, activa, turnoHoy,
+      teoricoSemanaHastaHoy, teoricoMesHastaHoy,
+      teoricoSemanaCompleta, teoricoMesCompleto
+    ] = await Promise.all([
+      this.getTotalRangeDB(id, inicioMes, finMes),
+      this.getTotalRangeDB(id, inicioSemana, ahoraReal),
+      this.getTotalRangeDB(id, inicioHoy, ahoraReal),
+      this.findActiveWorkday(id),
+      this.scheduleService.getTurnoHoy(id, ahoraEspana),
+      this.scheduleService.getTeoricoRange(id, inicioSemana, ahoraEspana),
+      this.scheduleService.getTeoricoRange(id, inicioMes, ahoraEspana),
+      this.scheduleService.getTeoricoRange(id, inicioSemana, finSemana),
+      this.scheduleService.getTeoricoRange(id, inicioMes, finMes)
+    ]);
 
-  const totalHoy = hoyDB + segundosEnVivo;
-  const totalSemana = semanalDB + segundosEnVivo;
-  const totalMes = mensualDB + segundosEnVivo;
+    // 3. CÁLCULO "EN VIVO" (Sin desfase de hora)
+    // Usamos ahoraReal (UTC) contra activa.inicio (UTC) para que la resta sea física y real
+    const segundosEnVivo = activa 
+      ? Math.floor((ahoraReal.getTime() - activa.inicio.getTime()) / 1000) 
+      : 0;
 
-  // --- 4. CÁLCULO TEÓRICO DE HOY ---
-  let segundosTeoricosHoy = 0;
-  if (turnoHoy?.franjas) {
-    segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, f) => {
-      return (f.inicio && f.fin) ? acc + this.calcularSegundosFranja(f.inicio, f.fin) : acc;
-    }, 0);
+    const totalHoy = hoyDB + segundosEnVivo;
+    const totalSemana = semanalDB + segundosEnVivo;
+    const totalMes = mensualDB + segundosEnVivo;
+
+    // 4. CÁLCULO TEÓRICO DE HOY
+    let segundosTeoricosHoy = 0;
+    if (turnoHoy?.franjas) {
+      segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, f) => {
+        return (f.inicio && f.fin) ? acc + this.calcularSegundosFranja(f.inicio, f.fin) : acc;
+      }, 0);
+    }
+
+    // 5. RETORNO ESTRUCTURADO
+    return {
+      hoy: {
+        ...this.formatPeriod(totalHoy, segundosTeoricosHoy),
+        objetivoTotal: { 
+          segundos: segundosTeoricosHoy, 
+          formateado: this.convertirSegundosAHora(segundosTeoricosHoy) 
+        }
+      },
+      semana: {
+        ...this.formatPeriod(totalSemana, teoricoSemanaHastaHoy),
+        objetivoTotal: { 
+          segundos: teoricoSemanaCompleta, 
+          formateado: this.convertirSegundosAHora(teoricoSemanaCompleta) 
+        }
+      },
+      mes: {
+        ...this.formatPeriod(totalMes, teoricoMesHastaHoy),
+        objetivoTotal: { 
+          segundos: teoricoMesCompleto, 
+          formateado: this.convertirSegundosAHora(teoricoMesCompleto) 
+        }
+      },
+      isWorking: !!activa,
+      puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado',
+      lastUpdate: ahoraEspana.toISOString()
+    };
   }
-
-  // --- 5. RESPUESTA ESTRUCTURADA ---
-  return {
-    hoy: {
-      ...this.formatPeriod(totalHoy, segundosTeoricosHoy),
-      objetivoTotal: {
-        segundos: segundosTeoricosHoy,
-        formateado: this.convertirSegundosAHora(segundosTeoricosHoy)
-      }
-    },
-    semana: {
-      // Balance respecto a lo que debería llevar "hasta ahora"
-      ...this.formatPeriod(totalSemana, teoricoSemanaHastaHoy),
-      // Meta total de la semana completa
-      objetivoTotal: {
-        segundos: teoricoSemanaCompleta,
-        formateado: this.convertirSegundosAHora(teoricoSemanaCompleta)
-      }
-    },
-    mes: {
-      // Balance respecto a lo que debería llevar "hasta ahora"
-      ...this.formatPeriod(totalMes, teoricoMesHastaHoy),
-      // Meta total del mes completo
-      objetivoTotal: {
-        segundos: teoricoMesCompleto,
-        formateado: this.convertirSegundosAHora(teoricoMesCompleto)
-      }
-    },
-    isWorking: !!activa,
-    puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado',
-    lastUpdate: ahora.toISOString()
-  };
-}
 
 // 💡 Método genérico para evitar duplicidad de lógica y errores de fechas
 private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
-  const res = await this.workdayRepository
-    .createQueryBuilder("j")
-    .select("SUM(j.total_segundos)", "suma")
-    .where("j.usuario_id = :id", { id: usuarioId })
-    // 🛡️ Filtro 1: Rango de fechas cerrado para evitar "ruido" de meses anteriores/posteriores
-    .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
-    // 🛡️ Filtro 2: IMPORTANTE - Solo sumar jornadas que ya tienen el 'fin' (Check-out hecho)
-    // Así evitamos que la DB sume un '0' o un valor parcial de la jornada activa
-    .andWhere("j.fin IS NOT NULL") 
-    .getRawOne();
-
-  const suma = parseInt(res.suma || 0);
-  
-  // 💡 LOG DE DEPURACIÓN (Míralo en tu terminal de NestJS)
-  this.logger.debug(`[Stats] User:${usuarioId} desde ${inicio.toISOString()} hasta ${fin.toISOString()} -> Suma DB: ${suma}s`);
-  
-  return suma;
-}
+    const res = await this.workdayRepository
+      .createQueryBuilder("j")
+      .select("SUM(j.total_segundos)", "suma")
+      .where("j.usuario_id = :id", { id: usuarioId })
+      .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
+      .andWhere("j.fin IS NOT NULL") // 👈 Crucial para no sumar la jornada activa aquí
+      .getRawOne();
+    return parseInt(res.suma || 0);
+  }
 /**
  * Helper para formatear los datos de cada periodo (evita repetir código)
  */

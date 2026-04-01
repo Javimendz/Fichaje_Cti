@@ -12,14 +12,13 @@ import { ScheduleService } from 'schedule/schedule.service'; // 👈 IMPORTANTE 
 @Injectable()
 export class WorkdayService {
   private readonly logger = new Logger('WorkdayService');
-
+private readonly TIMEZONE = 'Europe/Madrid';
   constructor(
     @InjectRepository(Workday) private readonly workdayRepository: Repository<Workday>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly alarmService: AlarmsService,
     @Inject(forwardRef(() => ScheduleService))
-    private readonly TIMEZONE = 'Europe/Madrid',
-    private readonly scheduleService: ScheduleService, // 👈 INYECTADO AQUÍ
+    private readonly scheduleService: ScheduleService,
   ) { }
 
   // ============================================

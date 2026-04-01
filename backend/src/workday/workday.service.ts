@@ -7,7 +7,8 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { AlarmsService } from 'alarms/alarms.service';
 import { AlarmType } from 'alarms/entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
-import { ScheduleService } from 'schedule/schedule.service'; // 👈 IMPORTANTE AÑADIR ESTO
+import { ScheduleService } from 'schedule/schedule.service'; /
+import { DateTime, Duration } from 'luxon';
 
 @Injectable()
 export class WorkdayService {
@@ -143,54 +144,46 @@ private getSpainDate(): Date {
    * Compara el tiempo real (DB + Live) contra el horario teórico.
    */
  async getWorkSummary(id: number, user: UserPayload) {
-    // 1. OBTENEMOS LAS FECHAS DE REFERENCIA
-    const ahoraReal = new Date(); // 👈 UTC Real para restar milisegundos exactos
-    const ahoraEspana = this.getSpainDate(); // 👈 Hora de Madrid para límites del calendario
+    // 1. OBTENEMOS "AHORA" EN ESPAÑA
+    const ahora = DateTime.now().setZone(this.ZONE);
 
-    // Normalización de inicios de periodo (00:00:00 de Madrid)
-    const inicioHoy = new Date(ahoraEspana);
-    inicioHoy.setHours(0, 0, 0, 0);
+    // 2. DEFINICIÓN DE RANGOS (Lunes a Domingo)
+    const inicioHoy = ahora.startOf('day');
+    const inicioSemana = ahora.startOf('week'); 
+    const finSemana = ahora.endOf('week');
+    const inicioMes = ahora.startOf('month');
+    const finMes = ahora.endOf('month');
 
-    const inicioSemana = new Date(inicioHoy);
-    const dia = inicioSemana.getDay();
-    const diff = inicioSemana.getDate() - dia + (dia === 0 ? -6 : 1);
-    inicioSemana.setDate(diff);
-
-    const finSemana = new Date(inicioSemana);
-    finSemana.setDate(finSemana.getDate() + 6);
-    finSemana.setHours(23, 59, 59, 999);
-
-    const inicioMes = new Date(ahoraEspana.getFullYear(), ahoraEspana.getMonth(), 1, 0, 0, 0);
-    const finMes = new Date(ahoraEspana.getFullYear(), ahoraEspana.getMonth() + 1, 0, 23, 59, 59, 999);
-
-    // 2. CONSULTAS EN PARALELO
+    // 3. CONSULTAS EN PARALELO (Convertimos a Date nativo solo para TypeORM)
     const [
       mensualDB, semanalDB, hoyDB, activa, turnoHoy,
       teoricoSemanaHastaHoy, teoricoMesHastaHoy,
       teoricoSemanaCompleta, teoricoMesCompleto
     ] = await Promise.all([
-      this.getTotalRangeDB(id, inicioMes, finMes),
-      this.getTotalRangeDB(id, inicioSemana, ahoraReal),
-      this.getTotalRangeDB(id, inicioHoy, ahoraReal),
+      this.getTotalRangeDB(id, inicioMes.toJSDate(), finMes.toJSDate()),
+      this.getTotalRangeDB(id, inicioSemana.toJSDate(), ahora.toJSDate()),
+      this.getTotalRangeDB(id, inicioHoy.toJSDate(), ahora.toJSDate()),
       this.findActiveWorkday(id),
-      this.scheduleService.getTurnoHoy(id, ahoraEspana),
-      this.scheduleService.getTeoricoRange(id, inicioSemana, ahoraEspana),
-      this.scheduleService.getTeoricoRange(id, inicioMes, ahoraEspana),
-      this.scheduleService.getTeoricoRange(id, inicioSemana, finSemana),
-      this.scheduleService.getTeoricoRange(id, inicioMes, finMes)
+      this.scheduleService.getTurnoHoy(id, ahora.toJSDate()),
+      this.scheduleService.getTeoricoRange(id, inicioSemana.toJSDate(), ahora.toJSDate()),
+      this.scheduleService.getTeoricoRange(id, inicioMes.toJSDate(), ahora.toJSDate()),
+      this.scheduleService.getTeoricoRange(id, inicioSemana.toJSDate(), finSemana.toJSDate()),
+      this.scheduleService.getTeoricoRange(id, inicioMes.toJSDate(), finMes.toJSDate())
     ]);
 
-    // 3. CÁLCULO "EN VIVO" (Sin desfase de hora)
-    // Usamos ahoraReal (UTC) contra activa.inicio (UTC) para que la resta sea física y real
-    const segundosEnVivo = activa 
-      ? Math.floor((ahoraReal.getTime() - activa.inicio.getTime()) / 1000) 
-      : 0;
+    // 4. CÁLCULO TIEMPO REAL "EN VIVO"
+    // Luxon calcula la diferencia real entre dos puntos en el tiempo (milisegundos UTC)
+    let segundosEnVivo = 0;
+    if (activa) {
+      const inicioActiva = DateTime.fromJSDate(activa.inicio);
+      segundosEnVivo = Math.floor(ahora.diff(inicioActiva, 'seconds').seconds);
+    }
 
     const totalHoy = hoyDB + segundosEnVivo;
     const totalSemana = semanalDB + segundosEnVivo;
     const totalMes = mensualDB + segundosEnVivo;
 
-    // 4. CÁLCULO TEÓRICO DE HOY
+    // 5. CÁLCULO TEÓRICO DE HOY
     let segundosTeoricosHoy = 0;
     if (turnoHoy?.franjas) {
       segundosTeoricosHoy = turnoHoy.franjas.reduce((acc, f) => {
@@ -198,7 +191,7 @@ private getSpainDate(): Date {
       }, 0);
     }
 
-    // 5. RETORNO ESTRUCTURADO
+    // 6. RETORNO DE RESULTADOS
     return {
       hoy: {
         ...this.formatPeriod(totalHoy, segundosTeoricosHoy),
@@ -223,7 +216,7 @@ private getSpainDate(): Date {
       },
       isWorking: !!activa,
       puesto: (turnoHoy as any)?.nombre || 'Sin turno asignado',
-      lastUpdate: ahoraEspana.toISOString()
+      lastUpdate: ahora.toISO() // Formato estándar: 2026-04-01T10:15:00+02:00
     };
   }
 
@@ -234,7 +227,7 @@ private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promi
       .select("SUM(j.total_segundos)", "suma")
       .where("j.usuario_id = :id", { id: usuarioId })
       .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
-      .andWhere("j.fin IS NOT NULL") // 👈 Crucial para no sumar la jornada activa aquí
+      .andWhere("j.fin IS NOT NULL") 
       .getRawOne();
     return parseInt(res.suma || 0);
   }
@@ -256,9 +249,7 @@ private formatPeriod(trabajado: number, teorico: number) {
         segundos: balance, 
         formateado: this.convertirSegundosAHora(Math.abs(balance)),
         isNegative: balance < 0,
-        completado: teorico > 0 
-          ? parseFloat(((trabajado / teorico) * 100).toFixed(2)) 
-          : 0
+        completado: teorico > 0 ? parseFloat(((trabajado / teorico) * 100).toFixed(2)) : 0
       }
     };
   }
@@ -310,15 +301,13 @@ async getWeeklyTotal(usuarioId: number): Promise<number> {
 
   // Utilidad para convertir segundos a texto HH:MM:SS
 private convertirSegundosAHora(segundos: number): string {
-    const h = Math.floor(segundos / 3600);
-    const m = Math.floor((segundos % 3600) / 60);
-    const s = segundos % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    // Usamos Luxon para formatear la duración de forma elegante
+    return Duration.fromObject({ seconds: segundos }).toFormat('hh:mm:ss');
   }
   // ============================================
   // MÉTODOS DE HISTORIAL Y STATUS (Sin cambios)
   // ============================================
-  async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
+async findActiveWorkday(usuarioId: number): Promise<Workday | null> {
     return await this.workdayRepository.findOne({
       where: { usuario: { id: usuarioId }, fin: IsNull() }
     });

@@ -12,6 +12,7 @@ import { FranjaHoraria } from 'timeSlot/entities/franja-horaria.entity';
 // Importar el módulo AuthModule para la autenticación
 import { AuthModule } from 'auth/auth.module';
 import { WorkerModule } from 'worker/worker.module';
+import { Ausencia } from 'absence/entities/ausencia.entity';
 /**
  * SchedulesModule
  * Módulo encargado de la gestión de horarios en el sistema.
@@ -30,7 +31,7 @@ import { WorkerModule } from 'worker/worker.module';
   imports: [ 
     AuthModule,
     // Importar las entidades de TypeORM necesarias
-    TypeOrmModule.forFeature([Horario, DistribucionDia, FranjaHoraria]),  // Entidades para gestión de horarios
+    TypeOrmModule.forFeature([Horario, DistribucionDia, FranjaHoraria, Ausencia]),  // Entidades para gestión de horarios
     WorkerModule,  // Importar AllowedUserModule para gestión de usuarios permitidos
   ],
   exports: [ScheduleService], // Exportar el servicio para usarlo en otros módulos

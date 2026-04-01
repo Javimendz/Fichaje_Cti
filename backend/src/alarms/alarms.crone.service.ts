@@ -22,20 +22,21 @@ import { Cron } from '@nestjs/schedule';
 import { UserRole } from "auth/roles.enum";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "users/entities/user.entity";
-import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
-import { DiaSemana } from "schedule/entities/distribucion-dia.entity";
+import { Between, Repository } from "typeorm";
 import { Workday } from "workday/entities/workday.entity";
+import isoWeek from 'dayjs/plugin/isoWeek';
 
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { AusenciaEstado } from "absence/dto/ausencia-estado.enum";
 import { Ausencia } from "absence/entities/ausencia.entity";
 import { AlarmType } from "./entities/alarm.entity";
 import { ScheduleService } from "schedule/schedule.service";
+import { WorkdayService } from "workday/workday.service";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(isoWeek);
 
 
 
@@ -82,6 +83,7 @@ export class AlarmCronService {
     @InjectRepository(Ausencia)
     private readonly ausenciaRepository: Repository<Ausencia>,
     private readonly scheduleService: ScheduleService,
+    private readonly workdayService: WorkdayService,
   ) { }
 
 
@@ -238,8 +240,102 @@ const alarmaExistente = await this.alarmService.verificarAlarmaHoy(worker.id, Al
     return minReales < minTeoricos;
   }
 
+//@Cron('55 23 * * *', { timeZone: 'Europe/Madrid' })
+@Cron('*/1 * * * *')
+  async checkPeriodClosures() {
+    const ahora = dayjs().tz(this.ZONA_HORARIA);
+    
+// 🔥 FORZADO PARA TEST:
+  const esDomingo = true; 
+  const esUltimoDiaMes = true;
+    /*
+
+const esDomingo = ahora.day() === 0;
+    const esUltimoDiaMes = ahora.date() === ahora.daysInMonth();
+    if (!esDomingo && !esUltimoDiaMes) {
+      return; // No es fin de ningún periodo, no hacemos nada.
+    }
+*/
+
+    this.logger.log(`--- Iniciando auditoría: ${esDomingo ? '[SEMANAL]' : ''} ${esUltimoDiaMes ? '[MENSUAL]' : ''} ---`);
+
+    const trabajadores = await this.userRepository.find({
+      where: { rol: UserRole.WORKER, isActive: true },
+    });
+
+    for (const worker of trabajadores) {
+      if (!worker.empresaId) continue;
+
+      try {
+        const resumen = await this.workdayService.getWorkSummary(
+          worker.id,
+          { id: worker.id, empresaId: worker.empresaId } as any
+        );
+
+        // --- 1. AUDITORÍA SEMANAL (Solo domingos) ---
+        if (esDomingo) {
+          await this.auditPeriod(
+            worker,
+            resumen.semana,
+            'SEMANALES',
+            AlarmType.WEEKLY_HOURS_INCOMPLETE
+          );
+        }
+
+        // --- 2. AUDITORÍA MENSUAL (Solo último día del mes) ---
+        if (esUltimoDiaMes) {
+          await this.auditPeriod(
+            worker,
+            resumen.mes,
+            'MENSUALES',
+            AlarmType.MONTHLY_HOURS_INCOMPLETE
+          );
+        }
+
+      } catch (error) {
+        this.logger.error(`Error auditando al trabajador ${worker.id}: ${error.message}`);
+      }
+    }
+    this.logger.log('--- Auditoría finalizada ---');
+  }
 
 
+  /**
+   * Función auxiliar para procesar el incumplimiento
+   */
+  private async auditPeriod(worker: User, datosPeriodo: any, label: string, tipo: AlarmType) {
+    const trabajado = datosPeriodo.trabajado.segundos;
+    const objetivo = datosPeriodo.objetivoTotal.segundos;
+
+    // Si no hay horas que trabajar en este periodo, ignoramos
+    if (objetivo <= 0) return;
+
+    // Umbral de cumplimiento (ejemplo: 95% o simplemente que sea menor al objetivo)
+    if (trabajado < objetivo) {
+      const yaExiste = await this.alarmService.verificarAlarmaHoy(worker.id, tipo);
+      
+      if (!yaExiste) {
+        const faltantes = this.segundosAHoras(objetivo - trabajado);
+        const descripcion = `HORAS ${label} INCOMPLETAS: Ha trabajado ${datosPeriodo.trabajado.formateado} de ${datosPeriodo.objetivoTotal.formateado}. Faltan ${faltantes}.`;
+
+        // Enviamos alarma al Admin (y según tu lógica anterior, esto también podría notificar al worker)
+        await this.alarmService.triggerAlarm(
+          worker.id,
+          worker.empresaId,
+          tipo,
+          descripcion
+        );
+
+        this.logger.warn(`🚨 Alarma ${tipo} generada para Worker ID: ${worker.id}`);
+      }
+    }
+  }
+
+private segundosAHoras(segundos: number): string {
+  const h = Math.floor(segundos / 3600);
+  const m = Math.floor((segundos % 3600) / 60);
+  return `${h}h ${m}m`;
+}
     
 
 

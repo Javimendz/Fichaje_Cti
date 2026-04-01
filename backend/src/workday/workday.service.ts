@@ -7,7 +7,7 @@ import type { UserPayload } from 'auth/interfaces/user-payload.interface';
 import { AlarmsService } from 'alarms/alarms.service';
 import { AlarmType } from 'alarms/entities/alarm.entity';
 import { User } from 'users/entities/user.entity';
-import { ScheduleService } from 'schedule/schedule.service'; /
+import { ScheduleService } from 'schedule/schedule.service'; 
 import { DateTime, Duration } from 'luxon';
 
 @Injectable()
@@ -145,7 +145,7 @@ private getSpainDate(): Date {
    */
  async getWorkSummary(id: number, user: UserPayload) {
     // 1. OBTENEMOS "AHORA" EN ESPAÑA
-    const ahora = DateTime.now().setZone(this.ZONE);
+    const ahora = DateTime.now().setZone(this.TIMEZONE);
 
     // 2. DEFINICIÓN DE RANGOS (Lunes a Domingo)
     const inicioHoy = ahora.startOf('day');

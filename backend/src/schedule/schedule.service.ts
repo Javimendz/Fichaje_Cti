@@ -257,7 +257,6 @@ export class ScheduleService {
 
   // 🔥 NUEVO: Método centralizado para obtener el turno exacto de un día
  async getTurnoHoy(usuarioId: number, fechaReferencia: Date) {
-  // 1. Obtener el horario del usuario (el JSON que me has pasado)
   const horario = await this.horarioRepository.findOne({ 
     where: { usuarios: { id: usuarioId } },
     relations: ['distribuciones', 'distribuciones.franjas']
@@ -265,21 +264,28 @@ export class ScheduleService {
 
   if (!horario) return null;
 
-  // 2. Calcular la semana de rotación actual
-  // Supongamos que la rotación empezó el lunes de la semana que se creó el horario
-  const fechaInicio = new Date(horario.createdAt); 
+  // ← Usar Luxon para normalizar ambas fechas a medianoche en Madrid
+  //    antes de calcular semanas — así evitamos desfase de horas UTC
+  const ancla = DateTime.fromJSDate(horario.createdAt)
+    .setZone('Europe/Madrid')
+    .startOf('week'); // lunes de la semana en que se creó el horario
+
+  const referencia = DateTime.fromJSDate(fechaReferencia)
+    .setZone('Europe/Madrid')
+    .startOf('week'); // lunes de la semana de referencia
+
   const semanasTranscurridas = Math.floor(
-    (fechaReferencia.getTime() - fechaInicio.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    referencia.diff(ancla, 'weeks').weeks
   );
-  
-  // Esto nos dará 1, 2 o 3 dependiendo de 'semanasRotacion'
-  const semanaActual = (semanasTranscurridas % horario.semanasRotacion) + 1;
 
-  // 3. Obtener el nombre del día en mayúsculas (LUNES, MARTES...)
+  const semanaActual = (Math.max(0, semanasTranscurridas) % horario.semanasRotacion) + 1;
+
   const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
-  const nombreDia = dias[fechaReferencia.getDay()];
+  // ← Usar Luxon para obtener el día en zona Madrid, no en UTC
+  const nombreDia = dias[
+    DateTime.fromJSDate(fechaReferencia).setZone('Europe/Madrid').weekday % 7
+  ];
 
-  // 4. Buscar la distribución que coincida con la semana y el día
   const distribucion = horario.distribuciones.find(d => 
     d.diaSemana === nombreDia && d.semanaRotacion === semanaActual
   );
@@ -292,7 +298,6 @@ export class ScheduleService {
     franjas: distribucion.franjas
   };
 }
-
   public obtenerNombreDia(fecha: Date): string {
     const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
     return dias[fecha.getDay()];
@@ -373,13 +378,10 @@ async getTeoricoRange(usuarioId: number, inicio: Date, fin: Date): Promise<numbe
  * Auxiliar para convertir franjas (HH:MM) en segundos totales
  */
 private calcularSegundosFranja(inicio: string, fin: string): number {
-  const hoy = DateTime.now().setZone('Europe/Madrid').toISODate(); // "2026-04-01"
-  
-  const start = DateTime.fromISO(`${hoy}T${inicio}`, { zone: 'Europe/Madrid' });
-  const end = DateTime.fromISO(`${hoy}T${fin}`, { zone: 'Europe/Madrid' });
-  
-  // Diff devuelve la diferencia real teniendo en cuenta el +2 actual de España
-  return end.diff(start, 'seconds').seconds;
+  // "10:00:00" → split por : → [10, 0, 0]
+  const [h1, m1] = inicio.split(':').map(Number);
+  const [h2, m2] = fin.split(':').map(Number);
+  return ((h2 * 60 + m2) - (h1 * 60 + m1)) * 60;
 }
 
 }

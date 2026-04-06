@@ -1,8 +1,8 @@
 # --- 1. Verificar Permisos de Administrador ---
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "--- ERROR: Ejecuta PowerShell como ADMINISTRADOR ---" -ForegroundColor Red
-    exit
+     Write-Host "--- ERROR: Ejecuta PowerShell como ADMINISTRADOR ---" -ForegroundColor Red
+     exit
 }
 
 Write-Host "--- Iniciando despliegue de Fichaje CTI ---" -ForegroundColor Cyan
@@ -15,8 +15,8 @@ $containers = docker ps -a --filter "network=red_fichaje" -q
 if ($containers) {
     Write-Host "Desconectando y eliminando contenedores antiguos..."
     foreach ($id in $containers) {
-        docker network disconnect -f red_fichaje $id 2>$null
-        docker rm -f $id 2>$null
+     docker network disconnect -f red_fichaje $id 2>$null
+       docker rm -f $id 2>$null
     }
 }
 
@@ -43,87 +43,40 @@ if (Test-Path "bbdd") {
     Set-Location "bbdd"
     docker compose up -d
     if ($LASTEXITCODE -ne 0) { 
-        Write-Host "❌ Error en BBDD. Revisa el archivo docker-compose en /bbdd" -ForegroundColor Red
-        Set-Location ".."
-        exit 
-    }
+     Write-Host "❌ Error en BBDD. Revisa el archivo docker-compose en /bbdd" -ForegroundColor Red
+         Set-Location ".."
+         exit 
+     }
     Set-Location ".."
 } else {
-    Write-Host "❌ ERROR: No se encuentra la carpeta /bbdd" -ForegroundColor Red
+     Write-Host "❌ ERROR: No se encuentra la carpeta /bbdd" -ForegroundColor Red
 }
 
-# --- 6. Verificar e Instalar Dependencias del Backend ---
-if (Test-Path "backend\package.json") {
-    Write-Host "Verificando dependencias locales de Yarn..." -ForegroundColor Yellow
-    Set-Location "backend"
-    
-    # Leer el package.json
-    $pkgJson = Get-Content "package.json" -Raw | ConvertFrom-Json
-    
-    # 6.1 Dependencias de Producción
-    $deps = @("cors", "@nestjs/schedule", "@nestjs/platform-socket.io", "@nestjs/websockets", "cookie-parser", "class-validator", "class-transformer", "date-holidays")
-    $missingDeps = @()
-    
-    foreach ($dep in $deps) {
-        if (-not ($pkgJson.dependencies.PSObject.Properties.Name -contains $dep)) {
-            $missingDeps += $dep
-        }
-    }
-    
-    if ($missingDeps.Length -gt 0) {
-        Write-Host "Añadiendo dependencias faltantes: $($missingDeps -join ' ')..." -ForegroundColor Cyan
-        yarn add $missingDeps
-    } else {
-        Write-Host "✔️ Todas las dependencias principales están instaladas." -ForegroundColor Green
-    }
-
-    # 6.2 Dependencias de Desarrollo (Dev)
-    $devDeps = @("@types/cookie-parser", "@nestjs/config")
-    $missingDevDeps = @()
-    
-    foreach ($dep in $devDeps) {
-        if (-not ($pkgJson.devDependencies.PSObject.Properties.Name -contains $dep)) {
-            $missingDevDeps += $dep
-        }
-    }
-    
-    if ($missingDevDeps.Length -gt 0) {
-        Write-Host "Añadiendo dependencias DEV faltantes: $($missingDevDeps -join ' ')..." -ForegroundColor Cyan
-        yarn add -D $missingDevDeps
-    } else {
-        Write-Host "✔️ Todas las dependencias de desarrollo están instaladas." -ForegroundColor Green
-    }
-
-    Set-Location ".."
-} else {
-    Write-Host "⚠️ No se encontró package.json en la carpeta backend. Saltando revisión de Yarn." -ForegroundColor DarkYellow
-}
-
-# --- 7. Levantar Backend ---
+# --- 6. Levantar Backend ---
 if (Test-Path "backend") {
-    Write-Host "Levantando Backend..." -ForegroundColor Yellow
+     Write-Host "Levantando Backend..." -ForegroundColor Yellow
     Set-Location "backend"
     docker compose up -d --build
     if ($LASTEXITCODE -ne 0) { 
-        Write-Host "❌ Error en Backend. Revisa logs con 'docker logs fichaje_backend'" -ForegroundColor Red
-        Set-Location ".."
-        exit 
+     Write-Host "❌ Error en Backend. Revisa logs con 'docker logs fichaje_backend'" -ForegroundColor Red
+     Set-Location ".."
+     exit 
     }
-    Set-Location ".."
+        Set-Location ".."
 }
 
-# --- 8. Levantar Proxy (Nginx) ---
+# --- 7. Levantar Proxy (Nginx) ---
 if (Test-Path "infra/proxy") {
     Write-Host "Levantando Proxy..." -ForegroundColor Yellow
-    Set-Location "infra/proxy"
+     Set-Location "infra/proxy"
     docker compose up -d
     if ($LASTEXITCODE -ne 0) { 
-        Write-Host "❌ Error en Proxy." -ForegroundColor Red
-        Set-Location "../../"
-        exit 
+     Write-Host "❌ Error en Proxy." -ForegroundColor Red
+     Set-Location "../../"
+     exit 
     }
     Set-Location "../../"
 }
 
 Write-Host "`n--- DESPLIEGUE COMPLETADO ---" -ForegroundColor Green
-docker ps --filter "network=red_fichaje"
+docker ps --filter "network=red_fichaje" 

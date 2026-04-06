@@ -112,13 +112,35 @@ export class WorkdayService {
     if (!jornada) throw new BadRequestException('No hay jornada activa.');
 
     const ahora = new Date();
+    
+    // --- 🚨 NUEVO: ALARMA DE SALIDA ANTICIPADA ---
+    const turnoHoy = await this.scheduleService.getTurnoHoy(userPayload.id, ahora);
+    if (turnoHoy?.franjas?.[0]?.fin) {
+      const horaFinTeorica = turnoHoy.franjas[0].fin;
+      
+      // Reutilizamos la lógica: convertimos a minutos para comparar
+      const finRealMin = (ahora.getHours() * 60) + ahora.getMinutes();
+      const [h, m] = horaFinTeorica.split(':').map(Number);
+      const finTeoricoMin = (h * 60) + m;
+
+      // Si sale al menos 10 minutos antes de su hora...
+      if (finRealMin < (finTeoricoMin - 10)) {
+        await this.alarmService.triggerAlarm(
+          userPayload.id, 
+          userPayload.empresaId, 
+          AlarmType.EARLY_DEPARTURE,
+          `SALIDA ANTICIPADA: Ha salido a las ${ahora.toLocaleTimeString('en-GB', {timeZone: this.TIMEZONE})} (Debía salir a las ${horaFinTeorica}).`
+        );
+      }
+    }
+    // ----------------------------------------------
+
     jornada.fin = ahora;
     if (dto.latitud && dto.longitud) {
       jornada.latitudSalida = dto.latitud;
       jornada.longitudSalida = dto.longitud;
     }
 
-    // GUARDAMOS EN SEGUNDOS
     jornada.total_segundos = Math.floor((ahora.getTime() - jornada.inicio.getTime()) / 1000);
     jornada.tipo = 'Salida';
     jornada.presente = dto.presente;

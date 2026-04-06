@@ -52,7 +52,54 @@ if (Test-Path "bbdd") {
     Write-Host "❌ ERROR: No se encuentra la carpeta /bbdd" -ForegroundColor Red
 }
 
-# --- 6. Levantar Backend ---
+# --- 6. Verificar e Instalar Dependencias del Backend ---
+if (Test-Path "backend\package.json") {
+    Write-Host "Verificando dependencias locales de Yarn..." -ForegroundColor Yellow
+    Set-Location "backend"
+    
+    # Leer el package.json
+    $pkgJson = Get-Content "package.json" -Raw | ConvertFrom-Json
+    
+    # 6.1 Dependencias de Producción
+    $deps = @("cors", "@nestjs/schedule", "@nestjs/platform-socket.io", "@nestjs/websockets", "cookie-parser", "class-validator", "class-transformer", "date-holidays")
+    $missingDeps = @()
+    
+    foreach ($dep in $deps) {
+        if (-not ($pkgJson.dependencies.PSObject.Properties.Name -contains $dep)) {
+            $missingDeps += $dep
+        }
+    }
+    
+    if ($missingDeps.Length -gt 0) {
+        Write-Host "Añadiendo dependencias faltantes: $($missingDeps -join ' ')..." -ForegroundColor Cyan
+        yarn add $missingDeps
+    } else {
+        Write-Host "✔️ Todas las dependencias principales están instaladas." -ForegroundColor Green
+    }
+
+    # 6.2 Dependencias de Desarrollo (Dev)
+    $devDeps = @("@types/cookie-parser", "@nestjs/config")
+    $missingDevDeps = @()
+    
+    foreach ($dep in $devDeps) {
+        if (-not ($pkgJson.devDependencies.PSObject.Properties.Name -contains $dep)) {
+            $missingDevDeps += $dep
+        }
+    }
+    
+    if ($missingDevDeps.Length -gt 0) {
+        Write-Host "Añadiendo dependencias DEV faltantes: $($missingDevDeps -join ' ')..." -ForegroundColor Cyan
+        yarn add -D $missingDevDeps
+    } else {
+        Write-Host "✔️ Todas las dependencias de desarrollo están instaladas." -ForegroundColor Green
+    }
+
+    Set-Location ".."
+} else {
+    Write-Host "⚠️ No se encontró package.json en la carpeta backend. Saltando revisión de Yarn." -ForegroundColor DarkYellow
+}
+
+# --- 7. Levantar Backend ---
 if (Test-Path "backend") {
     Write-Host "Levantando Backend..." -ForegroundColor Yellow
     Set-Location "backend"
@@ -65,7 +112,7 @@ if (Test-Path "backend") {
     Set-Location ".."
 }
 
-# --- 7. Levantar Proxy (Nginx) ---
+# --- 8. Levantar Proxy (Nginx) ---
 if (Test-Path "infra/proxy") {
     Write-Host "Levantando Proxy..." -ForegroundColor Yellow
     Set-Location "infra/proxy"

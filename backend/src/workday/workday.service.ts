@@ -436,17 +436,33 @@ export class WorkdayService {
   // ============================================
   // MÉTODOS AUXILIARES 
   // ============================================
-  private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
-    const res = await this.workdayRepository
+private async getTotalRangeDB(usuarioId: number, inicio: Date, fin: Date): Promise<number> {
+    // Buscamos jornadas cerradas que "toquen" o se solapen con este periodo
+    // Es decir: que empezaran antes de que acabe el periodo, y terminaran después de que empezara.
+    const jornadas = await this.workdayRepository
       .createQueryBuilder("j")
-      .select("SUM(j.total_segundos)", "suma")
       .where("j.usuario_id = :id", { id: usuarioId })
-      .andWhere("j.inicio BETWEEN :inicio AND :fin", { inicio, fin })
-      .andWhere("j.fin IS NOT NULL") 
-      .getRawOne();
-    return parseInt(res.suma || 0);
-  }
+      .andWhere("j.fin IS NOT NULL")
+      .andWhere("j.inicio <= :fin", { fin })
+      .andWhere("j.fin >= :inicio", { inicio })
+      .getMany();
 
+    let totalSegundos = 0;
+
+    for (const j of jornadas) {
+      // Recortamos el inicio y el fin para que encajen estrictamente en el periodo solicitado
+      const inicioReal = j.inicio.getTime() < inicio.getTime() ? inicio : j.inicio;
+      const finReal = j.fin.getTime() > fin.getTime() ? fin : j.fin;
+
+      const segundosEnPeriodo = Math.floor((finReal.getTime() - inicioReal.getTime()) / 1000);
+      
+      if (segundosEnPeriodo > 0) {
+        totalSegundos += segundosEnPeriodo;
+      }
+    }
+
+    return totalSegundos;
+  }
   private formatPeriod(trabajado: number, teorico: number) {
     const balance = trabajado - teorico;
     return {

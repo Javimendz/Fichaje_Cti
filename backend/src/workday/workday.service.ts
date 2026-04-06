@@ -176,15 +176,31 @@ export class WorkdayService {
       this.scheduleService.getTeoricoRange(id, inicioMes.toJSDate(), finMes.toJSDate())
     ]);
 
-    let segundosEnVivo = 0;
+    // --- CORRECCIÓN: Tiempo en vivo troceado por periodos ---
+    let segundosEnVivoHoy = 0;
+    let segundosEnVivoSemana = 0;
+    let segundosEnVivoMes = 0;
+
     if (activa) {
-      const inicioActiva = DateTime.fromJSDate(activa.inicio);
-      segundosEnVivo = Math.floor(ahora.diff(inicioActiva, 'seconds').seconds);
+      const inicioActiva = DateTime.fromJSDate(activa.inicio).setZone(this.TIMEZONE);
+
+      // 1. ¿Cuánto de este turno pertenece a HOY?
+      const inicioParaHoy = inicioActiva > inicioHoy ? inicioActiva : inicioHoy;
+      segundosEnVivoHoy = Math.floor(ahora.diff(inicioParaHoy, 'seconds').seconds);
+
+      // 2. ¿Cuánto de este turno pertenece a ESTA SEMANA?
+      const inicioParaSemana = inicioActiva > inicioSemana ? inicioActiva : inicioSemana;
+      segundosEnVivoSemana = Math.floor(ahora.diff(inicioParaSemana, 'seconds').seconds);
+
+      // 3. ¿Cuánto de este turno pertenece a ESTE MES?
+      const inicioParaMes = inicioActiva > inicioMes ? inicioActiva : inicioMes;
+      segundosEnVivoMes = Math.floor(ahora.diff(inicioParaMes, 'seconds').seconds);
     }
 
-    const totalHoy = hoyDB + segundosEnVivo;
-    const totalSemana = semanalDB + segundosEnVivo;
-    const totalMes = mensualDB + segundosEnVivo;
+    const totalHoy = hoyDB + Math.max(0, segundosEnVivoHoy);
+    const totalSemana = semanalDB + Math.max(0, segundosEnVivoSemana);
+    const totalMes = mensualDB + Math.max(0, segundosEnVivoMes);
+    // --------------------------------------------------------
 
     let segundosTeoricosHoy = 0;
     if (turnoHoy?.franjas) {

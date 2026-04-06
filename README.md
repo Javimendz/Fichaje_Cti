@@ -23,7 +23,7 @@ para permitir un despliegue profesional y escalable.
 ```
   - en una terminal como administrador, ejecutar el siguiente comando en la carpeta raiz del proyecto:
 
-  - bash .\deply.ps1 
+  - bash .\deploy.ps1 
 
   
 ```

@@ -143,6 +143,12 @@ export class WorkdayController {
     return await this.workdayService.getWorkSummary(id, user);
   }
 
+  /**
+   * Obtiene el calendario mensual del usuario para el dashboard
+   * @param user Año del calendario
+   * @param month Mes del calendario
+   * @returns Calendario mensual del usuario
+   */
   @Get('calendar/:year/:month')
   @Roles(UserRole.ADMIN, UserRole.WORKER) 
   async getCalendarData(
@@ -153,7 +159,14 @@ export class WorkdayController {
     return await this.workdayService.getMonthlyCalendar(user.id, year, month);
   }
 
-
+  /**
+   * Obtiene el calendario mensual de un trabajador para el dashboard del admin
+   * @param workerId ID del trabajador
+   * @param year Año del calendario
+   * @param month Mes del calendario
+   * @param admin Usuario admin
+   * @returns Calendario mensual del trabajador
+   */
   @Get('worker/:id/calendar/:year/:month')
   @Roles(UserRole.ADMIN)
   async getWorkerCalendarForAdmin(

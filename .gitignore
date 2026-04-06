@@ -7,8 +7,8 @@
 
 
 
-postgres-data/
-
+postgres-data-local/
+/postgres-data
 
 # Logs
 logs

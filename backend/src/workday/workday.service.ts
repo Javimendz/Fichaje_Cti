@@ -16,10 +16,14 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import minMax from 'dayjs/plugin/minMax';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(isSameOrBefore);
+dayjs.extend(minMax);
+
+
 
 @Injectable()
 export class WorkdayService {
@@ -333,66 +337,81 @@ export class WorkdayService {
    * Ideal para pintar calendarios en el Frontend.
    */
  async getMonthlyCalendar(usuarioId: number, year: number, month: number) {
-  // 1. Buscamos al usuario y su empresa para saber la región
+  // 1. Datos del usuario y región
   const usuario = await this.userRepository.findOne({
     where: { id: usuarioId },
     relations: ['empresa']
   });
-
-  const region = usuario?.empresa?.codigoRegion || 'MD'; // 'MD', 'CT', 'VC', etc.
+  const region = usuario?.empresa?.codigoRegion || 'MD';
   const hd = new Holidays('ES', region);
 
+  // 2. Definir límites del mes
   const inicioMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).startOf('month').toDate();
   const finMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).endOf('month').toDate();
 
-  // 2. Consulta de jornadas (lo que ya tenías)
-  const registros = await this.workdayRepository
-    .createQueryBuilder('w')
-    .select('DATE(w.inicio)', 'fecha')
-    .addSelect('SUM(w.total_segundos)', 'total_segundos')
-    .where('w.usuario_id = :userId', { userId: usuarioId })
-    .andWhere('w.inicio BETWEEN :inicio AND :fin', { inicio: inicioMes, fin: finMes })
-    .groupBy('DATE(w.inicio)')
-    .getRawMany();
+  // 3. Obtener TODAS las jornadas que toquen este mes (sin agrupar en SQL)
+  const jornadas = await this.workdayRepository
+    .createQueryBuilder('j')
+    .where('j.usuario_id = :userId', { userId: usuarioId })
+    .andWhere('j.fin IS NOT NULL')
+    .andWhere('j.inicio <= :fin', { fin: finMes })
+    .andWhere('j.fin >= :inicio', { inicio: inicioMes })
+    .getMany();
 
-  // 3. Obtener festivos del mes usando la librería
-  const festivosMes = hd.getHolidays(year).filter(h => 
-    dayjs(h.date).month() === (month - 1) && h.type === 'public'
-  );
-
+  // 4. Inicializar el calendario con todos los días del mes
   const calendario: Record<string, any> = {};
+  const numDias = dayjs(inicioMes).daysInMonth();
 
-  // --- PASO A: Llenar el calendario con los festivos primero ---
-  festivosMes.forEach(f => {
-    const fechaStr = dayjs(f.date).format('YYYY-MM-DD');
+  for (let i = 1; i <= numDias; i++) {
+    const fechaActual = dayjs(inicioMes).date(i);
+    const fechaStr = fechaActual.format('YYYY-MM-DD');
+    
+    // Verificar si es festivo
+    const festivo = hd.isHoliday(fechaActual.toDate());
+    const esFestivoPublico = festivo && festivo.some((h: any) => h.type === 'public');
+
     calendario[fechaStr] = {
-      esFestivo: true,
-      nombreFestivo: f.name,
       segundos: 0,
-      formateado: "00:00:00"
+      formateado: "00:00:00",
+      esFestivo: !!esFestivoPublico,
+      nombreFestivo: esFestivoPublico ? festivo.find((h: any) => h.type === 'public').name : null
     };
-  });
+  }
 
-  // --- PASO B: Llenar/Sobrescribir con los registros de trabajo ---
-  registros.forEach(r => {
-    const fechaStr = dayjs(r.fecha).format('YYYY-MM-DD');
-    const segundos = parseInt(r.total_segundos || '0', 10);
+  // 5. Repartir los segundos de las jornadas en el calendario
+  for (const j of jornadas) {
+    let cursor = dayjs(j.inicio).tz(this.TIMEZONE);
+    const finalTurno = dayjs(j.fin).tz(this.TIMEZONE);
 
-    // Si ya existía porque era festivo, mantenemos los datos del festivo pero añadimos las horas
-    const infoPrevia = calendario[fechaStr] || {};
+    while (cursor.isSameOrBefore(finalTurno, 'day')) {
+      const fechaStr = cursor.format('YYYY-MM-DD');
+      
+      // Solo procesamos si el día pertenece al mes que estamos consultando
+      if (calendario[fechaStr]) {
+        const inicioDia = cursor.startOf('day');
+        const finDia = cursor.endOf('day');
 
-    calendario[fechaStr] = {
-      ...infoPrevia,
-      segundos: segundos,
-      formateado: this.convertirSegundosAHora(segundos),
-      esFestivo: infoPrevia.esFestivo || false
-    };
+        // Determinar qué parte de la jornada cae en ESTE día concreto
+        const solapeInicio = dayjs.max(cursor, inicioDia, dayjs(inicioMes).tz(this.TIMEZONE));
+        const solapeFin = dayjs.min(finalTurno, finDia, dayjs(finMes).tz(this.TIMEZONE));
+
+        const segundosEnDia = solapeFin.diff(solapeInicio, 'second');
+
+        if (segundosEnDia > 0) {
+          calendario[fechaStr].segundos += segundosEnDia;
+        }
+      }
+      cursor = cursor.add(1, 'day').startOf('day');
+    }
+  }
+
+  // 6. Formatear los strings finales
+  Object.keys(calendario).forEach(fecha => {
+    calendario[fecha].formateado = this.convertirSegundosAHora(calendario[fecha].segundos);
   });
 
   return calendario;
 }
-
-
   /**
    * Versión para admin del calendario mensual.
    * Valida que el trabajador pertenezca a la misma empresa que el admin.

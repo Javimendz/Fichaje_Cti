@@ -403,36 +403,41 @@ export class WorkdayService {
     year: number, 
     month: number
   ) {
-    // 1. Verificamos que el trabajador existe y traemos su empresa
+    // 1. Verificación de seguridad (mismo código)
     const worker = await this.userRepository.findOne({
       where: { id: workerId },
       relations: ['empresa']
     });
 
     if (!worker) throw new NotFoundException('Trabajador no encontrado.');
-    
-    // 2. Seguridad: ¿El trabajador es de la empresa del admin?
     if (worker.empresa?.id !== adminEmpresaId) {
-      throw new BadRequestException('No tienes permisos para ver el calendario de este trabajador.');
+      throw new BadRequestException('No tienes permisos para ver a este trabajador.');
     }
 
-    // 3. Si todo es correcto, reutilizamos la lógica de calendario que ya tenemos
-    return await this.getMonthlyCalendar(workerId, year, month);
+    // 2. Obtenemos el calendario detallado día a día (Ya incluye festivos y horas)
+    const detalleDias = await this.getMonthlyCalendar(workerId, year, month);
+
+    // 3. Calculamos el total de segundos sumando el detalle que acabamos de obtener
+    const totalSegundosMes = Object.values(detalleDias).reduce(
+      (acc: number, dia: any) => acc + (dia.segundos || 0), 0
+    );
+
+    // 4. Retornamos un objeto completo "Todo en uno"
+    return {
+      worker: {
+        id: worker.id,
+        nombre: worker.nombre,
+        email: worker.email
+      },
+      resumen: {
+        totalSegundos: totalSegundosMes,
+        totalFormateado: this.convertirSegundosAHora(totalSegundosMes),
+        mes: month,
+        year: year
+      },
+      calendario: detalleDias // Aquí van todos los días con sus horas, festivos, etc.
+    };
   }
-
-  async getMonthlyTotal(usuarioId: number): Promise<number> {
-    const inicioMes = new Date();
-    inicioMes.setDate(1);
-    inicioMes.setHours(0, 0, 0, 0);
-
-    const res = await this.workdayRepository
-      .createQueryBuilder("j")
-      .select("SUM(j.total_segundos)", "suma")
-      .where("j.usuario_id = :id AND j.inicio >= :inicio", { id: usuarioId, inicio: inicioMes })
-      .getRawOne();
-    return parseInt(res.suma || 0);
-  }
-
   // ============================================
   // MÉTODOS AUXILIARES 
   // ============================================

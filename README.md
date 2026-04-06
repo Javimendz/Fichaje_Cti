@@ -236,7 +236,7 @@ docker run -d \
 
 ```
   
-
+dddd
 3. Dependencias necesarias (Dentro de directorio ```backend```):
 
 ```Bash

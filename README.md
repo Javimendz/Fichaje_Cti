@@ -242,7 +242,7 @@ docker run -d \
 ```Bash
 yarn add cors @nestjs/schedule @nestjs/platform-socket.io @nestjs/websockets cookie-parser class-validator class-transformer
 yarn add -D @types/cookie-parser @nestjs/config
-
+yarn add date-holidays
 ```
 4. Levantar Infraestructura (Base de Datos):
 

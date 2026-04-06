@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, Between, Not } from 'typeorm';
+import { Repository, IsNull, Between, Not, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { Workday } from './entities/workday.entity';
 import { CheckInDto } from './dto/check-in.dto';
 import type { UserPayload } from 'auth/interfaces/user-payload.interface';
@@ -17,6 +17,9 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import minMax from 'dayjs/plugin/minMax';
+import { AusenciaEstado } from 'absence/dto/ausencia-estado.enum';
+import { AbsenceService } from 'absence/absence.service';
+import { Ausencia } from 'absence/entities/ausencia.entity';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -36,6 +39,8 @@ export class WorkdayService {
     private readonly alarmService: AlarmsService,
     @Inject(forwardRef(() => ScheduleService))
     private readonly scheduleService: ScheduleService,
+    @InjectRepository(Ausencia) 
+    private readonly ausenciaRepository: Repository<Ausencia>,
   ) { }
 
   // ============================================
@@ -346,27 +351,37 @@ export class WorkdayService {
   const hd = new Holidays('ES', region);
 
   // 2. Definir límites del mes
-  const inicioMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).startOf('month').toDate();
-  const finMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).endOf('month').toDate();
+  const inicioMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).startOf('month');
+  const finMes = dayjs().tz(this.TIMEZONE).year(year).month(month - 1).endOf('month');
 
-  // 3. Obtener TODAS las jornadas que toquen este mes (sin agrupar en SQL)
-  const jornadas = await this.workdayRepository
-    .createQueryBuilder('j')
-    .where('j.usuario_id = :userId', { userId: usuarioId })
-    .andWhere('j.fin IS NOT NULL')
-    .andWhere('j.inicio <= :fin', { fin: finMes })
-    .andWhere('j.fin >= :inicio', { inicio: inicioMes })
-    .getMany();
+  // 3. Obtener Jornadas Y Ausencias en paralelo
+  const [jornadas, ausencias] = await Promise.all([
+    this.workdayRepository.createQueryBuilder('j')
+      .where('j.usuario_id = :userId', { userId: usuarioId })
+      .andWhere('j.fin IS NOT NULL')
+      .andWhere('j.inicio <= :fin', { fin: finMes.toDate() })
+      .andWhere('j.fin >= :inicio', { inicio: inicioMes.toDate() })
+      .getMany(),
+    
+    // Necesitas tener inyectado el repositorio de Ausencias en el constructor
+    this.ausenciaRepository.find({
+      where: {
+        usuario: { id: usuarioId },
+        estado: AusenciaEstado.APROBADA as any, // Solo ausencias validadas
+        fechaInicio: LessThanOrEqual(finMes.toDate()) as any,
+        fechaFin: MoreThanOrEqual(inicioMes.toDate()) as any,
+      }
+    })
+  ]);
 
-  // 4. Inicializar el calendario con todos los días del mes
+  // 4. Inicializar el calendario
   const calendario: Record<string, any> = {};
-  const numDias = dayjs(inicioMes).daysInMonth();
+  const numDias = inicioMes.daysInMonth();
 
   for (let i = 1; i <= numDias; i++) {
-    const fechaActual = dayjs(inicioMes).date(i);
+    const fechaActual = inicioMes.date(i);
     const fechaStr = fechaActual.format('YYYY-MM-DD');
     
-    // Verificar si es festivo
     const festivo = hd.isHoliday(fechaActual.toDate());
     const esFestivoPublico = festivo && festivo.some((h: any) => h.type === 'public');
 
@@ -374,38 +389,55 @@ export class WorkdayService {
       segundos: 0,
       formateado: "00:00:00",
       esFestivo: !!esFestivoPublico,
-      nombreFestivo: esFestivoPublico ? festivo.find((h: any) => h.type === 'public').name : null
+      nombreFestivo: esFestivoPublico ? festivo.find((h: any) => h.type === 'public').name : null,
+      ausencia: null // Aquí guardaremos el objeto de la ausencia si existe
     };
   }
 
-  // 5. Repartir los segundos de las jornadas en el calendario
-  for (const j of jornadas) {
-    let cursor = dayjs(j.inicio).tz(this.TIMEZONE);
-    const finalTurno = dayjs(j.fin).tz(this.TIMEZONE);
+  // 5. Marcar Ausencias en el calendario
+  ausencias.forEach(aus => {
+    let start = dayjs(aus.fechaInicio).tz(this.TIMEZONE);
+    const end = dayjs(aus.fechaFin).tz(this.TIMEZONE);
 
-    while (cursor.isSameOrBefore(finalTurno, 'day')) {
-      const fechaStr = cursor.format('YYYY-MM-DD');
-      
-      // Solo procesamos si el día pertenece al mes que estamos consultando
+    while (start.isSameOrBefore(end, 'day')) {
+      const fechaStr = start.format('YYYY-MM-DD');
       if (calendario[fechaStr]) {
-        const inicioDia = cursor.startOf('day');
-        const finDia = cursor.endOf('day');
-
-        // Determinar qué parte de la jornada cae en ESTE día concreto
-        const solapeInicio = dayjs.max(cursor, inicioDia, dayjs(inicioMes).tz(this.TIMEZONE));
-        const solapeFin = dayjs.min(finalTurno, finDia, dayjs(finMes).tz(this.TIMEZONE));
-
-        const segundosEnDia = solapeFin.diff(solapeInicio, 'second');
-
-        if (segundosEnDia > 0) {
-          calendario[fechaStr].segundos += segundosEnDia;
-        }
+        calendario[fechaStr].ausencia = {
+          tipo: aus.tipo, // Vacaciones, Enfermedad, etc.
+          motivo: aus.motivo,
+          id: aus.id
+        };
       }
-      cursor = cursor.add(1, 'day').startOf('day');
+      start = start.add(1, 'day');
+    }
+  });
+
+  // 6. Repartir segundos de jornadas (Tu lógica de solape corregida con minMax)
+  for (const j of jornadas) {
+    const inicioJornada = dayjs(j.inicio).tz(this.TIMEZONE);
+    const finJornada = dayjs(j.fin).tz(this.TIMEZONE);
+    
+    let cursor = dayjs.max([inicioJornada, inicioMes]);
+    const tope = dayjs.min([finJornada, finMes]);
+
+    while (cursor.isBefore(tope)) {
+      const fechaStr = cursor.format('YYYY-MM-DD');
+      if (calendario[fechaStr]) {
+        const finDeEsteDia = cursor.endOf('day');
+        const finFranjaActual = dayjs.min([finDeEsteDia, tope]);
+        const segundosEnEsteDia = finFranjaActual.diff(cursor, 'second');
+        
+        if (segundosEnEsteDia > 0) {
+          calendario[fechaStr].segundos += segundosEnEsteDia;
+        }
+        cursor = finDeEsteDia.add(1, 'millisecond');
+      } else {
+        break;
+      }
     }
   }
 
-  // 6. Formatear los strings finales
+  // 7. Formatear finales
   Object.keys(calendario).forEach(fecha => {
     calendario[fecha].formateado = this.convertirSegundosAHora(calendario[fecha].segundos);
   });
@@ -416,45 +448,56 @@ export class WorkdayService {
    * Versión para admin del calendario mensual.
    * Valida que el trabajador pertenezca a la misma empresa que el admin.
    */
+ /**
+   * Versión para admin del calendario mensual con desglose de ausencias.
+   * Proporciona una visión 360º del trabajador para un mes específico.
+   */
   async getWorkerMonthlyCalendarForAdmin(
     workerId: number, 
     adminEmpresaId: number, 
     year: number, 
     month: number
   ) {
-    // 1. Verificación de seguridad (mismo código)
+    // 1. Verificación de seguridad y existencia
     const worker = await this.userRepository.findOne({
       where: { id: workerId },
       relations: ['empresa']
     });
 
     if (!worker) throw new NotFoundException('Trabajador no encontrado.');
+    
+    // Seguridad: El admin solo puede ver trabajadores de su propia empresa
     if (worker.empresa?.id !== adminEmpresaId) {
-      throw new BadRequestException('No tienes permisos para ver a este trabajador.');
+      throw new BadRequestException('No tienes permisos para ver el calendario de este trabajador.');
     }
 
-    // 2. Obtenemos el calendario detallado día a día (Ya incluye festivos y horas)
+    // 2. Obtenemos el calendario detallado (incluye: segundos, festivos y ausencias)
     const detalleDias = await this.getMonthlyCalendar(workerId, year, month);
 
-    // 3. Calculamos el total de segundos sumando el detalle que acabamos de obtener
-    const totalSegundosMes = Object.values(detalleDias).reduce(
-      (acc: number, dia: any) => acc + (dia.segundos || 0), 0
-    );
+    // 3. Cálculo de métricas agregadas para el resumen
+    const dias = Object.values(detalleDias);
+    
+    const totalSegundosMes = dias.reduce((acc: number, dia: any) => acc + (dia.segundos || 0), 0);
+    const totalDiasConAusencia = dias.filter((dia: any) => dia.ausencia !== null).length;
+    const totalDiasTrabajados = dias.filter((dia: any) => dia.segundos > 0).length;
 
-    // 4. Retornamos un objeto completo "Todo en uno"
+    // 4. Retornamos el objeto unificado
     return {
       worker: {
         id: worker.id,
         nombre: worker.nombre,
-        email: worker.email
+        email: worker.email,
+        empresa: worker.empresa?.nombre
       },
       resumen: {
         totalSegundos: totalSegundosMes,
         totalFormateado: this.convertirSegundosAHora(totalSegundosMes),
+        diasTrabajados: totalDiasTrabajados,
+        diasConAusencia: totalDiasConAusencia,
         mes: month,
         year: year
       },
-      calendario: detalleDias // Aquí van todos los días con sus horas, festivos, etc.
+      calendario: detalleDias 
     };
   }
   // ============================================

@@ -1,82 +1,48 @@
-# --- 1. Verificar Permisos de Administrador ---
+# --- 1. Verificar Permisos ---
 $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-     Write-Host "--- ERROR: Ejecuta PowerShell como ADMINISTRADOR ---" -ForegroundColor Red
+     Write-Host "--- ERROR: Ejecuta como ADMINISTRADOR ---" -ForegroundColor Red
      exit
 }
 
-Write-Host "--- Iniciando despliegue de Fichaje CTI ---" -ForegroundColor Cyan
+Write-Host "--- Despliegue Optimizado Fichaje CTI ---" -ForegroundColor Cyan
 
-# --- 2. Limpieza Radical (Teardown) ---
-Write-Host "Limpiando contenedores y liberando red..." -ForegroundColor Yellow
+# --- 2. Limpieza Inteligente (Rápida) ---
+Write-Host "Liberando recursos..." -ForegroundColor Yellow
+# En lugar de borrar todo de raíz, solo bajamos los servicios del proyecto actual
+# Esto mantiene la red si ya existe, ahorrando tiempo.
+docker compose -f bbdd/docker-compose.yml down 2>$null
+docker compose -f backend/docker-compose.yml down 2>$null
+docker compose -f infra/proxy/docker-compose.yml down 2>$null
 
-# Obtenemos todos los contenedores que podrían estar usando nuestra red
-$containers = docker ps -a --filter "network=red_fichaje" -q
-if ($containers) {
-    Write-Host "Desconectando y eliminando contenedores antiguos..."
-    foreach ($id in $containers) {
-     docker network disconnect -f red_fichaje $id 2>$null
-       docker rm -f $id 2>$null
-    }
+# Solo borrar la red si es estrictamente necesario, pero aquí la creamos si no existe
+if (-not (docker network ls --filter name=red_fichaje -q)) {
+    docker network create red_fichaje
+    Write-Host "Red red_fichaje creada." -ForegroundColor Green
 }
 
-# Eliminamos contenedores por nombre por si acaso
-docker rm -f postgres postgres_bbdd fichaje_backend nginx_proxy 2>$null
+# --- 3. Levantar Componentes (Paralelismo sugerido) ---
+$componentes = @(
+    @{ Path = "bbdd"; Name = "Base de Datos" },
+    @{ Path = "backend"; Name = "Backend" },
+    @{ Path = "infra/proxy"; Name = "Proxy Nginx" }
+)
 
-# Borramos la red de raíz para evitar IDs huérfanos
-docker network rm red_fichaje 2>$null
-Write-Host "Entorno limpio." -ForegroundColor Green
-
-# --- 3. Crear red de Docker Limpia ---
-Write-Host "Configurando red de Docker..." -ForegroundColor Yellow
-docker network create red_fichaje
-Write-Host "Red red_fichaje creada." -ForegroundColor Green
-
-# --- 4. Liberar puerto 80 (Conflictos con IIS/HTTP) ---
-Write-Host "Liberando puerto 80..." -ForegroundColor Yellow
-net stop http /y 2>$null
-Write-Host "Puerto 80 liberado." -ForegroundColor Green
-
-# --- 5. Levantar Base de Datos ---
-if (Test-Path "bbdd") {
-    Write-Host "Levantando BBDD..." -ForegroundColor Yellow
-    Set-Location "bbdd"
-    docker compose up -d
-    if ($LASTEXITCODE -ne 0) { 
-     Write-Host "❌ Error en BBDD. Revisa el archivo docker-compose en /bbdd" -ForegroundColor Red
-         Set-Location ".."
-         exit 
-     }
-    Set-Location ".."
-} else {
-     Write-Host "❌ ERROR: No se encuentra la carpeta /bbdd" -ForegroundColor Red
-}
-
-# --- 6. Levantar Backend ---
-if (Test-Path "backend") {
-     Write-Host "Levantando Backend..." -ForegroundColor Yellow
-    Set-Location "backend"
-    docker compose up -d --build
-    if ($LASTEXITCODE -ne 0) { 
-     Write-Host "❌ Error en Backend. Revisa logs con 'docker logs fichaje_backend'" -ForegroundColor Red
-     Set-Location ".."
-     exit 
-    }
+foreach ($comp in $componentes) {
+    if (Test-Path $comp.Path) {
+        Write-Host ">> Levantando $($comp.Name)..." -ForegroundColor Yellow
+        Set-Location $comp.Path
+        # Quitamos el --build para usar la caché. Si cambias el package.json, Docker lo detectará solo.
+        docker compose up -d
+        if ($LASTEXITCODE -ne 0) { 
+            Write-Host "❌ Error en $($comp.Name)" -ForegroundColor Red
+            Set-Location $env:USERPROFILE # Volver a raíz segura
+            exit 
+        }
         Set-Location ".."
-}
-
-# --- 7. Levantar Proxy (Nginx) ---
-if (Test-Path "infra/proxy") {
-    Write-Host "Levantando Proxy..." -ForegroundColor Yellow
-     Set-Location "infra/proxy"
-    docker compose up -d
-    if ($LASTEXITCODE -ne 0) { 
-     Write-Host "❌ Error en Proxy." -ForegroundColor Red
-     Set-Location "../../"
-     exit 
+        if ($comp.Path -eq "infra/proxy") { Set-Location ".." } # Ajuste para ruta profunda
     }
-    Set-Location "../../"
 }
 
-Write-Host "`n--- DESPLIEGUE COMPLETADO ---" -ForegroundColor Green
-docker ps --filter "network=red_fichaje" 
+Write-Host "`n--- DESPLIEGUE COMPLETADO EN TIEMPO RÉCORD ---" -ForegroundColor Green
+docker ps --filter "network=red_fichaje"

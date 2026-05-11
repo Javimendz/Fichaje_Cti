@@ -78,7 +78,7 @@ export class IssueService extends BaseCleanupService<Issue> {
       );
     }
 
-
+    
 
 
     // Evitar duplicado mismo tipo en el mismo día
@@ -112,6 +112,8 @@ export class IssueService extends BaseCleanupService<Issue> {
     return this.issueRepo.save(incidencia);
   }
 
+
+  
 
   /**
    * Obtiene una incidencia por ID validando permisos de usuario.
@@ -246,6 +248,8 @@ async findAllByEmpresa(empresaId: number, soloPendientes?: boolean, page: number
     },
   };
 }
+
+
 
 // =====================================
 // PENDIENTES PARA EL TRABAJADOR

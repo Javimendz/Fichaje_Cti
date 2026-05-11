@@ -58,14 +58,39 @@ export class IncidenciaController {
     );
   }
 
-  @Get(':id')
-  @Roles(UserRole.WORKER, UserRole.ADMIN)
-  async getById(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: UserPayload, // Asumiendo que usas un decorador para el JWT
+  /**
+   * 
+   * Obtiene todas las incidencias ocultas de la empresa autenticada.
+   * 
+   * @param user Usuario autenticado
+   * @returns Lista de incidencias ocultas de la empresa
+   * 
+   */
+ /**
+   * Obtiene todas las incidencias archivadas que nunca fueron resueltas.
+   */
+  @Get('pendientes')
+  @Roles(UserRole.ADMIN)
+  async getPendientesArchivadas(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @GetUser() user: UserPayload
   ) {
-    return await this.issueService.findById(id, user);
+    return await this.issueService.getPendientesArchivadas(user.empresaId, page, limit);
   }
+/**
+   * Obtiene las incidencias resueltas (tramitadas) del usuario autenticado.
+   */
+  @Get('mis-tramitadas')
+  @Roles(UserRole.WORKER, UserRole.ADMIN)
+  findMyTramitadas(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @GetUser() user: UserPayload
+  ) {
+    return this.issueService.findFilteredByUsuario(user.id, true, page, limit);
+  }
+
 
 @Get('user/:userId')
   @Roles(UserRole.ADMIN) 
@@ -94,18 +119,7 @@ export class IncidenciaController {
   ) {
     return this.issueService.findAllByUsuario(user.id, page, limit);
   }
-  /**
-   * Obtiene las incidencias resueltas (tramitadas) del usuario autenticado.
-   */
-  @Get('mis-tramitadas')
-  @Roles(UserRole.WORKER, UserRole.ADMIN)
-  findMyTramitadas(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @GetUser() user: UserPayload
-  ) {
-    return this.issueService.findFilteredByUsuario(user.id, true, page, limit);
-  }
+  
 
   // ===============================
   // ADMIN
@@ -190,26 +204,7 @@ findAllForAdmin(
     return this.issueService.remove(id, user.empresaId);
   }
 
-  /**
-   * 
-   * Obtiene todas las incidencias ocultas de la empresa autenticada.
-   * 
-   * @param user Usuario autenticado
-   * @returns Lista de incidencias ocultas de la empresa
-   * 
-   */
- /**
-   * Obtiene todas las incidencias archivadas que nunca fueron resueltas.
-   */
-  @Get('pendientes')
-  @Roles(UserRole.ADMIN)
-  async getPendientesArchivadas(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @GetUser() user: UserPayload
-  ) {
-    return await this.issueService.getPendientesArchivadas(user.empresaId, page, limit);
-  }
+  
   // ===============================
   // TRABAJADOR - VISTAS FILTRADAS
   // ===============================
@@ -226,6 +221,13 @@ findAllForAdmin(
   ) {
     return this.issueService.findFilteredByUsuario(user.id, false, page, limit);
   }
-
+  @Get(':id')
+  @Roles(UserRole.WORKER, UserRole.ADMIN)
+  async getById(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserPayload, // Asumiendo que usas un decorador para el JWT
+  ) {
+    return await this.issueService.findById(id, user);
+  }
  
 }

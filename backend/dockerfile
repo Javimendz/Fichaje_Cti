@@ -1,0 +1,51 @@
+# --- ETAPA 1: Construcción (Builder) ---
+FROM node:20-alpine AS builder
+
+# Instalar dependencias necesarias para compilar módulos nativos si hiciera falta
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /usr/src/app
+
+# Copiamos archivos de definición de paquetes
+COPY package.json yarn.lock ./
+
+# Instalamos TODAS las dependencias (incluidas las de desarrollo como @nestjs/cli)
+RUN yarn install --frozen-lockfile
+
+# Copiamos el resto del código
+COPY . .
+
+# 🚨 EL TRUCO: Usamos el path directo al binario de nest para evitar el error 127
+RUN ./node_modules/.bin/nest build
+
+# --- ETAPA 2: Ejecución (Runner) ---
+FROM node:20-alpine AS runner
+
+WORKDIR /usr/src/app
+
+# Definimos el entorno de producción
+ENV NODE_ENV=production
+ENV TZ=Europe/Madrid
+
+# Copiamos solo lo necesario desde la etapa anterior
+COPY --from=builder /usr/src/app/package.json ./
+COPY --from=builder /usr/src/app/yarn.lock ./
+COPY --from=builder /usr/src/app/dist ./dist
+# Copiamos el .env si lo necesitas dentro (asegúrate de que no esté en .dockerignore)
+COPY --from=builder /usr/src/app/.env ./.env 
+
+# Instalamos solo las dependencias de producción para que la imagen pese menos
+RUN yarn install --production --frozen-lockfile
+
+# Ajuste de zona horaria y permisos
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Europe/Madrid /etc/localtime && \
+    echo "Europe/Madrid" > /etc/timezone && \
+    chown -R node:node /usr/src/app
+
+USER node
+
+EXPOSE 3000
+
+# Ejecutamos con node directamente sobre el archivo compilado
+CMD ["node", "dist/main"]

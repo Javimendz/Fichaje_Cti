@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:14.3
+    container_name: postgres # 👈 Coincide con tu DB_HOST de producción
+    restart: always
+    env_file: 
+      - .env.bbdd
+   
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - red_fichaje
+
+networks:
+  red_fichaje:
+    external: true
+
+volumes:
+  postgres_data:

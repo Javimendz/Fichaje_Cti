@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: .
+    container_name: fichaje_backend
+    restart: always
+    ports:                 # 👈 CAMBIA 'expose' POR 'ports'
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - red_fichaje
+
+networks:
+  red_fichaje:
+    external: true

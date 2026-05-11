@@ -1,0 +1,42 @@
+# --- Dependencias (Librerías) ---
+# Esto ignora node_modules en la raíz y en cualquier subcarpeta (como /backend)
+node_modules/
+**/node_modules/
+/backend/node_modules/
+
+# --- Compilación ---
+/dist/
+**/dist/
+/build/
+
+# --- Base de Datos (Persistencia Local) ---
+# Ignora la carpeta de datos de PostgreSQL dentro de BBDD
+/BBDD/postgres-data/
+**/postgres-data/
+postgres-data-local/
+
+# --- Variables de Entorno (Seguridad) ---
+# Nunca subas tus credenciales reales
+.env
+**/.env
+.env.local
+.env.*.local
+
+# --- Herramientas de IA y Editores ---
+.vscode/
+.windsurf/
+.windsurf.rules
+.idea/
+*.sublime-workspace
+.DS_Store
+
+# --- Logs y temporales ---
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.tmp
+.temp
+
+*.db

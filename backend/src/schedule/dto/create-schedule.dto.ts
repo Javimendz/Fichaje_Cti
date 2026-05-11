@@ -1,0 +1,105 @@
+import { Expose, Transform, Type } from "class-transformer";
+import { 
+  IsArray, 
+  IsDateString, 
+  IsString, 
+  ValidateNested, 
+  IsNotEmpty, 
+  ArrayMinSize, 
+  IsEnum, 
+  MaxLength,
+  MinLength,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min
+} from "class-validator";
+import { DistribucionDiaDto } from "./DistribucionDiaDto";
+
+// Definir un Enum para el tipo ayuda a que no escriban cualquier cosa
+export enum HorarioTipo {
+  ROTATIVO = 'ROTATIVO',
+  FIJO = 'FIJO',
+  PARTIDO = 'PARTIDO'
+}
+
+/**
+ * CreateHorarioDto
+ * DTO para crear un nuevo horario. Contiene el nombre del horario, las fechas de inicio y fin, el tipo de horario y una lista de distribuciones por día. Utiliza class-validator para validar los datos de entrada y class-transformer para transformar y exponer las propiedades correctamente.
+ * @property {string} nombre - El nombre del horario. Es obligatorio, debe ser una cadena de texto entre 3 y 50 caracteres, y se transforma para eliminar espacios innecesarios.
+ * @property {string} fechaInicio - La fecha de inicio del horario. Es obligatorio, debe ser una cadena con formato de fecha (AAAA-MM-DD) y se transforma para eliminar espacios.
+ * @property {string} fechaFin - La fecha de fin del horario. Es obligatorio, debe ser una cadena con formato de fecha (AAAA-MM-DD) y se transforma para eliminar espacios.
+ * @property {HorarioTipo} tipo - El tipo de horario. Es obligatorio y debe ser uno de los valores definidos en el enum HorarioTipo (ROTATIVO, FIJO, PARTIDO).
+ * @property {DistribucionDiaDto[]} distribuciones - Una lista de distribuciones por día para el horario. Es obligatorio, debe ser un array con al menos una distribución, y cada elemento del array debe ser una instancia válida de DistribucionDiaDto.
+ * @uses class-validator para validación de datos y class-transformer para transformación y exposición de propiedades.
+ * @example
+ * ```typescript
+ * const nuevoHorario: CreateHorarioDto = {
+ * nombre: 'Horario de Verano',
+ * fechaInicio: '2024-06-01',
+ * fechaFin: '2024-09-30',  
+ * tipo: HorarioTipo.FIJO,
+ * distribuciones: [
+ *  {
+ *    diaSemana: DiaSemana.LUNES,
+ *   horasDia: 8,
+ *   franjas: [
+ *    { inicio: '08:00', fin: '12:00', distribucionDiaId: 1 },
+ *   { inicio: '13:00', fin: '17:00', distribucionDiaId: 1 }
+ *  ]
+ * },
+ * {
+ *   diaSemana: DiaSemana.MARTES,
+ *  horasDia: 6,
+ * franjas: [
+ *   { inicio: '09:00', fin: '12:00', distribucionDiaId: 2 },
+ *  { inicio: '14:00', fin: '17:00', distribucionDiaId: 2 }
+ * ]
+ * }
+ * ]
+ * };
+ * ```
+ */
+// ---------------------------------------------------------
+// DTO PRINCIPAL: CREATEHORARIODTO
+// ---------------------------------------------------------  
+
+export class CreateHorarioDto {
+  @IsNotEmpty({ message: 'El nombre del horario es obligatorio' })
+  @IsString({ message: 'El nombre debe ser una cadena de texto' })
+  @MinLength(3, { message: 'El nombre del horario es demasiado corto (mínimo 3 caracteres)' })
+  @MaxLength(50, { message: 'El nombre del horario es demasiado largo (máximo 50 caracteres)' })
+  // Saneamiento: Elimina espacios innecesarios al principio y al final
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Expose()
+  nombre: string; // El nombre del horario, obligatorio, con validación de longitud y saneamiento de espacios
+
+  // La fecha de inicio del horario, obligatoria, con validación de formato de fecha y saneamiento de espacios
+
+
+ // La fecha de fin del horario, opcional, con validación de formato de fecha y saneamiento de espacios
+
+  @IsNotEmpty({ message: 'El tipo de horario es obligatorio' })
+  @IsEnum(HorarioTipo, { 
+    message: 'El tipo de horario debe ser uno de los siguientes valores: ROTATIVO, FIJO o PARTIDO' 
+  })
+  @Expose()
+  tipo: HorarioTipo; // El tipo de horario, obligatorio, debe ser uno de los valores definidos en el enum HorarioTipo
+
+  @IsBoolean()
+  @IsOptional()
+  esRotativo?: boolean;
+  
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  semanasRotacion?: number;
+
+  @IsArray({ message: 'Las distribuciones deben enviarse en formato de lista (array)' })
+  @ArrayMinSize(1, { message: 'El horario debe tener al menos una distribución de día configurada' })
+  @ValidateNested({ each: true })
+ 
+  @Type(() => DistribucionDiaDto)
+  @Expose()
+  distribuciones: DistribucionDiaDto[]; // Una lista de distribuciones por día para el horario, obligatoria, con validación de que sea un array con al menos una distribución y que cada elemento sea una instancia válida de DistribucionDiaDto
+}

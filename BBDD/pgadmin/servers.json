@@ -1,0 +1,19 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Fichaje CTI - PostgreSQL",
+            "Group": "Servers",
+            "Host": "postgres_bbdd",
+            "Port": 5432,
+            "MaintenanceDB": "fichaje_cti",
+            "Username": "postgres",
+            "Password": "mypass",
+            "SSLMode": "prefer",
+            "ConnectionParameters": {
+                "sslmode": "prefer",
+                "connect_timeout": 10,
+                "application_name": "pgAdmin 4"
+            }
+        }
+    }
+}

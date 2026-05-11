@@ -1,0 +1,35 @@
+# --- Basura de Editores e IDEs ---
+**/.vs
+**/.vscode
+**/.settings
+**/.project
+**/.classpath
+**/*.jfm
+**/*.*proj.user
+**/.toolstarget
+
+# --- Git ---
+**/.git
+**/.gitignore
+
+# --- Archivos de Sistema y Logs ---
+**/.DS_Store
+**/npm-debug.log
+**/thumbs.db
+
+# --- Dependencias y Compilación (¡Muy importante!) ---
+**/node_modules
+**/obj
+**/bin
+**/target
+**/*.dbmdl
+
+# --- Secretos (Nunca los incluyas en la imagen) ---
+
+**/secrets.*
+**/values.dev.yaml
+
+# --- Documentación ---
+README.md
+LICENSE
+**/.dockerignore

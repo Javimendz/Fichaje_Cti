@@ -65,6 +65,9 @@ export class Site {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-  @ManyToMany(() => Worker, (worker) => worker.sites)
+ 
+  @ManyToMany(() => Worker, (worker) => worker.sites, { 
+    onDelete: 'CASCADE' // 🚩 Esto le dice a la tabla intermedia que se limpie sola
+  })
   workers: Worker[];
 }

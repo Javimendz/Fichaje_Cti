@@ -12,7 +12,11 @@ services:
       # Importante: si usas la ruta /var/www/static/, crea esa carpeta o bórrala de la config
     networks:
       - red_fichaje
+      - test_network
 
 networks:
   red_fichaje:
+    external: true
+  test_network:
+    name: bbdd_test_network # 🚩 LA MAGIA: Le decimos a Docker el nombre real que debe buscar
     external: true

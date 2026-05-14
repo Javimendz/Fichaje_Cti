@@ -28,6 +28,151 @@ para permitir un despliegue profesional y escalable.
   
 ```
 
+-----------------------------------------------------
+
+
+
+
+🚀 Guía Maestra de Despliegue: Fichaday v0.7
+Esta guía configura un entorno profesional con aislamiento total entre Producción y Test.
+
+1. Preparación de Terreno (Redes y Volúmenes)
+Antes de meter los contenedores, necesitamos las "habitaciones" y los "baúles" de datos.
+
+Bash
+# Crear las redes (si no existen)
+docker network create red_fichaje || true
+docker network create test_network || true
+
+# Crear los volúmenes para que los datos no se borren
+docker volume create postgres_data_bbdd
+docker volume create postgres_data_test
+2. Capa de Datos: PostgreSQL (Imagen v0.7)
+Usamos tu imagen personalizada. Separamos Producción en el puerto 5432 y Test en el 5433.
+
+A. Base de Datos de Producción
+Bash
+docker run -d \
+  --name postgres_bbdd \
+  --network red_fichaje \
+  --restart always \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=Jp10.Mnl \
+  -e POSTGRES_DB=fichaje_cti \
+  -v postgres_data_bbdd:/var/lib/postgresql/data \
+  -p 5432:5432 \
+  javierm735/postgres_bbdd-0.7:latest
+B. Base de Datos de Test
+Bash
+docker run -d \
+  --name postgres_bbdd_test \
+  --network test_network \
+  --restart always \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=Jp10.Mnl \
+  -e POSTGRES_DB=fichaje_cti \
+  -v postgres_data_test:/var/lib/postgresql/data \
+  -p 5433:5432 \
+  javierm735/postgres_bbdd-0.7:latest
+3. Capa de Aplicación: Backend NestJS
+Aquí es donde ocurre la magia de la sincronización de tablas. Asegúrate de tener tu archivo .env en la carpeta actual.
+
+A. API de Producción
+Bash
+docker run -d \
+  --name fichaday_backend \
+  --network red_fichaje \
+  --restart always \
+  -e TYPEORM_SYNCHRONIZE=true \
+  javierm735/fichaday-backend-0.21:latest
+
+B. API de Test
+Bash
+docker run -d \
+  --name fichaday_backend_test \
+  --network test_network \
+  --restart always \
+  -e DB_HOST=postgres_bbdd_test \
+  -e TYPEORM_SYNCHRONIZE=true \
+  javierm735/fichaday-backend-0.21:latest
+
+4. Capa de Acceso: Nginx Proxy (Doble Dominio)
+Lanzamos el proxy inyectando la configuración para que no dependa de archivos externos en el VPS.
+
+Nota: He escapado los símbolos \$ para que la terminal no los borre.
+
+docker rm -f nginx_proxy
+
+docker run -d \
+  --name nginx_proxy \
+  --network red_fichaje \
+  --restart always \
+  -p 80:80 \
+  -p 443:443 \
+  nginx:1.25-alpine /bin/sh -c "echo 'events { worker_connections 1024; }
+http {
+    # PRODUCCIÓN
+    server {
+        listen 80;
+        server_name fichaday.cticontrol.com;
+        location /api/ {
+            proxy_pass http://fichaday_backend:3000;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        location / {
+            proxy_pass http://fichaje-frontend:3000;
+        }
+    }
+    # TEST
+    server {
+        listen 80;
+        server_name fichadaytest.cticontrol.com;
+        location / {
+            proxy_pass http://fichaday_backend_test:3000;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+    }
+}' > /etc/nginx/nginx.conf && nginx -g \"daemon off;\""
+
+
+Unir los cables finales:
+Bash
+# 1. Conectar Frontend a la red (si no estaba)
+docker network connect red_fichaje fichaje-frontend || true
+## docker network connect test_network pgadmin_bbdd || true    Conectar pgadmin a la misma red de prueba
+# 2. Conectar Proxy a la red de Test
+docker network connect test_network nginx_proxy
+
+# 3. Reiniciar para aplicar
+docker restart nginx_proxy
+5. Verificación y Limpieza
+Una vez ejecutado todo, sigue estos pasos para asegurar un entorno profesional:
+
+Check de Tablas: Mira los logs del backend (docker logs fichaday_backend). Si ves que NestJS ha terminado de arrancar sin errores de "relation users not exist", las tablas se han creado con éxito.
+
+Seguridad: Ahora que las tablas existen, es recomendable recrear los backends con TYPEORM_SYNCHRONIZE=false para evitar desastres accidentales en el futuro.
+
+Radiografía:
+
+docker ps: Debes ver los 5-6 contenedores en Up.
+
+docker network inspect red_fichaje: Debes ver a Nginx, el Front, el Backend de Prod y su DB.
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------
+
 
 
 # Crear la red necesaria para la comunicación entre servicios
@@ -101,6 +246,10 @@ Bash
 # Crear red y descargar imagen
 
   - docker network create red_fichaje
+  # para el contenedor de prueba red
+  
+  - docker network create test_network
+
   - docker pull tu_usuario/fichaday-backend:latest
 
 # Levantar servicios
@@ -116,10 +265,20 @@ docker run -d \
   -e POSTGRES_PASSWORD=Jp10.Mnl  \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_bbdd:/var/lib/postgresql/data \
-  -p 5432:5432 javierm735/postgres03:latest  
+  -p 5432:5432 javierm735/postgres-05:latest  
 
+## Segundo contenedor
 
-
+docker run -d \
+  --name postgres_bbdd_test \
+  --network test_network \
+  --restart always \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=Jp10.Mnl \
+  -e POSTGRES_DB=fichaje_cti \
+  -v postgres_data_test:/var/lib/postgresql/data \
+  -p 5433:5432 \
+  javierm735/postgres_bbdd-0.6:latest
 
 ```
 
@@ -150,7 +309,6 @@ docker run -d \
   --name fichaday_backend \
   --network red_fichaje \
   --restart always \
-  -p 3000:3000 \
   -e DB_HOST=postgres_bbdd \
   -e DB_USERNAME=postgres \
   -e DB_PASSWORD=Jp10.Mnl  \
@@ -171,8 +329,36 @@ docker run -d \
   -e MAX_FICHAR_DISTANCE=600 \
   -e DEFAULT_DAYS_ISSUES=5 \
   -e DEFAULT_DAYS_REQUESTS=15 \
-  javierm735/fichaday-backend-0.14:latest  
+  javierm735/fichaday-backend-0.20:latest  
 
+
+## Contenedor de prueba
+
+docker run -d \
+  --name fichaje_backend_test \
+  --network test_network \
+  --restart always \
+  -e DB_HOST=postgres_bbdd \
+  -e DB_USERNAME=postgres \
+  -e DB_PASSWORD=Jp10.Mnl  \
+  -e DB_NAME=fichaje_cti \
+  -e DB_PORT=5432 \
+  -e NODE_ENV=development \
+  -e PORT=3000 \
+  -e CORS_ORIGIN=* \
+  -e TZ=Europe/Madrid \
+  -e JWT_SECRET=tu_secreto_para_access \
+  -e JWT_REFRESH_SECRET=tu_secreto_para_refresh \
+  -e JWT_ADMIN_EXPIRATION=24h \
+  -e JWT_WORKER_EXPIRATION=1h \
+  -e JWT_ADMIN_EXP_HOURS=24 \
+  -e JWT_WORKER_EXP_HOURS=1 \
+  -e JWT_REFRESH_EXPIRATION=7d \
+  -e SEED_SECRET_KEY=123 \
+  -e MAX_FICHAR_DISTANCE=600 \
+  -e DEFAULT_DAYS_ISSUES=5 \
+  -e DEFAULT_DAYS_REQUESTS=15 \
+  javierm735/fichaday-backend-0.20:latest  
 
 # 1. Borramos el backend que está en el bucle de error
 docker rm -f fichaday_backend
@@ -246,15 +432,19 @@ PGADMIN
 docker rm -f nginx_proxy
 
 # 2. Lanzamos vinculando el archivo específico del volumen
+
+docker network connect test_network nginx_proxy
+
+
 docker run -d \
   --name nginx_proxy \
   --network red_fichaje \
-  -v nginx_config_vol:/etc/nginx/configs \
+  --restart always \
   -p 80:80 \
+  -p 443:443 \
+  -v nginx_config_vol:/etc/nginx/configs \
   nginx:1.25-alpine nginx -g 'daemon off;' -c /etc/nginx/configs/nginx.conf
 
-
-```
 
 
 # Lanzar sin nginx
@@ -271,7 +461,7 @@ docker run -d \
   -e DB_NAME=fichaje_cti \
   -e NODE_ENV=production \
   -e JWT_SECRET=un_secreto_seguro \
-  javierm735/fichaday-backend01:latest
+  javierm735/fichaday-backend-0.20:latest
 
 
 usar este sino

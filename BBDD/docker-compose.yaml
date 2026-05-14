@@ -1,11 +1,17 @@
+
+
 services:
-  postgres:
-    build: .
+  # ==========================================
+  # ENTORNO DE PRODUCCIÓN
+  # ==========================================
+  db-prod:
+    image: postgres:15 # , lo ideal es usar la imagen oficial salvo que tengas un Dockerfile específico para Postgres
     container_name: postgres_bbdd
     restart: always
     env_file:
       - .env
     environment:
+      DB_HOST: ${DB_HOST}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
@@ -13,7 +19,7 @@ services:
       - postgres_data_bbdd:/var/lib/postgresql/data
       - ./init:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432" #
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
       interval: 10s
@@ -22,6 +28,30 @@ services:
     networks:
       - red_fichaje 
 
+  # ==========================================
+  # ENTORNO DE TEST / DESARROLLO
+  # ==========================================
+  db-test:
+    image: postgres:15
+    container_name: postgres_bbdd_test
+    restart: always
+    env_file:
+      - .env
+    environment:
+       DB_HOST: ${DB_HOST_TEST}
+       POSTGRES_USER: ${DB_USERNAME}
+       POSTGRES_PASSWORD: ${DB_PASSWORD}
+       POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # 🚩 Accesible en el puerto 5433 desde fuera
+    networks:
+      - test_network
+
+  # ==========================================
+  # GESTIÓN (PGADMIN)
+  # ==========================================
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin_bbdd
@@ -32,16 +62,26 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - "${PGADMIN_PORT}:80" # Mapea el puerto 5050 de tu VPS al 80 interno de pgAdmin
+      - "${PGADMIN_PORT}:80"
     networks:
       - red_fichaje
+      - test_network #  Así pgAdmin puede ver AMBAS bases de datos (Producción y Test)
     depends_on:
-      - postgres
+      - db-prod # Tenías 'postgres', pero tu servicio se llama 'db-prod'
+      - db-test # Espera también a la de test
 
+# ==========================================
+# DECLARACIÓN DE REDES Y VOLÚMENES
+# ==========================================
 networks:
   red_fichaje:
-    name: red_fichaje # 👈 Esto obliga a Docker a buscar "red_fichaje" sin prefijos
+    name: red_fichaje
     external: true
+  test_network: #  Faltaba declarar la red de test
+    driver: bridge
+
 volumes:
   postgres_data_bbdd:
+    driver: local
+  db_test_data: # Faltaba declarar el volumen de test
     driver: local

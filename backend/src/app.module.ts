@@ -72,7 +72,7 @@ import { IssueSiteModule } from './issue-site/issue-site.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       autoLoadEntities: true,
-      synchronize:   false,  // process.env.NODE_ENV !== 'production',
+      synchronize:   true,  // process.env.NODE_ENV !== 'production',
       dropSchema: false, // Cambiado a false para evitar pérdida de datos en producción
       extra: {
         timezone: 'UTC',

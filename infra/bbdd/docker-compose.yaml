@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:14.3
+    image: postgres:15
     container_name: postgres # 👈 Coincide con tu DB_HOST de producción
     restart: always
     env_file: 

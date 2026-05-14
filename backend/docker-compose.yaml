@@ -1,15 +1,41 @@
 services:
-  backend:
+  # ==========================================
+  # 1. API DE PRODUCCIÓN
+  # ==========================================
+  api-prod:
     build: .
-    container_name: fichaje_backend
+    container_name: fichaje_backend # ✅ Tu nombre original restaurado
     restart: always
-    ports:                 # 👈 CAMBIA 'expose' POR 'ports'
-      - "3000:3000"
+    expose:
+      - "3000"
     env_file:
       - .env
+    environment:
+      - DB_HOST=postgres_bbdd 
+      - NODE_ENV=development
     networks:
       - red_fichaje
 
+  # ==========================================
+  # 2. API DE TEST / DESARROLLO
+  # ==========================================
+  api-test:
+    build: .
+    container_name: fichaje_backend_test #  Un nombre derivado para que no haya conflicto
+    restart: always
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres_bbdd_test 
+      - NODE_ENV=development
+    networks:
+      - test_network
+
 networks:
   red_fichaje:
+    external: true
+  test_network:
+    name: bbdd_test_network 
     external: true

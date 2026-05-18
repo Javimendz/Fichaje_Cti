@@ -419,6 +419,16 @@ const { usuarios, configPassword, ...resto } = empresa; // 🚩 Extraemos y omit
       empresa.isActive = false;   // Bloqueo manual
       this.logger.log(`Empresa ${empresa.nombre} ha sido BLOQUEADA (Expired).`);
     }
+    // 👇 SOLUCIÓN: Calculamos de nuevo los 25 días si vuelve a Trial
+    else if (nuevoPlan === 'trial') {
+      const trialDays = 25;
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
+
+      empresa.trialEndsAt = trialEndDate; // Asignamos la nueva fecha
+      empresa.isActive = true;            // Reactivamos por si venía de estar bloqueada
+      this.logger.log(`Empresa ${empresa.nombre} devuelta a plan TRIAL. Nueva caducidad: ${trialEndDate.toISOString()}`);
+    }
 
     // 3. Guardar y devolver
     await this.empresaRepository.save(empresa);
@@ -429,6 +439,7 @@ const { usuarios, configPassword, ...resto } = empresa; // 🚩 Extraemos y omit
         id: empresa.id,
         nombre: empresa.nombre,
         plan: empresa.plan,
+        trialEndsAt: empresa.trialEndsAt, // Devolvemos la fecha para que el frontend lo sepa
         isActive: empresa.isActive
       }
     };

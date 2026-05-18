@@ -68,8 +68,8 @@ configPassword?: string;
   @Column({ type: 'float', nullable: false })
   longitud: number;
 
-  @Column({ type: 'float', default: 100 }) // Radio de 100 metros por defecto
-  radioPermitido: number;
+  @Column({ type: 'float', default: 100 , nullable: true })// Radio de 100 metros por defecto
+  radioPermitido?: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

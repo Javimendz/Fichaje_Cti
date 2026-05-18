@@ -150,6 +150,62 @@ docker restart nginx_proxy
 5. Verificación y Limpieza
 Una vez ejecutado todo, sigue estos pasos para asegurar un entorno profesional:
 
+------------------
+Pasos cuando falla el nginx
+
+# 1. Borramos el proxy actual
+docker rm -f nginx_proxy
+
+# 2. Lo levantamos con la configuración corregida
+docker run -d \
+  --name nginx_proxy \
+  --network red_fichaje \
+  --restart always \
+  -p 80:80 \
+  -p 443:443 \
+  nginx:1.25-alpine /bin/sh -c "echo 'events { worker_connections 1024; }
+http {
+    resolver 127.0.0.11 valid=30s;
+    
+    # PRODUCCIÓN
+    server {
+        listen 80;
+        server_name fichaday.cticontrol.com;
+        
+        # Backend: SIN la barra al final para que conserve el /api/
+        location /api/ {
+            proxy_pass http://fichaday_backend:3000;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+        
+        # Frontend
+        location / {
+            proxy_pass http://fichaje-frontend:3000;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+    }
+    
+    # TEST
+    server {
+        listen 80;
+        server_name fichadaytest.cticontrol.com;
+        location / {
+            proxy_pass http://fichaday_backend_test:3000;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+    }
+}' > /etc/nginx/nginx.conf && nginx -g \"daemon off;\""
+
+# 3. Lo conectamos a la red de test para que vea ese backend también
+docker network connect test_network nginx_proxy
+docker restart nginx_proxy
+
+
+
+
 Check de Tablas: Mira los logs del backend (docker logs fichaday_backend). Si ves que NestJS ha terminado de arrancar sin errores de "relation users not exist", las tablas se han creado con éxito.
 
 Seguridad: Ahora que las tablas existen, es recomendable recrear los backends con TYPEORM_SYNCHRONIZE=false para evitar desastres accidentales en el futuro.

@@ -6,6 +6,7 @@ import { Injectable, InternalServerErrorException, BadRequestException, NotFound
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { Company } from './entities/company.entity';
 import { User } from '../auth/entities/user.entity';
@@ -44,6 +45,35 @@ export class CompanyService {
     private readonly dataSource: DataSource, // Inyectado para transacciones
   ) {}
 
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async checkTrialExpirations() {
+    this.logger.log('--- Iniciando verificación de caducidad de Trials ---');
+    const ahora = new Date();
+
+    try {
+      // Busca empresas en periodo de prueba que ya hayan superado la fecha límite y sigan activas
+      const expiredCompanies = await this.empresaRepository.createQueryBuilder('empresa')
+        .where('empresa.plan = :plan', { plan: 'trial' })
+        .andWhere('empresa.trialEndsAt < :ahora', { ahora })
+        .andWhere('empresa.isActive = :isActive', { isActive: true })
+        .getMany();
+
+      if (expiredCompanies.length > 0) {
+        for (const empresa of expiredCompanies) {
+          empresa.isActive = false; // Desactivamos el acceso
+          empresa.plan = 'expired'; // Cambiamos el estado
+          await this.empresaRepository.save(empresa);
+          this.logger.warn(`Trial agotado: Empresa "${empresa.nombre}" (ID: ${empresa.id}) ha sido bloqueada automáticamente.`);
+        }
+      } else {
+        this.logger.log('No se encontraron empresas con trial caducado hoy.');
+      }
+    } catch (error: any) {
+      this.logger.error(`Error al verificar caducidades: ${error.message}`);
+    }
+  }
+
   // 1. Método para crear una empresa junto con un usuario Admin
   // Este método es el único punto de entrada para crear una empresa, y solo puede ser accedido por un SuperAdmin. Se encarga de crear la empresa y el usuario Admin asociado en una transacción atómica, garantizando que ambos se creen correctamente o ninguno se cree en caso de error.
   // El método recibe un DTO que incluye los datos de la empresa y del Admin a crear. Primero valida que el CIF de la empresa no esté registrado,
@@ -61,9 +91,7 @@ async createWithAdmin(dto: SetupCompanyDto) {
     // 1. 🛡️ VALIDACIONES PREVIAS
     if (!dto.cif) throw new BadRequestException('El CIF es obligatorio.');
     if (!dto.nombreEmpresa) throw new BadRequestException('El nombre de la empresa es obligatorio.');
-    // 🚩 VALIDACIÓN NUEVA:
     if (!configPassword) throw new BadRequestException('La contraseña de configuración de la empresa es obligatoria.');
-    
     if (!adminData.email) throw new BadRequestException('El email del administrador es obligatorio.');
     if (!adminData.password) throw new BadRequestException('La contraseña del administrador es obligatoria.');
 
@@ -79,20 +107,28 @@ async createWithAdmin(dto: SetupCompanyDto) {
     if (existe) throw new BadRequestException('La empresa (Nombre o CIF) ya está registrada.');
 
     const hashedPassword = await bcrypt.hash(adminData.password, 10);
+    const hashedConfigPassword = await bcrypt.hash(configPassword, 10);
+
+    // 🚩 LÓGICA DE TRIAL (25 Días)
+    const trialDays = 25;
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + trialDays);
 
     // 3. 🚀 TRANSACCIÓN
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-const hashedConfigPassword = await bcrypt.hash(configPassword, 10);
+    
     try {
-      // A. Crear la Empresa con la contraseña de configuración
+      // A. Crear la Empresa con la contraseña de configuración y el trial
       const nuevaEmpresa = queryRunner.manager.create(Company, {
         ...empresaDatos,
         nombre: nombreLimpio,
         cif: cifLimpio,
-        configPassword: hashedConfigPassword, // 🚩 GUARDADO DE LA CONTRASEÑA DE ZONA PRIVADA
+        configPassword: hashedConfigPassword,
         isActive: true,
+        plan: 'trial', // 🚩 Asignamos plan temporal
+        trialEndsAt: trialEndDate, // 🚩 Asignamos fecha de caducidad
       });
       
       const empresaGuardada = await queryRunner.manager.save(nuevaEmpresa);
@@ -111,11 +147,16 @@ const hashedConfigPassword = await bcrypt.hash(configPassword, 10);
       const adminGuardado = await queryRunner.manager.save(nuevoAdmin);
 
       await queryRunner.commitTransaction();
-      this.logger.log(`[SETUP] Empresa "${empresaGuardada.nombre}" y zona privada configurada.`);
+      this.logger.log(`[SETUP] Empresa "${empresaGuardada.nombre}" creada. Trial finaliza el: ${trialEndDate.toISOString()}`);
 
       return {
-        message: 'Alta de empresa y administrador completada con éxito',
-        empresa: { id: empresaGuardada.id, nombre: empresaGuardada.nombre },
+        message: 'Alta de empresa completada. 25 días de prueba activados.',
+        empresa: { 
+          id: empresaGuardada.id, 
+          nombre: empresaGuardada.nombre,
+          plan: empresaGuardada.plan,
+          trialEndsAt: empresaGuardada.trialEndsAt
+        },
         admin: { id: adminGuardado.id, email: adminGuardado.email }
       };
 
@@ -354,6 +395,45 @@ const { usuarios, configPassword, ...resto } = empresa; // 🚩 Extraemos y omit
 
 }
 
+// --------------------------------------------------------------------
+  // 🚩 NUEVO: ACTUALIZAR EL PLAN DE UNA EMPRESA (Trial -> Premium)
+  // --------------------------------------------------------------------
+  async updateSubscriptionPlan(id: number, nuevoPlan: 'trial' | 'premium' | 'expired', user: UserPayload) {
+    // 1. Seguridad estricta
+    if (user.rol !== UserRole.SUPERADMIN) {
+      throw new ForbiddenException('Solo el SuperAdministrador puede cambiar los planes de suscripción.');
+    }
+
+    const empresa = await this.empresaRepository.findOneBy({ id });
+    if (!empresa) throw new NotFoundException(`La empresa con ID ${id} no existe.`);
+
+    // 2. Lógica de cambio de plan
+    empresa.plan = nuevoPlan;
+
+    if (nuevoPlan === 'premium') {
+      empresa.trialEndsAt = null; // Eliminamos la caducidad
+      empresa.isActive = true;    // Reactivamos por si estaba caducada
+      this.logger.log(`Empresa ${empresa.nombre} ha sido pasada a plan PREMIUM.`);
+    } 
+    else if (nuevoPlan === 'expired') {
+      empresa.isActive = false;   // Bloqueo manual
+      this.logger.log(`Empresa ${empresa.nombre} ha sido BLOQUEADA (Expired).`);
+    }
+
+    // 3. Guardar y devolver
+    await this.empresaRepository.save(empresa);
+    
+    return {
+      message: `El plan de la empresa ${empresa.nombre} se ha actualizado a ${nuevoPlan.toUpperCase()}`,
+      empresa: {
+        id: empresa.id,
+        nombre: empresa.nombre,
+        plan: empresa.plan,
+        isActive: empresa.isActive
+      }
+    };
+  }
+
   // 
   // Auxiliar para el Seed
   /**
@@ -364,4 +444,8 @@ const { usuarios, configPassword, ...resto } = empresa; // 🚩 Extraemos y omit
   async findByName(nombre: string) {
     return await this.empresaRepository.findOneBy({ nombre });
   }
+
+
+
+
 }

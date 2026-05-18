@@ -4,7 +4,8 @@ import {
   Controller, Get, Post, Body, Patch, Param, Delete, 
   UseGuards, ParseIntPipe, Put, Req, 
   DefaultValuePipe,
-  Query
+  Query,
+  BadRequestException
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -126,6 +127,20 @@ async findAll(
   @Roles(UserRole.SUPERADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.empresasService.remove(id);
+  }
+
+  @Patch(':id/subscription')
+  // @UseGuards(JwtAuthGuard, RolesGuard) <-- Asegúrate de usar tus decoradores de seguridad
+  // @Roles(UserRole.SUPERADMIN)
+  async updatePlan(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('plan') plan: 'trial' | 'premium' | 'expired',
+    @GetUser() user: UserPayload, // O el decorador que uses para el request.user
+  ) {
+    if (!['trial', 'premium', 'expired'].includes(plan)) {
+      throw new BadRequestException('El plan debe ser trial, premium o expired');
+    }
+    return this.empresasService.updateSubscriptionPlan(id, plan, user);
   }
 
   @Put('settings/archive')

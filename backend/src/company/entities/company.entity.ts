@@ -56,6 +56,12 @@ configPassword?: string;
   @Column({ default: 'MD' }) // Por defecto Madrid, o el que prefieras
   codigoRegion: string;
 
+  @Column({ type: 'varchar', default: 'trial' })
+  plan: string; // Puede ser 'trial', 'premium', 'expired'
+
+  @Column({ name: 'trial_ends_at', type: 'timestamp', nullable: true })
+  trialEndsAt: Date | null;
+
   @Column({ type: 'float', nullable: false })
   latitud: number;
 

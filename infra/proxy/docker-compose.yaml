@@ -6,6 +6,7 @@ services:
     ports:
       - "80:80"   # Puerto para el mundo exterior
       - "443:443" # Reservado para cuando pongas el SSL
+      - "8080:8080"
     volumes:
       # Montamos tu archivo de config sobre el de por defecto de Nginx
       - ./nginx.conf:/etc/nginx/nginx.conf:ro

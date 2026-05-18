@@ -321,7 +321,8 @@ docker run -d \
   -e POSTGRES_PASSWORD=Jp10.Mnl  \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_bbdd:/var/lib/postgresql/data \
-  -p 5432:5432 javierm735/postgres-05:latest  
+  -p 5433:5432 \
+  javierm735/postgres_bbdd-0.8:latest
 
 ## Segundo contenedor
 
@@ -334,7 +335,7 @@ docker run -d \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_test:/var/lib/postgresql/data \
   -p 5433:5432 \
-  javierm735/postgres_bbdd-0.6:latest
+  javierm735/postgres_bbdd-0.8:latest
 
 ```
 

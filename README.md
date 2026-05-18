@@ -157,47 +157,77 @@ Pasos cuando falla el nginx
 docker rm -f nginx_proxy
 
 # 2. Lo levantamos con la configuración corregida
+# 1. Borramos el proxy con el error
+# 1. Borramos el proxy con el nombre incorrecto
+docker rm -f nginx_proxy
+
+# 2. Levantamos el proxy con los nombres EXACTOS para Front y Back
 docker run -d \
   --name nginx_proxy \
   --network red_fichaje \
   --restart always \
   -p 80:80 \
   -p 443:443 \
-  nginx:1.25-alpine /bin/sh -c "echo 'events { worker_connections 1024; }
+  nginx:1.25-alpine /bin/sh -c "echo 'worker_processes auto;
+events { worker_connections 2048; }
 http {
-    resolver 127.0.0.11 valid=30s;
+    include       mime.types;
+    default_type  application/octet-stream;
     
-    # PRODUCCIÓN
+    resolver 127.0.0.11 valid=30s;
+
+    # ==========================================
+    # 🌍 SERVIDOR PRODUCCIÓN (fichaday.cticontrol.com)
+    # ==========================================
     server {
         listen 80;
         server_name fichaday.cticontrol.com;
-        
-        # Backend: SIN la barra al final para que conserve el /api/
+
+        # API apunta al backend de prod
         location /api/ {
-            proxy_pass http://fichaday_backend:3000;
+            set \$backend_prod \"http://fichaday_backend:3000\";
+            proxy_pass \$backend_prod;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         }
-        
-        # Frontend
+
+        # La raíz apunta al frontend de prod
         location / {
-            proxy_pass http://fichaje-frontend:3000;
+            set \$frontend_prod \"http://fichaje-frontend-prod:3000\";
+            proxy_pass \$frontend_prod;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
         }
     }
-    
-    # TEST
+
+    # ==========================================
+    # 🧪 SERVIDOR TEST (fichadaytest.cticontrol.com)
+    # ==========================================
     server {
         listen 80;
         server_name fichadaytest.cticontrol.com;
+
+        # La raíz apunta al frontend de test
         location / {
-            proxy_pass http://fichaday_backend_test:3000;
+            set \$frontend_test \"http://fichaje-frontend-test:3000\";
+            proxy_pass \$frontend_test;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+        }
+
+        # API apunta al backend de test
+        location /api/ {
+            set \$backend_test_api \"http://fichaday_backend_test:3000\";
+            proxy_pass \$backend_test_api;
             proxy_set_header Host \$host;
             proxy_set_header X-Real-IP \$remote_addr;
         }
     }
 }' > /etc/nginx/nginx.conf && nginx -g \"daemon off;\""
+
+# 3. Conectamos la red de test
+docker network connect test_network nginx_proxy
 
 # 3. Lo conectamos a la red de test para que vea ese backend también
 docker network connect test_network nginx_proxy
@@ -321,7 +351,7 @@ docker run -d \
   -e POSTGRES_PASSWORD=Jp10.Mnl  \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_bbdd:/var/lib/postgresql/data \
-  -p 5433:5432 \
+  -p 5432:5432 \
   javierm735/postgres_bbdd-0.8:latest
 
 ## Segundo contenedor
@@ -330,6 +360,7 @@ docker run -d \
   --name postgres_bbdd_test \
   --network test_network \
   --restart always \
+  -e TYPEORM_SYNCHRONIZE=false \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=Jp10.Mnl \
   -e POSTGRES_DB=fichaje_cti \

@@ -37,4 +37,9 @@ export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {
   @IsOptional()
   @IsDateString({}, { message: 'La fecha de fin de prueba debe estar en formato ISO 8601 (ej: 2026-12-31T23:59:59Z)' })
   trialEndsAt?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'El radio permitido debe ser un número válido.' })
+  @Min(1, { message: 'El radio permitido debe ser de al menos 1 metro.' })
+  radioPermitido?: number;
 }

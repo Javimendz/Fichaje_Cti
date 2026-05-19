@@ -257,8 +257,7 @@ async findOne(id: number, user: UserPayload) {
 
 async update(id: number, dto: UpdateCompanyDto, user: UserPayload) {
   // 1. Extraemos los datos del DTO
-  const { admin, configPassword, ...empresaDatos } = dto as any;
-
+const { admin, configPassword, plan, trialEndsAt, ...empresaDatos } = dto as any;
   // 🛡️ Validación de Rol
   if (user.rol !== UserRole.SUPERADMIN) {
     throw new ForbiddenException('Solo el SuperAdministrador puede modificar empresas');
@@ -270,6 +269,18 @@ let hashedConfigPassword: string | undefined = undefined;
     hashedConfigPassword = await bcrypt.hash(configPassword, 10);
   }
 
+  if (plan) {
+    // Si manejas un ENUM para los planes (ej: PREMIUM, BASIC), puedes validarlo aquí
+    // Ejemplo: if (!Object.values(SubscriptionPlan).includes(plan)) { ... }
+    empresaDatos.plan = plan;
+  }
+  if (trialEndsAt) {
+    const fechaPrueba = new Date(trialEndsAt);
+    if (isNaN(fechaPrueba.getTime())) {
+      throw new BadRequestException('El formato de la fecha trialEndsAt no es válido. Utiliza un formato ISO (AAAA-MM-DD)');
+    }
+    empresaDatos.trialEndsAt = fechaPrueba;
+  }
   // 2. Normalización de Nombre
   if (empresaDatos.nombre) {
     const nombreNormalizado = empresaDatos.nombre.toUpperCase().trim();

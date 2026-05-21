@@ -13,7 +13,6 @@ export class MailService {
     const user = process.env.MAIL_USER;
     const pass = process.env.MAIL_PASS;
 
-    // Diagnóstico rápido: Verás esto reflejado en tus `docker logs`
     this.logger.log(`[SMTP INIT] Conectando a host: ${host || 'FALTA HOST'} en el puerto: ${port}`);
 
     if (!host || !user || !pass) {
@@ -23,15 +22,14 @@ export class MailService {
     this.transporter = nodemailer.createTransport({
       host: host,
       port: port,
-      secure: port === 465, // false para puerto 587 (Brevo STARTTLS)
+      secure: port === 465, // false para 587 (STARTTLS es mandatorio aquí)
       auth: {
         user: user,
         pass: pass,
       },
-      // Forzar parámetros seguros de red requeridos por el relé de Brevo en Localhost
+      // 🚩 CORRECCIÓN CRÍTICA: Eliminamos 'SSLv3' y permitimos negociación TLS moderna
       tls: {
-        rejectUnauthorized: false,
-        ciphers: 'SSLv3'
+        rejectUnauthorized: false
       }
     });
   }

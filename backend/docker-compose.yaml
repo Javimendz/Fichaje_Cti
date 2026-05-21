@@ -13,6 +13,9 @@ services:
     environment:
       - DB_HOST=postgres_bbdd 
       - NODE_ENV=development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     networks:
       - red_fichaje
 

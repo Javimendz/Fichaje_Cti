@@ -1,6 +1,7 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SendPinDto } from './dto/send-pin.dto';
+import * as path from 'path'; // 🚩 Necesario para calcular rutas físicas de archivos
 
 @Injectable()
 export class MailService {
@@ -45,6 +46,8 @@ export class MailService {
       ? `Hola ${nombre}, se ha generado un nuevo PIN de acceso a tu solicitud.` 
       : `¡Bienvenido a la plataforma, ${nombre}! Te han dado de alta como trabajador.`;
 
+const logoPath = path.join(__dirname, 'assets', 'favicon.ico');
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
         <h2 style="color: #00bcd4; text-align: center;">Fichaje CTI</h2>
@@ -74,11 +77,18 @@ export class MailService {
       // 3. Ejecutamos el envío con los tipos garantizados como string
       await this.transporter.sendMail({
         from: `"Fichaje CTI" <${senderEmail}>`,
-        to: email.trim(), // ✅ Al haber validado arriba, TS ya sabe que es un string seguro
+        to: email.trim(),
         subject: asunto,
         html: htmlContent,
+        // 🚩 ADJUNTOS OCULTOS DE NODEMAILER (ESTRATEGIA CID)
+        attachments: [
+          {
+            filename: 'logo.png', // Nodemailer lo tratará como PNG internamente
+            path: logoPath,       // Ruta física al archivo favicon.ico
+            cid: 'logo_fichaje'   // Este nombre debe coincidir exactamente con el src="cid:..." del HTML
+          }
+        ]
       });
-      
       this.logger.log(`📧 Correo con PIN enviado con éxito a ${email}`);
     } catch (error: any) {
       this.logger.error(`Error al enviar correo a ${email || 'Destinatario Desconocido'}: ${error.message}`);

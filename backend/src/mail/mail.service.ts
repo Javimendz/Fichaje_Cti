@@ -1,14 +1,13 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SendPinDto } from './dto/send-pin.dto';
-import * as path from 'path'; // 🚩 Necesario para calcular rutas físicas de archivos
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
 
- constructor() {
+  constructor() {
     const host = process.env.MAIL_HOST;
     const port = parseInt(process.env.MAIL_PORT || '587', 10);
     const user = process.env.MAIL_USER;
@@ -23,12 +22,11 @@ export class MailService {
     this.transporter = nodemailer.createTransport({
       host: host,
       port: port,
-      secure: port === 465, // false para 587 (STARTTLS es mandatorio aquí)
+      secure: port === 465, 
       auth: {
         user: user,
         pass: pass,
       },
-      // 🚩 CORRECCIÓN CRÍTICA: Eliminamos 'SSLv3' y permitimos negociación TLS moderna
       tls: {
         rejectUnauthorized: false
       }
@@ -46,10 +44,7 @@ export class MailService {
       ? `Hola ${nombre}, se ha generado un nuevo PIN de acceso a tu solicitud.` 
       : `¡Bienvenido a la plataforma, ${nombre}! Te han dado de alta como trabajador.`;
 
-const logoPath = path.resolve(__dirname, '..', '..', 'src', 'mail', 'assets', 'favicon.ico');
-
-
-const htmlContent = `
+    const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #ffffff;">
         
         <div style="text-align: center; margin-bottom: 20px;">
@@ -75,30 +70,48 @@ const htmlContent = `
       </div>
     `;
 
-   try {
-      // 1. Aseguramos el remitente (from)
+    try {
       const senderEmail = process.env.MAIL_FROM || 'no-reply@cticontrol.com';
 
-      // 2. Validamos de forma estricta que exista un destinatario
       if (!email) {
         throw new Error('El correo electrónico del destinatario está vacío o es inválido.');
       }
 
-      // 3. Ejecutamos el envío con los tipos garantizados como string
       await this.transporter.sendMail({
         from: `"Fichaje CTI" <${senderEmail}>`,
         to: email.trim(),
         subject: asunto,
         html: htmlContent,
-        // 🚩 ADJUNTOS OCULTOS DE NODEMAILER (ESTRATEGIA CID)
         attachments: [
           {
-            filename: 'logo.png', // Nodemailer lo tratará como PNG internamente
-            path: logoPath,       // Ruta física al archivo favicon.ico
-            cid: 'logo_fichaje'   // Este nombre debe coincidir exactamente con el src="cid:..." del HTML
+            filename: 'logo.png',
+            // 🚩 TU IMAGEN INTEGRADA EN TEXTO (BASE64): Ya no busca archivos en el disco de Docker
+            content: Buffer.from(
+              'AAABAAEAEBAAAAEAIABoYAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAD/' +
+              '//////8A////////////////////////////////////////////////////////////////////////////' +
+              '////////////////////////////////////////////////////////////////////////////////////' +
+              '//////////////////////////////////////////////////8A/wAAAP8AAAD/' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wD/AAAA/wAAAP8A' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD//////wA/wAAAP8AAAD/' +
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAP8AAAD/////////////////////' +
+              '////////////////////////////////////////////////////////////////////////////' +
+              '////////////////////////////////////////////////////////////////////////////' +
+              '//////////8=', 
+              'base64'
+            ),
+            cid: 'logo_fichaje'
           }
         ]
       });
+      
       this.logger.log(`📧 Correo con PIN enviado con éxito a ${email}`);
     } catch (error: any) {
       this.logger.error(`Error al enviar correo a ${email || 'Destinatario Desconocido'}: ${error.message}`);

@@ -29,6 +29,7 @@ import { MasterPinGenerationDto } from './dto/master-pin.dto';
 import { Company } from '../company/entities/company.entity';
 import { AssignWorkerDto } from '../site/dto/assign-worker.dto';
 import { Site } from '../site/entities/site.entity';
+import { MailService } from '../mail/mail.service';
 
 // El servicio de Worker se encarga de toda la lógica de negocio relacionada con los trabajadores, incluyendo la creación, actualización, eliminación y consulta de trabajadores. Además, maneja la sincronización entre las tablas de User y Worker para asegurar que los datos estén consistentes. El servicio utiliza transacciones para garantizar que las operaciones que afectan a ambas tablas se realicen de manera atómica, evitando problemas de datos inconsistentes en caso de errores. También incluye validaciones para asegurar que los datos sean únicos y que los usuarios tengan los permisos adecuados para realizar acciones relacionadas con los trabajadores.
 /**
@@ -46,6 +47,7 @@ export class WorkerService {
     private readonly authService: AuthService,
     @InjectRepository(Site) private readonly siteRepository: Repository<Site>,
 
+    private readonly mailService: MailService,
     private readonly dataSource: DataSource, // Necesario para transacciones
     private configService: ConfigService,
   ) { }
@@ -289,6 +291,20 @@ async create(dto: CreateWorkerDto, admin: UserPayload) {
 
     this.logger.log(`[ALTA] Trabajador ${savedUser.dni} creado. PIN generado y guardado en tabla User.`);
 
+
+    try {
+  await this.mailService.sendWorkerPin({
+    email: savedUser.email,
+    nombre: savedUser.nombre,
+    pin: rawPin,
+    esNuevoPin: false
+  });
+} catch (mailError) {
+  const error = mailError as Error; // 🚩 Le decimos a TS: "Confía en mí, es un Error"
+  this.logger.error(`Falló el envío de correo al trabajador ${savedUser.id}: ${error.message}`);
+  // Aquí decides: ¿lanzas error o solo logueas? 
+  // Lo ideal es que el admin sepa que el usuario existe pero el mail falló.
+}
     // 4. Respuesta (El Admin recibe el PIN para dárselo al empleado)
     return { 
       message: 'Trabajador creado con éxito', 
@@ -347,9 +363,26 @@ async create(dto: CreateWorkerDto, admin: UserPayload) {
     // 5. AUDITORÍA: Dejamos rastro en la consola del servidor
     this.logger.warn(`[AUDITORÍA] El Administrador ${admin.nombre} (ID: ${admin.id}) ha reseteado el PIN del trabajador ${worker.nombre} (ID: ${worker.id}).`);
 
+
+    try {
+      await this.mailService.sendWorkerPin({
+        email: worker.email,
+        nombre: worker.nombre,
+        pin: rawPin,
+        esNuevoPin: true // 🚩 Marcamos true para que el asunto y cuerpo cambien
+      });
+      this.logger.log(`[PIN REGENERADO] Correo enviado al trabajador ${worker.id}`);
+    } catch (mailError: unknown) {
+      const message = mailError instanceof Error ? mailError.message : String(mailError);
+      this.logger.error(`Error al enviar correo de nuevo PIN: ${message}`);
+      // Decisión: ¿Lanzar error o avisar? 
+      // Lanzamos error porque si no llega el PIN, el trabajador está bloqueado
+      throw new InternalServerErrorException('PIN generado pero falló el envío del correo.');
+    }
+
     // 6. Devolvemos la respuesta que espera tu Frontend (React)
     return {
-      message: 'Nuevo PIN generado con éxito',
+      message: 'Nuevo PIN generado con éxito, Enviado a correo electrónico correctamente',
       worker: `${worker.nombre} ${worker.apellidos || ''}`,
       pin: rawPin // 👈 Única vez que este dato existe en texto plano
     };

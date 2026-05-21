@@ -8,6 +8,7 @@ import { WorkerAuthController } from './worker-auth.controller';
 import { IssueSiteModule } from '../issue-site/issue-site.module';
 import { Site } from '../site/entities/site.entity';
 import { User } from '../auth/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 
 
 // El módulo de Worker se encarga de gestionar los trabajadores dentro del sistema. Incluye la entidad Worker, el servicio WorkerService que contiene la lógica de negocio, y el controlador WorkerController que maneja las solicitudes HTTP relacionadas con los trabajadores. Además, importa el AuthModule para manejar la autenticación y autorización, y la entidad Worker para gestionar las relaciones entre trabajadores y otros módulos del sistema. El módulo exporta el WorkerService para que pueda ser utilizado en otros módulos del sistema.
@@ -22,9 +23,11 @@ imports: [
       Worker, 
       User, // 🚩 Necesario para 'UserRepository' (index 1)
       Site  // 🚩 Necesario para 'SiteRepository' (index 3)
+    
     ]),
     forwardRef(() => AuthModule), // 🚩 Usa forwardRef para evitar el bloqueo circular
     IssueSiteModule,
+    MailModule,
   ],  controllers: [WorkerController, WorkerAuthController],
   providers: [WorkerService],
   exports: [WorkerService],

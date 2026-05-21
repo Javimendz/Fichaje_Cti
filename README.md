@@ -84,7 +84,7 @@ docker run -d \
   --network red_fichaje \
   --restart always \
   -e TYPEORM_SYNCHRONIZE=true \
-  javierm735/fichaday-backend-0.21:latest
+  javierm735/fichaday-backend-0.22:latest
 
 B. API de Test
 Bash
@@ -158,6 +158,20 @@ docker rm -f nginx_proxy
 
 # 2. Lo levantamos con la configuración corregida
 # 1. Borramos el proxy con el error
+
+# 1. Descargar la imagen que acabas de subir
+docker pull javierm735/nginx_proxy:latest
+
+# 2. Fulminar el proxy antiguo si seguía corriendo
+docker rm -f nginx_proxy
+
+# 3. Levantar el nuevo contenedor en la red de producción
+docker run -d --name nginx_proxy --network red_fichaje --restart always -p 80:80 -p 443:443 javierm735/nginx_proxy-0.03:latest
+
+
+# 4. Enchufarle la red de test del VPS
+docker network connect test_network nginx_proxy
+
 # 1. Borramos el proxy con el nombre incorrecto
 docker rm -f nginx_proxy
 
@@ -417,7 +431,7 @@ docker run -d \
   -e MAX_FICHAR_DISTANCE=600 \
   -e DEFAULT_DAYS_ISSUES=5 \
   -e DEFAULT_DAYS_REQUESTS=15 \
-  javierm735/fichaday-backend-0.20:latest  
+  javierm735/fichaday-backend-0.22:latest  
 
 
 ## Contenedor de prueba
@@ -549,7 +563,7 @@ docker run -d \
   -e DB_NAME=fichaje_cti \
   -e NODE_ENV=production \
   -e JWT_SECRET=un_secreto_seguro \
-  javierm735/fichaday-backend-0.20:latest
+  javierm735/fichaday-backend-0.22:latest
 
 
 usar este sino

@@ -22,6 +22,7 @@ import { ActivityModule } from './activity/activity.module';
 import { SiteModule } from './site/site.module';
 import { SiteLogModule } from './siteLog/siteLog.module';
 import { IssueSiteModule } from './issue-site/issue-site.module';
+import { MailModule } from './mail/mail.module';
 /**
  * 
  * TypeORM Configuration:
@@ -42,7 +43,7 @@ import { IssueSiteModule } from './issue-site/issue-site.module';
 @Module({
 
   imports: [
-
+    MailModule,
     ThrottlerModule.forRoot([{
       ttl: 60000, // Tiempo de vida en milisegundos (1 minuto)
       limit: 5,   // Límite global: 10 peticiones por minuto

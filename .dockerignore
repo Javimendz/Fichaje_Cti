@@ -33,3 +33,14 @@
 README.md
 LICENSE
 **/.dockerignore
+
+# Excluir la carpeta de tu máquina local
+node_modules
+npm-debug.log
+
+# Excluir archivos innecesarios para la imagen
+
+
+.dockerignore
+dist
+.env

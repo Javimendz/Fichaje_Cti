@@ -7,14 +7,32 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
 
-  constructor() {
+ constructor() {
+    const host = process.env.MAIL_HOST;
+    const port = parseInt(process.env.MAIL_PORT || '587', 10);
+    const user = process.env.MAIL_USER;
+    const pass = process.env.MAIL_PASS;
+
+    // Diagnóstico rápido: Verás esto reflejado en tus `docker logs`
+    this.logger.log(`[SMTP INIT] Conectando a host: ${host || 'FALTA HOST'} en el puerto: ${port}`);
+
+    if (!host || !user || !pass) {
+      this.logger.error('❌ CRÍTICO: Faltan configurar variables SMTP esenciales en el .env');
+    }
+
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
-      port: parseInt(process.env.MAIL_PORT || '2525', 10),
+      host: host,
+      port: port,
+      secure: port === 465, // false para puerto 587 (Brevo STARTTLS)
       auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        user: user,
+        pass: pass,
       },
+      // Forzar parámetros seguros de red requeridos por el relé de Brevo en Localhost
+      tls: {
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+      }
     });
   }
 

@@ -364,20 +364,18 @@ async create(dto: CreateWorkerDto, admin: UserPayload) {
     this.logger.warn(`[AUDITORÍA] El Administrador ${admin.nombre} (ID: ${admin.id}) ha reseteado el PIN del trabajador ${worker.nombre} (ID: ${worker.id}).`);
 
 
-    try {
+   try {
       await this.mailService.sendWorkerPin({
         email: worker.email,
         nombre: worker.nombre,
         pin: rawPin,
-        esNuevoPin: true // 🚩 Marcamos true para que el asunto y cuerpo cambien
+        esNuevoPin: true // 🚩 Condiciona una plantilla de "PIN Modificado/Regenerado"
       });
-      this.logger.log(`[PIN REGENERADO] Correo enviado al trabajador ${worker.id}`);
     } catch (mailError: unknown) {
       const message = mailError instanceof Error ? mailError.message : String(mailError);
       this.logger.error(`Error al enviar correo de nuevo PIN: ${message}`);
-      // Decisión: ¿Lanzar error o avisar? 
-      // Lanzamos error porque si no llega el PIN, el trabajador está bloqueado
-      throw new InternalServerErrorException('PIN generado pero falló el envío del correo.');
+      // Lanza excepción porque el usuario se quedaría bloqueado sin saber el código nuevo
+      throw new InternalServerErrorException('PIN guardado en el sistema, pero el proveedor SMTP falló.');
     }
 
     // 6. Devolvemos la respuesta que espera tu Frontend (React)

@@ -5,15 +5,12 @@ import { SendPinDto } from './dto/send-pin.dto';
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private transporter;
+  private transporter: nodemailer.Transporter;
 
   constructor() {
-
-    
-    // Configuración del servidor SMTP usando variables de entorno (.env)
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST || 'smtp.mailtrap.io',
-port: parseInt(process.env.MAIL_PORT || '2525', 10),
+      host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
+      port: parseInt(process.env.MAIL_PORT || '2525', 10),
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
@@ -21,8 +18,9 @@ port: parseInt(process.env.MAIL_PORT || '2525', 10),
     });
   }
 
-  async sendWorkerPin(data: SendPinDto) {
+  async sendWorkerPin(data: SendPinDto): Promise<void> {
     const { email, nombre, pin, esNuevoPin = false } = data;
+    
     const asunto = esNuevoPin 
       ? '🔄 Tu nuevo PIN de seguridad - Fichaje CTI' 
       : '🎉 Bienvenido - Tu PIN de acceso a Fichaje CTI';
@@ -48,16 +46,26 @@ port: parseInt(process.env.MAIL_PORT || '2525', 10),
       </div>
     `;
 
-    try {
+   try {
+      // 1. Aseguramos el remitente (from)
+      const senderEmail = process.env.MAIL_FROM || 'no-reply@cticontrol.com';
+
+      // 2. Validamos de forma estricta que exista un destinatario
+      if (!email) {
+        throw new Error('El correo electrónico del destinatario está vacío o es inválido.');
+      }
+
+      // 3. Ejecutamos el envío con los tipos garantizados como string
       await this.transporter.sendMail({
-        from: `"Fichaje CTI" <${process.env.MAIL_FROM || 'no-reply@cticontrol.com'}>`,
-        to: email,
+        from: `"Fichaje CTI" <${senderEmail}>`,
+        to: email.trim(), // ✅ Al haber validado arriba, TS ya sabe que es un string seguro
         subject: asunto,
         html: htmlContent,
       });
+      
       this.logger.log(`📧 Correo con PIN enviado con éxito a ${email}`);
     } catch (error: any) {
-      this.logger.error(`Error al enviar correo a ${email}: ${error.message}`);
+      this.logger.error(`Error al enviar correo a ${email || 'Destinatario Desconocido'}: ${error.message}`);
       throw new InternalServerErrorException('No se pudo enviar el correo con el PIN.');
     }
   }

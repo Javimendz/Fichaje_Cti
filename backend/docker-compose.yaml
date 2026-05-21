@@ -16,6 +16,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+      - /usr/src/app/dist
     networks:
       - red_fichaje
 
@@ -33,6 +34,10 @@ services:
     environment:
       - DB_HOST=postgres_bbdd_test 
       - NODE_ENV=development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/dist
     networks:
       - test_network
 

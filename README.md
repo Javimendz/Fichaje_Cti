@@ -266,8 +266,8 @@ docker network inspect red_fichaje: Debes ver a Nginx, el Front, el Backend de P
 
 
 
-
-
+### Servicio para Email
+https://app.brevo.com/transactional/email/logs 
 
 
 

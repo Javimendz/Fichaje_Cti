@@ -46,8 +46,7 @@ export class MailService {
       ? `Hola ${nombre}, se ha generado un nuevo PIN de acceso a tu solicitud.` 
       : `¡Bienvenido a la plataforma, ${nombre}! Te han dado de alta como trabajador.`;
 
-const logoPath = path.resolve(process.cwd(), 'src', 'mail', 'assets', 'logo.jpg');
-
+const logoPath = path.join(__dirname, 'assets', 'logo.jpg');
 const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #ffffff;">
         

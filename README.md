@@ -73,7 +73,7 @@ docker run -d \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_test:/var/lib/postgresql/data \
   -p 5433:5432 \
-  javierm735/postgres_bbdd-0.7:latest
+  javierm735/postgres_bbdd_0.10:latest
 3. Capa de Aplicación: Backend NestJS
 Aquí es donde ocurre la magia de la sincronización de tablas. Asegúrate de tener tu archivo .env en la carpeta actual.
 
@@ -94,7 +94,13 @@ docker run -d \
   --restart always \
   -e DB_HOST=postgres_bbdd_test \
   -e TYPEORM_SYNCHRONIZE=true \
-  javierm735/fichaday-backend-0.21:latest
+  --env-file .env \
+  javierm735/fichaday-backend-0.30:latest
+
+
+  con el archivo env en la carpeta env
+
+  docker run -d --name fichaday_backend_test --network test_network --restart always -e DB_HOST=postgres_bbdd_test -e TYPEORM_SYNCHRONIZE=true --env-file env/.env javierm735/fichaday-backend-0.30:latest
 
 4. Capa de Acceso: Nginx Proxy (Doble Dominio)
 Lanzamos el proxy inyectando la configuración para que no dependa de archivos externos en el VPS.

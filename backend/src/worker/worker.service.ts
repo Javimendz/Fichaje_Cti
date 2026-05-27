@@ -415,11 +415,12 @@ async reasignarTrabajadoresMasivo(workerIds: number[], nuevoHorarioId: number) {
   /**
    * Lista todos los workers con paginación (Solo para SuperAdmin)
    */
-  async findAll(page: number = 1, limit: number = 10) {
+ async findAll(page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     const [data, total] = await this.workerRepository.findAndCount({
-      relations: ['empresa'],
+      // 🟢 Añadimos 'sites' a las relaciones para traer sus obras asignadas
+      relations: ['empresa', 'sites'], 
       order: { createdAt: 'DESC' },
       take: limit,
       skip: skip,
@@ -441,11 +442,13 @@ async reasignarTrabajadoresMasivo(workerIds: number[], nuevoHorarioId: number) {
    * @return Lista de trabajadores asociados a la empresa especificada. Si el usuario autenticado no tiene permisos para acceder a esta información, se lanzará una excepción que será manejada por el WorkerController.
    * Nota: Si en el futuro decides permitir que un Admin normal también pueda listar todos los trabajadores sin filtrar por empresa, puedes ajustar la lógica de seguridad en el controlador para llamar al método findAll() independientemente del rol del usuario, o agregar una condición dentro de este método para verificar el rol y aplicar el filtro de empresa solo si el usuario es un Admin normal.
    */
-  async findAllByEmpresa(empresaId: number, page: number = 1, limit: number = 10) {
+async findAllByEmpresa(empresaId: number, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     const [data, total] = await this.workerRepository.findAndCount({
       where: { empresa: { id: empresaId } },
+      // 🟢 Añadimos 'sites' aquí también para que el Admin vea las obras de sus trabajadores
+      relations: ['sites'], 
       order: { createdAt: 'DESC' },
       take: limit,
       skip: skip,
@@ -460,7 +463,6 @@ async reasignarTrabajadoresMasivo(workerIds: number[], nuevoHorarioId: number) {
       },
     };
   }
-
 
 
   /**

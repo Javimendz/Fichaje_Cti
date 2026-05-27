@@ -558,9 +558,10 @@ async update(id: number, dto: UpdateWorkerDto, currentUser: UserPayload) {
     });
 
     // 5. GESTIÓN DE HORARIO Y FECHA ANCLA (Evita el null)
-    if (dto.horarioId !== undefined) {
+   if (dto.horarioId !== undefined) {
       const nuevoId = dto.horarioId;
       worker.horarioId = nuevoId;
+      user.horarioId = nuevoId; // Aseguramos columna física en User
       user.horario = nuevoId ? { id: nuevoId } as any : null;
 
       if (nuevoId) {
@@ -573,6 +574,18 @@ async update(id: number, dto: UpdateWorkerDto, currentUser: UserPayload) {
       worker.fechaInicioHorario = user.fechaInicioHorario; // Sincronización crucial
     }
 
+    // 🟢 NUEVO: GESTIÓN DE ACTIVIDAD / PUESTO DE TRABAJO (Sincronización Total)
+    if (dto.actividadId !== undefined) {
+      const nuevaActividadId = dto.actividadId;
+      
+      // Sincronizamos las columnas físicas en ambas tablas espejo
+      worker.actividadId = nuevaActividadId;
+      user.actividadId = nuevaActividadId;
+
+      // Sincronizamos las relaciones de objetos para TypeORM (manejando el desasignar con null)
+      worker.actividad = nuevaActividadId ? { id: nuevaActividadId } as any : null;
+      user.actividad = nuevaActividadId ? { id: nuevaActividadId } as any : null;
+    }
     // 6. GUARDADO CON CATCH MEJORADO
     try {
       await manager.save(User, user);

@@ -15,6 +15,7 @@ import { AusenciaEstado } from '../absence/dto/ausencia-estado.enum';
 @Injectable()
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name);
+  workerRepository: any;
   constructor(
     @InjectRepository(Horario) private readonly horarioRepository: Repository<Horario>,
     private readonly dataSource: DataSource,
@@ -83,7 +84,48 @@ export class ScheduleService {
       throw new BadRequestException(`No se pudo crear el horario: ${err.message}`);
     }
   }
+async findAffectedWorkers(horarioId: number, empresaId: number): Promise<Worker[]> {
+    return await this.workerRepository.find({
+      where: {
+        horarioId: horarioId,
+        // Asumiendo que Worker tiene relación o columna de empresa_id para aislar los datos
+        // empresaId: empresaId 
+      },
+      select: ['id', 'nombre', 'horarioId'] // Solo traemos lo necesario para la tabla del front
+    });
+  }
+  async removeSeguro(id: number, empresaId: number) {
+    // Verificamos que el horario exista y pertenezca a la empresa del administrador logueado
+    const horario = await this.horarioRepository.findOne({ 
+      where: { id, empresaId } 
+    });
+    
+    if (!horario) {
+      throw new NotFoundException(`El horario con ID ${id} no existe o no pertenece a tu empresa.`);
+    }
 
+    // Contamos de forma nativa cuántos trabajadores están usando este horario
+    const trabajadoresVinculados = await this.workerRepository.count({ 
+      where: { horarioId: id } 
+    });
+
+    // Si hay trabajadores vinculados, frenamos el borrado inmediatamente
+    if (trabajadoresVinculados > 0) {
+      throw new BadRequestException({
+        code: 'SCHEDULE_IN_USE',
+        message: `No se puede eliminar el horario. Está asignado a ${trabajadoresVinculados} trabajadores activos.`,
+        count: trabajadoresVinculados
+      });
+    }
+
+    // Si el conteo es 0, procedemos al borrado físico (o Soft Delete si usas .softDelete)
+    await this.horarioRepository.delete(id);
+    
+    return { 
+      success: true, 
+      message: `El horario "${horario.nombre}" ha sido eliminado correctamente.` 
+    };
+  }
   async findAllByEmpresa(empresaId: number) {
     return await this.horarioRepository.find({
       where: { empresa: { id: empresaId }, isActive: true },

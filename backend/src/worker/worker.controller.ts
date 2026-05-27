@@ -20,6 +20,7 @@ import { MasterPinGenerationDto } from './dto/master-pin.dto';
 import { LoginPinDto } from './dto/login-pin.dto';
 import { LoginMasterDto } from './dto/login-master.dto';
 import { IssueSiteService } from '../issue-site/issue-site.service';
+import { ReasignarTrabajadoresDto } from './dto/reasignar-trabajadores.dto';
 
 
 // --- Controlador para la gestión de Trabajadores ---
@@ -239,6 +240,24 @@ async getAll(
   ) {
     // Pasamos el DNI que viene del frontend y el 'admin' entero para la auditoría
     return await this.workerService.regeneratePinWithToken(dni, admin);
+  }
+
+
+  @Put('reasignar-masivo')
+  @Roles(UserRole.ADMIN) // Protegido para que solo entren administradores
+  async reasignarMasivo(
+    @Body() dto: ReasignarTrabajadoresDto,
+    @GetUser() user: UserPayload, // Por si en el futuro necesitas validar la empresa_id del admin
+  ) {
+    // Auditamos quién está haciendo el cambio masivo en los logs
+    // (Ajusta la propiedad del email/id según sea tu UserPayload real)
+    console.warn(`[Audit] Admin ${user.email} está reasignando ${dto.workerIds.length} trabajadores.`);
+
+    // Llamamos a la función de tu servicio pasando las propiedades del DTO
+    return await this.workerService.reasignarTrabajadoresMasivo(
+      dto.workerIds, 
+      dto.nuevoHorarioId
+    );
   }
 
 }

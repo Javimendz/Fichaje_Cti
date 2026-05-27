@@ -19,6 +19,7 @@ import { Worker } from "../worker/entities/worker.entity";
 import { Activity } from "../activity/entities/activity.entity";
 import { WorkerService } from "../worker/worker.service";
 
+
 @Injectable()
 export class UserService {
   constructor(

@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -25,6 +26,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { Throttle } from '@nestjs/throttler';
 import { WorkerService } from '../worker/worker.service';
 import { MasterPinGenerationDto } from '../worker/dto/master-pin.dto';
+
 
 /**
  * UsersController
@@ -146,4 +148,6 @@ export class UserController {
   ) {
     return this.usersService.remove(id, currentUser);
   }
+
+
 }

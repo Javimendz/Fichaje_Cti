@@ -196,15 +196,26 @@ async getWorkersBySchedule(
    * ``` 
    */
   @Delete('delete/:id')
-  @Roles(UserRole.ADMIN)
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @GetUser() user: UserPayload,
-  ) {
-    const empresaId = this.getEmpresaId(user);
-    this.logger.warn(`[Audit] Admin ${user.email} eliminando horario ${id}`);
-    return this.schedulesService.remove(id, empresaId);
-  }
+@Roles(UserRole.ADMIN)
+async remove(
+  @Param('id', ParseIntPipe) id: number,
+  @GetUser() user: UserPayload,
+) {
+  const empresaId = this.getEmpresaId(user);
+  this.logger.warn(`[Audit] Admin ${user.email} eliminando horario ${id}`);
+  
+  // Llamamos al nuevo método seguro del servicio
+  return this.schedulesService.removeSeguro(id, empresaId);
+}
+  @Get(':id/affected-workers')
+@Roles(UserRole.ADMIN)
+async getAffectedWorkers(
+  @Param('id', ParseIntPipe) id: number,
+  @GetUser() user: UserPayload,
+) {
+  const empresaId = this.getEmpresaId(user);
+  return this.schedulesService.findAffectedWorkers(id, empresaId);
+}
 
   
 

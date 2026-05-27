@@ -91,7 +91,7 @@ export class User { // Definición de la entidad User
   empresa: Company | null; // Empresa a la que pertenece el usuario
 
   // --- RELACIONES: PLANIFICACIÓN Y REGISTROS ---
-  @ManyToOne(() => Horario, (horario) => horario.usuarios, { nullable: true, onDelete: 'SET NULL' }) // Relación con Horario
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { onDelete: 'RESTRICT' })// Relación con Horario
   @JoinColumn({ name: 'horario_id' }) // Llave foránea personalizada
   horario: Horario | null; // Horario asignado al usuario
 

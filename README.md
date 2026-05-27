@@ -36,6 +36,13 @@ para permitir un despliegue profesional y escalable.
 🚀 Guía Maestra de Despliegue: Fichaday v0.7
 Esta guía configura un entorno profesional con aislamiento total entre Producción y Test.
 
+
+# 1. Asegúrate de detener y borrar el contenedor de producción por si acaso
+docker rm -f postgres_bbdd
+
+# 2. Borra TODOS los volúmenes relacionados con producción de un solo golpe
+docker volume rm postgres_data_bbdd postgres_data_test
+
 1. Preparación de Terreno (Redes y Volúmenes)
 Antes de meter los contenedores, necesitamos las "habitaciones" y los "baúles" de datos.
 
@@ -52,6 +59,8 @@ Usamos tu imagen personalizada. Separamos Producción en el puerto 5432 y Test e
 
 A. Base de Datos de Producción
 Bash
+
+
 docker run -d \
   --name postgres_bbdd \
   --network red_fichaje \
@@ -61,7 +70,9 @@ docker run -d \
   -e POSTGRES_DB=fichaje_cti \
   -v postgres_data_bbdd:/var/lib/postgresql/data \
   -p 5432:5432 \
-  javierm735/postgres_bbdd-0.7:latest
+  javierm735/postgres_bbdd_0.10:latest
+
+
 B. Base de Datos de Test
 Bash
 docker run -d \
@@ -83,8 +94,10 @@ docker run -d \
   --name fichaday_backend \
   --network red_fichaje \
   --restart always \
+   -e DB_HOST=postgres_bbdd \
   -e TYPEORM_SYNCHRONIZE=true \
-  javierm735/fichaday-backend-0.22:latest
+  --env-file env/.env \
+  javierm735/fichaday-backend-0.32:latest
 
 B. API de Test
 Bash
@@ -94,7 +107,7 @@ docker run -d \
   --restart always \
   -e DB_HOST=postgres_bbdd_test \
   -e TYPEORM_SYNCHRONIZE=true \
-  --env-file .env \
+  --env-file env/.env \
   javierm735/fichaday-backend-0.30:latest
 
 

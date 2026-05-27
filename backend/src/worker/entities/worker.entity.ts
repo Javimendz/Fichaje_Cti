@@ -124,8 +124,9 @@ export class Worker {
     nullable: true,
     onDelete: 'SET NULL'
   })
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'horario_id' })
-  horario?: Horario;
+  horario: Horario;
 
 
   @Column({ nullable: true, name: 'actividad_id' })

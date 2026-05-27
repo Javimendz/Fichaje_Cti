@@ -386,8 +386,22 @@ async create(dto: CreateWorkerDto, admin: UserPayload) {
     };
   }
 
-  
+async reasignarTrabajadoresMasivo(workerIds: number[], nuevoHorarioId: number) {
+  if (!workerIds || workerIds.length === 0) {
+    throw new BadRequestException('No se han seleccionado trabajadores para reasignar.');
+  }
 
+  // 🟢 Usamos el método nativo del repositorio pasándole el objeto directamente
+  await this.workerRepository.update(
+    workerIds, // Primer parámetro: IDs a actualizar
+    { horarioId: nuevoHorarioId  as any} // Segundo parámetro: El campo físico con el nuevo valor
+  );
+
+  return {
+    success: true,
+    message: `${workerIds.length} trabajadores movidos al nuevo horario con éxito.`
+  };
+}
 
   /**
    * Lista todos los workers (Solo para Admin)

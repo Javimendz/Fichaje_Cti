@@ -120,12 +120,12 @@ export class Worker {
   @Column({ nullable: true, name: 'horario_id' })
   horarioId?: number;
 
-  @ManyToOne(() => Horario, (horario) => horario.usuarios, {
-    nullable: true,
-    onDelete: 'SET NULL'
+
+  @ManyToOne(() => Horario, (horario) => horario.usuarios, { 
+    nullable: true, 
+    onDelete: 'RESTRICT' // 🚩 Evita borrar el horario si hay workers vinculados
   })
-  @ManyToOne(() => Horario, (horario) => horario.usuarios, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'horario_id' })
+  @JoinColumn({ name: 'horario_id' }) // Vincula con la columna física de arriba
   horario: Horario;
 
 

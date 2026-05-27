@@ -722,6 +722,8 @@ GET              /api/worker/find/:id               Obtiene la ficha de un traba
 PUT              /api/worker/update/:id             Actualiza información del trabajador.          Token (ADMIN) + Body
 DELETE           /api/worker/delete/:id             Borra un trabajador autorizado.                Token (ADMIN)
 PUT              /api/worker/assign-schedule/:id    Asignar Horario: Vincula horario a trabajador. Token (ADMIN) + Body
+POST             /api/worker/reasignar-masivo       Reasignar Horario: Actualiza horario de múltiples usuarios. Token (ADMIN) + Body
+
 
 ```
 
@@ -754,6 +756,10 @@ GET            /api/schedule/stats/progreso          Obtiene el % de cumplimient
 GET            /api/schedule/stats/progreso/:userId  Consulta el progreso de cualquier trabajador por su  ID.Token (ADMIN) 
 GET            /api/schedule/test-rotacion           Simula y calcula a qué semana de rotación pertenece. Token (ADMIN) + Querys: ?fechaInicio=2026-03-09&fechaPrueba=2026-03-23&ciclo=2
 GET            /api/schedule/turno-hoy                Devuelve el turno exacto de HOY calculando la rotación.       Token (Cualquiera)
+
+GET            /api/schedule/:id/affected-workers    Lista los trabajadores afectados por un horario específico. Token (ADMIN)
+
+
 ```
 
 ```

@@ -15,13 +15,14 @@ import { AusenciaEstado } from '../absence/dto/ausencia-estado.enum';
 @Injectable()
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name);
-  workerRepository: any;
+  
   constructor(
     @InjectRepository(Horario) private readonly horarioRepository: Repository<Horario>,
     private readonly dataSource: DataSource,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(FranjaHoraria) private readonly franjaRepo: Repository<FranjaHoraria>,
-    @InjectRepository(Ausencia) private readonly ausenciaRepository: Repository<Ausencia>
+    @InjectRepository(Ausencia) private readonly ausenciaRepository: Repository<Ausencia>,
+    @InjectRepository(Worker) private readonly workerRepository: Repository<Worker>,
   ) {}
 
   // ---------------------------------------------------------
@@ -85,47 +86,59 @@ export class ScheduleService {
     }
   }
 async findAffectedWorkers(horarioId: number, empresaId: number): Promise<Worker[]> {
-    return await this.workerRepository.find({
-      where: {
-        horarioId: horarioId,
-        // Asumiendo que Worker tiene relación o columna de empresa_id para aislar los datos
-        // empresaId: empresaId 
-      },
-      select: ['id', 'nombre', 'horarioId'] // Solo traemos lo necesario para la tabla del front
+  return await this.workerRepository.find({
+    where: {
+      horarioId: horarioId
+    } as any, // 🟢 El 'as any' silencia el error de propiedades conocidas
+    select: ['id', 'nombre'] as any
+  });
+}
+ async removeSeguro(id: number, empresaId: number) {
+  // 1. Buscamos el horario apuntando al ID de la relación de la empresa (Multi-tenancy seguro)
+  const horario = await this.horarioRepository.findOne({ 
+    where: { 
+      id, 
+      empresa: { id: empresaId } 
+    } 
+  });
+  
+  if (!horario) {
+    throw new NotFoundException(`El horario con ID ${id} no existe o no pertenece a tu empresa.`);
+  }
+
+  // 2. Contamos usando la columna física 'horarioId' con 'as any' para saltar el bloqueo de la interfaz
+  const trabajadoresVinculados = await this.workerRepository.count({ 
+    where: { 
+      horarioId: id 
+    } as any
+  });
+
+  // 3. Si hay trabajadores vinculados, frenamos el borrado inmediatamente
+  if (trabajadoresVinculados > 0) {
+    throw new BadRequestException({
+      code: 'SCHEDULE_IN_USE',
+      message: `No se puede eliminar el horario. Está asignado a ${trabajadoresVinculados} trabajadores activos.`,
+      count: trabajadoresVinculados
     });
   }
-  async removeSeguro(id: number, empresaId: number) {
-    // Verificamos que el horario exista y pertenezca a la empresa del administrador logueado
-    const horario = await this.horarioRepository.findOne({ 
-      where: { id, empresaId } 
-    });
-    
-    if (!horario) {
-      throw new NotFoundException(`El horario con ID ${id} no existe o no pertenece a tu empresa.`);
-    }
 
-    // Contamos de forma nativa cuántos trabajadores están usando este horario
-    const trabajadoresVinculados = await this.workerRepository.count({ 
-      where: { horarioId: id } 
-    });
+  // 4. 🟢 CORREGIDO: Sincronización simétrica. Limpiamos los residuos de ID en AMBAS tablas espejo
+  // Evita que queden IDs huérfanos o "fantasmas" en la base de datos
+  await this.userRepository.update({ horario: { id: id } }, { horario: null }); 
+await this.workerRepository.update(
+    { horarioId: id } as any, 
+    { horarioId: null } as any
+  );  
+  // 5. Borramos el horario físicamente. Al tener 'cascade: true' en tu entidad Horario, 
+  // PostgreSQL purgará automáticamente las tablas dependientes ('distribucion_dia' y 'franjas').
+  await this.horarioRepository.delete(id);
+  
+  return { 
+    success: true, 
+    message: `El horario "${horario.nombre}" ha sido eliminado correctamente.` 
+  };
+}
 
-    // Si hay trabajadores vinculados, frenamos el borrado inmediatamente
-    if (trabajadoresVinculados > 0) {
-      throw new BadRequestException({
-        code: 'SCHEDULE_IN_USE',
-        message: `No se puede eliminar el horario. Está asignado a ${trabajadoresVinculados} trabajadores activos.`,
-        count: trabajadoresVinculados
-      });
-    }
-
-    // Si el conteo es 0, procedemos al borrado físico (o Soft Delete si usas .softDelete)
-    await this.horarioRepository.delete(id);
-    
-    return { 
-      success: true, 
-      message: `El horario "${horario.nombre}" ha sido eliminado correctamente.` 
-    };
-  }
   async findAllByEmpresa(empresaId: number) {
     return await this.horarioRepository.find({
       where: { empresa: { id: empresaId }, isActive: true },

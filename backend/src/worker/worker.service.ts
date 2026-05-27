@@ -391,11 +391,11 @@ async reasignarTrabajadoresMasivo(workerIds: number[], nuevoHorarioId: number) {
     throw new BadRequestException('No se han seleccionado trabajadores para reasignar.');
   }
 
-  // 🟢 Usamos el método nativo del repositorio pasándole el objeto directamente
-  await this.workerRepository.update(
-    workerIds, // Primer parámetro: IDs a actualizar
-    { horarioId: nuevoHorarioId  as any} // Segundo parámetro: El campo físico con el nuevo valor
-  );
+  // 1. Actualizamos la tabla de trabajadores (perfiles)
+  await this.workerRepository.update(workerIds, { horarioId: nuevoHorarioId as any });
+
+  // 2. 🟢 ¡AÑADE ESTO! Actualizamos la tabla de usuarios (auth) para que no se desincronice el sistema
+  await this.userRepo.update(workerIds, { horarioId: nuevoHorarioId });
 
   return {
     success: true,

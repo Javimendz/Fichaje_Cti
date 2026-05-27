@@ -11,6 +11,7 @@ import { DistribucionDia } from './entities/distribucion-dia.entity';
 import { DateTime } from 'luxon';
 import { Ausencia } from '../absence/entities/ausencia.entity';
 import { AusenciaEstado } from '../absence/dto/ausencia-estado.enum';
+import { Worker } from '../worker/entities/worker.entity';
 
 @Injectable()
 export class ScheduleService {

@@ -17,15 +17,15 @@ postgres-data-local/
 
 # --- Variables de Entorno (Seguridad) ---
 # Nunca subas tus credenciales reales
-.env
-**/.env
-.env.local
-.env.*.local
+#.env
+#**/.env
+#.env.local
+#.env.*.local
 
 # --- Herramientas de IA y Editores ---
-.vscode/
-.windsurf/
-.windsurf.rules
+#.vscode/
+#.windsurf/
+#.windsurf.rules
 .idea/
 *.sublime-workspace
 .DS_Store
